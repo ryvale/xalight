@@ -1,0 +1,40 @@
+:xlsx,
+
+model {
+	file 'repo:default/equipement-a-renouveler.xls',
+
+	sheets [
+		Automates,
+		
+		Forages {
+			num 2
+		}
+	]
+},
+
+data [
+
+	automates {
+		defaultSheet Automates,
+		
+		record [
+			A3 { sheet Automates,  exp code },
+			B8 { exp libelle}
+		],
+		
+		lists [
+			{ 
+				sheet Forages,
+				row 5,
+				record [ 
+					A { exp debut }
+				]
+			}
+		]
+	}
+	
+]
+
+
+
+

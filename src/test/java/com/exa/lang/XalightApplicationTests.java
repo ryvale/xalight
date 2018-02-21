@@ -25,13 +25,11 @@ public class XalightApplicationTests extends TestCase {
     }
 	
 
-	public void test1() throws ManagedException {
+	public void testXalFile() throws ManagedException {
 		Parser parser = new Parser();
-		ObjectValue ov = parser.parse(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
+		ObjectValue ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString("type")));
-		
-		System.out.println(ov.getPathAttributAsString("model.file"));
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
@@ -57,6 +55,27 @@ public class XalightApplicationTests extends TestCase {
 		System.out.println(sb);
 		
 		assertTrue("abc\\d".equals(sb.toString()));
+	}
+	
+	public void testXalString() throws ManagedException {
+		Parser parser = new Parser();
+		ObjectValue ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
+		
+		assertTrue("xlsx".equals(ov.getAttributAsString("type")));
+		
+		System.out.println(ov.getPathAttributAsString("model.file"));
+		
+		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
+		
+		List<Value<?>> l = ov.getPathAttributAsArray("model.sheets");
+		
+		assertTrue(l.size() > 0);
+		
+		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString("_name")));
+		
+		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString("_name")));
+		
+		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("num")));
 	}
 
 }

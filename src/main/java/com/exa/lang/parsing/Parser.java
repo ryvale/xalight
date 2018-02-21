@@ -1,5 +1,7 @@
 package com.exa.lang.parsing;
 
+import java.io.IOException;
+
 import com.exa.buffer.CharReader;
 import com.exa.chars.EscapeCharMan;
 import com.exa.lexing.ParsingException;
@@ -16,10 +18,8 @@ public class Parser {
 	
 	private XALLexingRules lexingRules = new XALLexingRules();
 	
-	public ObjectValue parse(String script) throws ManagedException {
+	public ObjectValue parse(CharReader cr) throws ManagedException {
 		ObjectValue res = new ObjectValue();
-		
-		CharReader cr = new CharReader(script);
 		
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		if(ch.charValue() == ':') {
@@ -69,6 +69,25 @@ public class Parser {
 		while(true);
 		
 		return res;
+	}
+	
+	public ObjectValue parseString(String script) throws ManagedException {
+		
+		CharReader cr = new CharReader(script);
+		
+		return parse(cr);
+	}
+	
+	public ObjectValue parseFile(String script) throws ManagedException {
+		
+		CharReader cr;
+		try {
+			cr = CharReader.forFile(script, false);
+		} catch (IOException e) {
+			throw new ManagedException(e);
+		}
+		
+		return parse(cr);
 	}
 	
 	
