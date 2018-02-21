@@ -13,8 +13,15 @@ import com.exa.utils.values.IntegerValue;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.StringValue;
 import com.exa.utils.values.Value;
+import com.exa.utils.values.eval.CalculableValue;
 
 public class Parser {
+	
+	public static final String PRTY_NAME = "_name";
+	public static final String PRTY_CLASS = "_class";
+	public static final String PRTY_TYPE = "_type";
+	public static final String PRTY_EXTEND = "_extend";
+	public static final String PRTY_OBJECT = "_object";
 	
 	private XALLexingRules lexingRules = new XALLexingRules();
 	
@@ -26,7 +33,7 @@ public class Parser {
 			lexingRules.nextNonBlankChar(cr);
 			
 			String type = lexingRules.nextNonNullString(cr);
-			res.setAttribut("type", type);
+			res.setAttribut(PRTY_TYPE, type);
 			
 			ch = lexingRules.nextForwardNonBlankChar(cr);
 			
@@ -93,13 +100,19 @@ public class Parser {
 	
 	
 	private StringValue readString(CharReader cr, String end) throws ManagedException {
+		String str = readStringReturnString(cr, end);
+		
+		return new StringValue(str);
+	}
+	
+	private String readStringReturnString(CharReader cr, String end) throws ManagedException {
 		String str = lexingRules.nextNonNullString(cr);
 		
 		if(!str.endsWith(end)) throw new ManagedException(String.format("%s is not a valid string", str));
 		
 		StringBuilder sb = new StringBuilder(str.substring(1, str.length()-1));
 		EscapeCharMan.STANDARD.normalized(sb);
-		return new StringValue(sb.toString());
+		return sb.toString();
 	}
 	
 	private Value<? extends Number> readNumeric(CharReader cr) throws ManagedException {
@@ -137,7 +150,7 @@ public class Parser {
 		String str = lexingRules.nextNonNullString(cr);
 		if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 		
-		ov.setAttribut("_class", str);
+		ov.setAttribut(PRTY_OBJECT, str);
 		
 		return ov;
 	}
@@ -165,6 +178,23 @@ public class Parser {
 		
 		if(ch == '\'' || ch == '\"') return readString(cr, ch.toString());
 		
+		if('#' == ch) {
+			lexingRules.nextNonBlankChar(cr);
+			ch = cr.nextChar();
+			
+			if(ch == null) throw new ParsingException(String.format("Unexpected end of file. 0 or 1 exepected after #"));
+			
+			if(ch != '0' && ch != '1') throw new ParsingException(String.format("Error near # %s . 0 or 1 exepected after #", ch.toString()));
+			String expType ="#"+ch.toString();
+			
+			ch = lexingRules.nextForwardChar(cr);
+			if(ch != '\'' && ch != '\"') throw new ParsingException(String.format("Error near # %s . ' or \" expected.", ch.toString()));
+			
+			String str = readStringReturnString(cr, ch.toString());
+			
+			return new CalculableValue<>(str, expType);
+		}
+		
 		if(XALLexingRules.NUMERIC_DIGITS.indexOf(ch) >= 0) return readNumeric(cr);
 		
 		if(XALLexingRules.VALID_PROPERTY_NAME_CHARS_LC.indexOf(ch) >= 0) {
@@ -177,7 +207,7 @@ public class Parser {
 			if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 			
 			ObjectValue ov = new ObjectValue();
-			ov.setAttribut("_name", str);
+			ov.setAttribut(PRTY_NAME, str);
 			
 			ch = lexingRules.nextForwardNonBlankChar(cr);
 			

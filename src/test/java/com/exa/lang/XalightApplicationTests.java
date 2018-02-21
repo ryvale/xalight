@@ -29,7 +29,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
 		
-		assertTrue("xlsx".equals(ov.getAttributAsString("type")));
+		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
@@ -37,9 +37,9 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue(l.size() > 0);
 		
-		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString("_name")));
+		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
 		
-		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString("_name")));
+		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
 		
 		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("num")));
 	}
@@ -61,7 +61,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
 		
-		assertTrue("xlsx".equals(ov.getAttributAsString("type")));
+		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
 		
 		System.out.println(ov.getPathAttributAsString("model.file"));
 		
@@ -71,9 +71,9 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue(l.size() > 0);
 		
-		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString("_name")));
+		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
 		
-		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString("_name")));
+		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
 		
 		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("num")));
 	}
