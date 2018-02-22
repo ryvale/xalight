@@ -152,6 +152,12 @@ public class Parser {
 		
 		ov.setAttribut(PRTY_OBJECT, str);
 		
+		ch = lexingRules.nextForwardNonBlankChar(cr);
+		if('{' == ch) {
+			lexingRules.nextNonBlankChar(cr);
+			return readObjectBody(cr, ov);
+		}
+		
 		return ov;
 	}
 	
@@ -288,7 +294,7 @@ public class Parser {
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));
 	}
 	
-	public Value<?> readObjectBody(CharReader cr, ObjectValue ov) throws ManagedException {
+	public ObjectValue readObjectBody(CharReader cr, ObjectValue ov) throws ManagedException {
 		//ObjectValue ov = new ObjectValue();
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		if('}' == ch.charValue()) {
