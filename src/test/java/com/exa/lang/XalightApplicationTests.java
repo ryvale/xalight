@@ -4,6 +4,7 @@ package com.exa.lang;
 import java.util.List;
 
 import com.exa.chars.EscapeCharMan;
+import com.exa.expression.XPression;
 import com.exa.lang.parsing.Parser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
@@ -27,13 +28,13 @@ public class XalightApplicationTests extends TestCase {
 
 	public void testXalFile() throws ManagedException {
 		Parser parser = new Parser();
-		ObjectValue ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
+		ObjectValue<XPression<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
-		List<Value<?>> l = ov.getPathAttributAsArray("model.sheets");
+		List<Value<?, XPression<?>>> l = ov.getPathAttributAsArray("model.sheets");
 		
 		assertTrue(l.size() > 0);
 		
@@ -59,7 +60,7 @@ public class XalightApplicationTests extends TestCase {
 	
 	public void testXalString() throws ManagedException {
 		Parser parser = new Parser();
-		ObjectValue ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
+		ObjectValue<XPression<?>> ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
 		
@@ -67,7 +68,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
-		List<Value<?>> l = ov.getPathAttributAsArray("model.sheets");
+		List<Value<?, XPression<?>>> l = ov.getPathAttributAsArray("model.sheets");
 		
 		assertTrue(l.size() > 0);
 		

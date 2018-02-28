@@ -40,6 +40,11 @@
 			<artifactId>exa-char-buffer</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>com.exa.eva</groupId>
+			<artifactId>eva</artifactId>
+			<version>0.0.2-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>
