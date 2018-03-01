@@ -2,12 +2,20 @@
 
 references {
 	entity1 {
-		property1 2
+		property1 2,
+		
+		cplx {
+			property1 'a'
+		}
 	}
 },
 
 entities {
 	entity2 @entity1 {
-		property2 'a'
+		property2 'a',
+		
+		cplx {
+			property2 'b'
+		}
 	}
 }

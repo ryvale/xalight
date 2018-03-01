@@ -85,6 +85,10 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.property2")));
 		
+		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.cplx.property1")));
+		
+		assertTrue("b".equals(ov.getPathAttributAsString("entities.entity2.cplx.property2")));
+		
 		ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
 		
 		assertTrue(new Integer(2).equals(ov1.getAttributAsInteger("property1")));

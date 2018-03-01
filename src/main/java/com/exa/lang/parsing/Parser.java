@@ -105,39 +105,85 @@ public class Parser {
 		return res;
 	}
 	
-	private void getObjectInheritance(ObjectValue<XPOperand<?>> object, ObjectValue<XPOperand<?>> references,  Set<String> cyclicRefs) throws ManagedException {
+	private void getObjectInheritance(ObjectValue<XPOperand<?>> dst, ObjectValue<XPOperand<?>> references,  Set<String> cyclicRefs) throws ManagedException {
 		
-		String objectClass = object.getAttributAsString(PRTY_OBJECT);
+		String objectClass = dst.getAttributAsString(PRTY_OBJECT);
 		
 		if(objectClass == null) return;
 		
-		if(cyclicRefs.contains(objectClass)) throw new ManagedException(String.format("Cyclic reference in inheritance for %s. ( %s )", object, cyclicRefs.toString()));
+		if(cyclicRefs.contains(objectClass)) throw new ManagedException(String.format("Cyclic reference in inheritance for %s. ( %s )", dst, cyclicRefs.toString()));
 		
-		ObjectValue<XPOperand<?>> refObj = references.getAttributAsObjectValue(objectClass);
-		if(refObj == null) return;
+		ObjectValue<XPOperand<?>> src = references.getAttributAsObjectValue(objectClass);
+		if(src == null) return;
 		
 		cyclicRefs.add(objectClass);
-		if(refObj.getAttribut(PRTY_OBJECT) != null) getObjectInheritance(refObj, references, cyclicRefs);
+		if(src.getAttribut(PRTY_OBJECT) != null) getObjectInheritance(src, references, cyclicRefs);
 		
-		Map<String, Value<?, XPOperand<?>>> mpRefObj = refObj.getValue();
-		if(mpRefObj == null) return;
+		Map<String, Value<?, XPOperand<?>>> mpDst = dst.getValue();
 		
-		Map<String, Value<?, XPOperand<?>>> mpOV = object.getValue();
+		mergeObject(src, dst);
+		
+		/*Map<String, Value<?, XPOperand<?>>> mpRefObj = src.getValue();
+		if(mpRefObj == null) return;*/
+		
+		/*Map<String, Value<?, XPOperand<?>>> mpOV = object.getValue();
 		
 		for(String v : mpRefObj.keySet()) {
 			Value<?, XPOperand<?>> vlv = object.getAttribut(v);
-			if(vlv != null) continue;
+			
+			if(vlv != null) {
+				ObjectValue<XPOperand<?>> objectOVAttribut = vlv.asObjectValue();
+				if(objectOVAttribut == null) continue;
+				
+				vlv = refObj.getAttribut(v);
+				if(vlv == null) continue;
+				ObjectValue<XPOperand<?>> refObjectOVAttribut = vlv.asObjectValue();
+				if(refObjectOVAttribut == null) continue;
+				
+				mergeObject(refObjectOVAttribut, objectOVAttribut);
+				continue;
+			}
 			
 			try {
 				mpOV.put(v, refObj.getAttribut(v).clone());
 			} catch (CloneNotSupportedException e) {
 				throw new ManagedException(e);
 			}
+		}*/
+		
+		mpDst.remove(PRTY_OBJECT);
+		
+		
+	}
+	
+	private void mergeObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst) throws ManagedException {
+		Map<String, Value<?, XPOperand<?>>> mpSrc = src.getValue();
+		Map<String, Value<?, XPOperand<?>>> mpDst = dst.getValue();
+		
+		for(String v : mpSrc.keySet()) {
+			Value<?, XPOperand<?>> vlv = dst.getAttribut(v);
+			if(vlv != null) {
+				ObjectValue<XPOperand<?>> dstOVAttribut = vlv.asObjectValue();
+				if(dstOVAttribut == null) continue;
+				
+				vlv = src.getAttribut(v);
+				if(vlv == null) continue;
+				
+				ObjectValue<XPOperand<?>> srcOVAttribut = vlv.asObjectValue();
+				if(srcOVAttribut == null) continue;
+				mergeObject(srcOVAttribut, dstOVAttribut);
+				continue;
+			}
+			
+			vlv = src.getAttribut(v);
+			if(vlv == null) continue;
+			
+			try {
+				mpDst.put(v, src.getAttribut(v).clone());
+			} catch (CloneNotSupportedException e) {
+				throw new ManagedException(e);
+			}
 		}
-		
-		mpOV.remove(PRTY_OBJECT);
-		
-		
 	}
 	
 	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {
