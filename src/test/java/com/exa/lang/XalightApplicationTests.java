@@ -1,6 +1,5 @@
 package com.exa.lang;
 
-
 import java.util.List;
 
 import com.exa.chars.EscapeCharMan;
@@ -14,7 +13,6 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
-
 public class XalightApplicationTests extends TestCase {
 	
 	public XalightApplicationTests( String testName ) {
@@ -25,7 +23,6 @@ public class XalightApplicationTests extends TestCase {
         return new TestSuite( XalightApplicationTests.class );
     }
 	
-
 	public void testXalFile() throws ManagedException {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
@@ -86,6 +83,8 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.property2")));
 		
 		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.cplx.property1")));
+		
+		assertTrue("af".equals(ov.getPathAttributAsString("entities.entity2._call_params.prm")));
 		
 		assertTrue("b".equals(ov.getPathAttributAsString("entities.entity2.cplx.property2")));
 		

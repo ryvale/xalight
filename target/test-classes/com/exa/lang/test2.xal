@@ -1,7 +1,7 @@
 :test,
 
 references {
-	entity1 {
+	entity1(prm) {
 		property1 2,
 		
 		cplx {
@@ -11,7 +11,7 @@ references {
 },
 
 entities {
-	entity2 @entity1 {
+	entity2 @entity1('af') {
 		property2 'a',
 		
 		cplx {

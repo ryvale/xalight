@@ -2,7 +2,9 @@ package com.exa.lang.parsing;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -28,12 +30,30 @@ public class Parser {
 	public static final String PRTY_TYPE = "_type";
 	public static final String PRTY_EXTEND = "_extend";
 	public static final String PRTY_OBJECT = "_object";
+	public static final String PRTY_DEC_PARAMS = "_dec_params";
+	public static final String PRTY_CALL_PARAMS = "_call_params";
 	
 	private XALLexingRules lexingRules = new XALLexingRules();
 	
 	private XPParser xpParser = new XPParser();
 	
 	private List<ObjectValue<XPOperand<?>>> heirsObject = new ArrayList<>();
+	
+	private final Set<String> xalTypes =  new HashSet<>();
+	
+	private Map<Class<?>, String> valeuMapOnTypes = new HashMap<>();
+	
+	public Parser() {
+		xalTypes.add("string"); xalTypes.add("int"); xalTypes.add("boolean"); xalTypes.add("float"); xalTypes.add("date");
+		xalTypes.add("object"); xalTypes.add("array");
+		
+		valeuMapOnTypes.put(StringValue.class, "string");
+		valeuMapOnTypes.put(IntegerValue.class, "int");
+		valeuMapOnTypes.put(DecimalValue.class, "float");
+		valeuMapOnTypes.put(BooleanValue.class, "boolean");
+		valeuMapOnTypes.put(ObjectValue.class, "object");
+		valeuMapOnTypes.put(ArrayValue.class, "array");
+	}
 	
 	public ObjectValue<XPOperand<?>> parse(CharReader cr) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
@@ -123,37 +143,7 @@ public class Parser {
 		
 		mergeObject(src, dst);
 		
-		/*Map<String, Value<?, XPOperand<?>>> mpRefObj = src.getValue();
-		if(mpRefObj == null) return;*/
-		
-		/*Map<String, Value<?, XPOperand<?>>> mpOV = object.getValue();
-		
-		for(String v : mpRefObj.keySet()) {
-			Value<?, XPOperand<?>> vlv = object.getAttribut(v);
-			
-			if(vlv != null) {
-				ObjectValue<XPOperand<?>> objectOVAttribut = vlv.asObjectValue();
-				if(objectOVAttribut == null) continue;
-				
-				vlv = refObj.getAttribut(v);
-				if(vlv == null) continue;
-				ObjectValue<XPOperand<?>> refObjectOVAttribut = vlv.asObjectValue();
-				if(refObjectOVAttribut == null) continue;
-				
-				mergeObject(refObjectOVAttribut, objectOVAttribut);
-				continue;
-			}
-			
-			try {
-				mpOV.put(v, refObj.getAttribut(v).clone());
-			} catch (CloneNotSupportedException e) {
-				throw new ManagedException(e);
-			}
-		}*/
-		
 		mpDst.remove(PRTY_OBJECT);
-		
-		
 	}
 	
 	private void mergeObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst) throws ManagedException {
@@ -161,10 +151,14 @@ public class Parser {
 		Map<String, Value<?, XPOperand<?>>> mpDst = dst.getValue();
 		
 		for(String v : mpSrc.keySet()) {
+			
+			checkParameters(mpSrc, mpDst);
 			Value<?, XPOperand<?>> vlv = dst.getAttribut(v);
 			if(vlv != null) {
 				ObjectValue<XPOperand<?>> dstOVAttribut = vlv.asObjectValue();
-				if(dstOVAttribut == null) continue;
+				if(dstOVAttribut == null) {
+					continue;
+				}
 				
 				vlv = src.getAttribut(v);
 				if(vlv == null) continue;
@@ -184,6 +178,80 @@ public class Parser {
 				throw new ManagedException(e);
 			}
 		}
+	}
+	
+	private void checkParameters(Map<String, Value<?, XPOperand<?>>> mpOvSrc, Map<String, Value<?, XPOperand<?>>> mpOvDst) throws ManagedException {
+		Value<?, XPOperand<?>> src = mpOvSrc.get(PRTY_DEC_PARAMS);
+		
+		Value<?, XPOperand<?>> dst = mpOvDst.get(PRTY_CALL_PARAMS);
+		
+		if(src == null && dst == null) return;
+		
+		if(src == null || dst == null) throw new ManagedException(String.format("The number arguments does'nt match."));
+		
+		//ArrayValue<XPOperand<?>> avSrc = src.asArrayValue();
+		
+		ObjectValue<XPOperand<?>> ovSrc = src.asObjectValue();
+		
+		if(ovSrc == null) throw new ManagedException(String.format("The called source arguments are invalid."));
+		
+		ArrayValue<XPOperand<?>> avDst = dst.asArrayValue();
+		
+		ObjectValue<XPOperand<?>> ovDst = dst.asObjectValue();
+		
+		if(avDst == null && ovDst == null) throw new ManagedException(String.format("The caller destination arguments are invalid."));
+		
+		Map<String, Value<?, XPOperand<?>>> mpSrc = ovSrc.getValue();
+		
+		int nbSrc = mpSrc.keySet().size();
+		if(avDst == null) {
+			Map<String, Value<?, XPOperand<?>>> mpDst = ovDst.getValue();
+			int nbDst = mpDst.keySet().size();
+			
+			if(nbSrc != nbDst) throw new ManagedException(String.format("The number of source argument ( %s ) is different than the number of destination on ( %s )", nbSrc, nbDst));
+			
+			for(String v : mpSrc.keySet()) {
+				Value<?, XPOperand<?>> vlDstPrm = mpDst.get(v);
+				if(vlDstPrm == null) throw new ManagedException(String.format("The parameter %s is not defined", v));
+				
+				Value<?, XPOperand<?>> vlSrcPrm = mpSrc.get(v);
+				
+				String srcType = vlSrcPrm.asString();
+				
+				String dstType = valeuMapOnTypes.get(vlDstPrm.getClass());
+				
+				if(dstType == null || srcType.equals(dstType)) continue;
+				
+				throw new ManagedException(String.format("Type mismatch %s %s", srcType, dstType));
+				
+			}
+			
+			return;
+		}
+		
+		ovDst = new ObjectValue<>();
+		List<Value<?, XPOperand<?>>> lsDst = avDst.getValue();
+		int nbDst = lsDst.size();
+		if(nbSrc != nbDst) throw new ManagedException(String.format("The number of source argument ( %s ) is different than the number of destination on ( %s )", nbSrc, nbDst));
+		
+		int i= 0;
+		for(String v : mpSrc.keySet()) {
+			Value<?, XPOperand<?>> vlDstPrm = lsDst.get(i);
+			if(vlDstPrm == null) throw new ManagedException(String.format("The %s th parameter is not defined", i));
+			
+			Value<?, XPOperand<?>> vlSrcPrm = mpSrc.get(v);
+			
+			String srcType = vlSrcPrm.asString();
+			
+			String dstType = valeuMapOnTypes.get(vlDstPrm.getClass());
+			
+			if(dstType == null || srcType.equals(dstType)) { ovDst.setAttribut(v, vlDstPrm);  i++; continue;}
+			
+			throw new ManagedException(String.format("Type mismatch %s %s", srcType, dstType));
+			
+		}
+		
+		mpOvDst.put(PRTY_CALL_PARAMS, ovDst);
 	}
 	
 	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {
@@ -251,7 +319,7 @@ public class Parser {
 	}
 	
 	private ObjectValue<XPOperand<?>> readObjectByClass(CharReader cr, ObjectValue<XPOperand<?>> ov) throws ManagedException {
-		Character ch = lexingRules.nextForwardNonBlankChar(cr);
+		Character ch = lexingRules.nextForwardRequiredNonBlankChar(cr);
 		
 		if(XALLexingRules.VALID_PROPERTY_NAME_CHARS_LC.indexOf(ch) < 0) throw new ParsingException(String.format("Error near %s .", ch.toString()));
 		
@@ -259,10 +327,19 @@ public class Parser {
 		if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 		
 		ov.setAttribut(PRTY_OBJECT, str);
-		
 		heirsObject.add(ov);
 		
 		ch = lexingRules.nextForwardNonBlankChar(cr);
+		if(ch == null) return ov;
+		
+		if('(' == ch) {
+			lexingRules.nextNonBlankChar(cr);
+			Value<?, XPOperand<?>> params = readFunctionCallParams(cr);
+			ov.setAttribut(PRTY_CALL_PARAMS, params);
+			ch = lexingRules.nextForwardNonBlankChar(cr);
+			if(ch == null) return ov;
+		}
+	
 		if('{' == ch) {
 			lexingRules.nextNonBlankChar(cr);
 			return readObjectBody(cr, ov);
@@ -271,11 +348,62 @@ public class Parser {
 		return ov;
 	}
 	
+	 
+	
+	private Value<?, XPOperand<?>> readFunctionCallParams(CharReader cr) throws ManagedException {
+		
+		Character ch = lexingRules.nextForwardRequiredNonBlankChar(cr);
+		if('#' == ch) {
+			ObjectValue<XPOperand<?>> ovRes = new ObjectValue<>();
+			lexingRules.nextNonBlankChar(cr);
+			do {
+				String propertyName = lexingRules.nextRequiredPropertyName(cr);
+				
+				Value<?, XPOperand<?>> propetyValue = _readPropertyValueForObjectWithOutDec(cr);
+				
+				ch = lexingRules.nextForwardRequiredNonBlankChar(cr);
+				
+				ovRes.setAttribut(propertyName, propetyValue);
+				
+				if(')' == ch) {
+					lexingRules.nextNonBlankChar(cr);
+					break;
+				}
+				
+				if(',' != ch) throw new ManagedException(String.format("Unexpected char %s while reading function call params", ch.toString()));
+				
+			} while(true);
+			
+			return ovRes;
+		}
+		
+		ArrayValue<XPOperand<?>> avRes = new ArrayValue<>();
+		//lexingRules.nextNonBlankChar(cr);
+		do {
+			Value<?, XPOperand<?>> propetyValue = _readPropertyValueForObjectWithOutDec(cr);
+			
+			ch = lexingRules.nextForwardRequiredNonBlankChar(cr);
+			
+			avRes.add(propetyValue);
+			
+			if(')' == ch) {
+				lexingRules.nextNonBlankChar(cr);
+				break;
+			}
+			
+			if(',' != ch) throw new ManagedException(String.format("Unexpected char %s while reading function call params", ch.toString()));
+			
+			lexingRules.nextNonBlankChar(cr);
+		} while(true);
+		
+		return avRes;
+	}
+
 	private ObjectValue<XPOperand<?>> readObjectByClass(CharReader cr) throws ManagedException {
 		return readObjectByClass(cr, new ObjectValue<XPOperand<?>>());
 	}
 	
-	public Value<?, XPOperand<?>> readPropertyValueForObject(CharReader cr) throws ManagedException {
+	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithOutDec(CharReader cr) throws ManagedException {
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		
 		if(ch == null) return new BooleanValue<XPOperand<?>>(Boolean.TRUE);
@@ -316,11 +444,9 @@ public class Parser {
 			}
 			
 			if('@' == ch) {
-				cr.nextChar();
+				lexingRules.nextNonBlankChar(cr);
 				
 				readObjectByClass(cr, ov);
-				
-				
 				
 				return ov;
 			}
@@ -329,20 +455,91 @@ public class Parser {
 		}
 		
 		if('@' == ch) {
-			cr.nextChar();
+			lexingRules.nextNonBlankChar(cr);
 			return readObjectByClass(cr);
 		}
 		
 		if('=' == ch) {
-			cr.nextChar();
+			lexingRules.nextNonBlankChar(cr);
 			XPOperand<?> xp = xpParser.parse(cr, (lr, charReader) -> true );
 			
 			return calculableFor(xp);
 		}
 		
+		return null;
+	}
+	
+	public Value<?, XPOperand<?>> readPropertyValueForObject(CharReader cr) throws ManagedException {
+		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithOutDec(cr);
+		if(res != null) return res;
+		Character ch = lexingRules.nextForwardChar(cr);
+		
+		if('(' == ch) {
+			lexingRules.nextNonBlankChar(cr);
+			
+			return readObjectWithDeclarationParam(cr);
+		}
+		
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));
 	}
 	
+	private ObjectValue<XPOperand<?>> readObjectWithDeclarationParam(CharReader cr) throws ManagedException {
+		ObjectValue<XPOperand<?>> params = readFunctionParamsDeclaration(cr);
+		
+		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
+		res.setAttribut(PRTY_DEC_PARAMS, params);
+		
+		Character ch = lexingRules.nextForwardRequiredNonBlankChar(cr);
+		if('{' == ch) {
+			lexingRules.nextNonBlankChar(cr);
+			return readObjectBody(cr, res);
+		}
+		
+		if('@' == ch) {
+			lexingRules.nextNonBlankChar(cr);
+			return readObjectByClass(cr);
+		}
+		
+		throw new ParsingException(String.format("'{' or '@' expected after declarion params. Unexpected %S", ch.toString()));
+	}
+	
+	private ObjectValue<XPOperand<?>> readFunctionParamsDeclaration(CharReader cr) throws ManagedException {
+		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
+		
+		Character ch = null;
+		do {
+			String propertyName = lexingRules.nextRequiredPropertyName(cr);
+			String type  = null;
+			
+			ch = lexingRules.nextForwardNonBlankChar(cr);
+			if(ch == null) throw new ManagedException(String.format("Unexpected end of file while reading declaration params"));
+			
+			if('@' == ch) {
+				lexingRules.nextNonBlankChar(cr);
+				
+				type = lexingRules.nextNonNullString(cr);
+				if(!xalTypes.contains(type)) throw new ManagedException(String.format("Unknown %s while expecting type after @", type));
+				
+				ch = lexingRules.nextForwardNonBlankChar(cr);
+				if(ch == null) throw new ManagedException(String.format("Unexpected end of file while reading declaration params"));
+			}
+			
+			res.setAttribut(propertyName, type == null ? "string" : type);
+			
+			if(')' == ch) {
+				lexingRules.nextNonBlankChar(cr);
+				break;
+			}
+			
+			if(',' != ch) throw new ManagedException(String.format("Unexpected char %s while reading declaration params", ch.toString()));
+			
+			lexingRules.nextNonBlankChar(cr);
+		}
+		while(true);
+		
+		return res;
+	}
+
 	private Value<?, XPOperand<?>> readArrayItem(CharReader cr) throws ManagedException {
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		

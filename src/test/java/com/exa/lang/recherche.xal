@@ -1,7 +1,7 @@
 :sql,
 
-refernces {
-	inventaireEquipement { _extends object, ? [ classeActif @string ],
+references {
+	inventaireEquipement(cls @int) {
 		
 		type "sql-server",
 		
@@ -25,8 +25,8 @@ refernces {
 },
 
 entities {
-	compresseur @inventaireEquipement { 
-		?classActif = 'EQU/GECP'
+	compresseur @inventaireEquipement(# cls '') { 
+		
 		
 		
 	}
