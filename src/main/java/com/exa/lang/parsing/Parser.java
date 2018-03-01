@@ -1,15 +1,20 @@
 package com.exa.lang.parsing;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.exa.buffer.CharReader;
 import com.exa.chars.EscapeCharMan;
-import com.exa.expression.XPression;
+import com.exa.expression.TypeMan;
+import com.exa.expression.XPOperand;
 import com.exa.lexing.ParsingException;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.BooleanValue;
-import com.exa.utils.values.CalculableValue;
 import com.exa.utils.values.DecimalValue;
 import com.exa.utils.values.IntegerValue;
 import com.exa.utils.values.ObjectValue;
@@ -28,8 +33,10 @@ public class Parser {
 	
 	private XPParser xpParser = new XPParser();
 	
-	public ObjectValue<XPression<?>> parse(CharReader cr) throws ManagedException {
-		ObjectValue<XPression<?>> res = new ObjectValue<>();
+	private List<ObjectValue<XPOperand<?>>> heirsObject = new ArrayList<>();
+	
+	public ObjectValue<XPOperand<?>> parse(CharReader cr) throws ManagedException {
+		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
 		
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		if(ch.charValue() == ':') {
@@ -62,7 +69,8 @@ public class Parser {
 				throw e;
 			}
 			
-			Value<?, XPression<?>> propertyValue = readPropertyValueForObject(cr);
+			Value<?, XPOperand<?>> propertyValue = readPropertyValueForObject(cr);
+			
 			
 			res.setAttribut(propertyName, propertyValue);
 			
@@ -78,17 +86,68 @@ public class Parser {
 		}
 		while(true);
 		
+		Value<?, XPOperand<?>> vlReferences = res.getAttribut("references");
+		
+		if(vlReferences == null) return res;
+		
+		ObjectValue<XPOperand<?>> references = vlReferences.asObjectValue();
+		
+		if(references == null) return res;
+		
+		for(ObjectValue<XPOperand<?>> ov : heirsObject) {
+		
+			Set<String> cyclicRefs = new HashSet<>();
+			
+			getObjectInheritance(ov, references, cyclicRefs);
+		}
+	
+		
 		return res;
 	}
 	
-	public ObjectValue<XPression<?>> parseString(String script) throws ManagedException {
+	private void getObjectInheritance(ObjectValue<XPOperand<?>> object, ObjectValue<XPOperand<?>> references,  Set<String> cyclicRefs) throws ManagedException {
+		
+		String objectClass = object.getAttributAsString(PRTY_OBJECT);
+		
+		if(objectClass == null) return;
+		
+		if(cyclicRefs.contains(objectClass)) throw new ManagedException(String.format("Cyclic reference in inheritance for %s. ( %s )", object, cyclicRefs.toString()));
+		
+		ObjectValue<XPOperand<?>> refObj = references.getAttributAsObjectValue(objectClass);
+		if(refObj == null) return;
+		
+		cyclicRefs.add(objectClass);
+		if(refObj.getAttribut(PRTY_OBJECT) != null) getObjectInheritance(refObj, references, cyclicRefs);
+		
+		Map<String, Value<?, XPOperand<?>>> mpRefObj = refObj.getValue();
+		if(mpRefObj == null) return;
+		
+		Map<String, Value<?, XPOperand<?>>> mpOV = object.getValue();
+		
+		for(String v : mpRefObj.keySet()) {
+			Value<?, XPOperand<?>> vlv = object.getAttribut(v);
+			if(vlv != null) continue;
+			
+			try {
+				mpOV.put(v, refObj.getAttribut(v).clone());
+			} catch (CloneNotSupportedException e) {
+				throw new ManagedException(e);
+			}
+		}
+		
+		mpOV.remove(PRTY_OBJECT);
+		
+		
+	}
+	
+	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {
 		
 		CharReader cr = new CharReader(script);
 		
 		return parse(cr);
 	}
 	
-	public ObjectValue<XPression<?>> parseFile(String script) throws ManagedException {
+	public ObjectValue<XPOperand<?>> parseFile(String script) throws ManagedException {
 		
 		CharReader cr;
 		try {
@@ -102,10 +161,10 @@ public class Parser {
 	
 	
 	
-	private StringValue<XPression<?>> readString(CharReader cr, String end) throws ManagedException {
+	private StringValue<XPOperand<?>> readString(CharReader cr, String end) throws ManagedException {
 		String str = readStringReturnString(cr, end);
 		
-		return new StringValue<XPression<?>>(str);
+		return new StringValue<XPOperand<?>>(str);
 	}
 	
 	private String readStringReturnString(CharReader cr, String end) throws ManagedException {
@@ -118,34 +177,34 @@ public class Parser {
 		return sb.toString();
 	}
 	
-	private Value<? extends Number, XPression<?>> readNumeric(CharReader cr) throws ManagedException {
+	private Value<? extends Number, XPOperand<?>> readNumeric(CharReader cr) throws ManagedException {
 		String str = lexingRules.nextNonNullString(cr);
 		
 		if(!lexingRules.isInteger(str, true)) throw new ParsingException(String.format("%s is not not numeric", str));
 		
-		if(XALLexingRules.EXTENDED_NUMERIC_TERMINATION.indexOf(str.charAt(str.length() - 1)) >= 0) return new DecimalValue<XPression<?>>(Double.parseDouble(str));
+		if(XALLexingRules.EXTENDED_NUMERIC_TERMINATION.indexOf(str.charAt(str.length() - 1)) >= 0) return new DecimalValue<XPOperand<?>>(Double.parseDouble(str));
 		
 		Character ch = lexingRules.nextForwardChar(cr);
 		
-		if(ch == null) return new IntegerValue<XPression<?>>(Integer.parseInt(str));
+		if(ch == null) return new IntegerValue<XPOperand<?>>(Integer.parseInt(str));
 		
 		if(ch == '.') {
 			cr.nextChar();
 			
 			ch = lexingRules.nextForwardChar(cr);
-			if(ch == null || XALLexingRules.NUMERIC_DIGITS.indexOf(ch) < 0) return new DecimalValue<XPression<?>>(Double.parseDouble(str));
+			if(ch == null || XALLexingRules.NUMERIC_DIGITS.indexOf(ch) < 0) return new DecimalValue<XPOperand<?>>(Double.parseDouble(str));
 			
 			String str2 = lexingRules.nextNonNullString(cr);
 			
 			if(!lexingRules.isInteger(str, true)) throw new ParsingException(String.format("%s is not not numeric", str));
 			
-			return new DecimalValue<XPression<?>>(Double.parseDouble(str+"."+str2));
+			return new DecimalValue<XPOperand<?>>(Double.parseDouble(str+"."+str2));
 		}
 		
-		return new IntegerValue<XPression<?>>(Integer.parseInt(str));
+		return new IntegerValue<XPOperand<?>>(Integer.parseInt(str));
 	}
 	
-	private ObjectValue<XPression<?>> readObjectByClass(CharReader cr, ObjectValue<XPression<?>> ov) throws ManagedException {
+	private ObjectValue<XPOperand<?>> readObjectByClass(CharReader cr, ObjectValue<XPOperand<?>> ov) throws ManagedException {
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		
 		if(XALLexingRules.VALID_PROPERTY_NAME_CHARS_LC.indexOf(ch) < 0) throw new ParsingException(String.format("Error near %s .", ch.toString()));
@@ -154,6 +213,8 @@ public class Parser {
 		if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 		
 		ov.setAttribut(PRTY_OBJECT, str);
+		
+		heirsObject.add(ov);
 		
 		ch = lexingRules.nextForwardNonBlankChar(cr);
 		if('{' == ch) {
@@ -164,14 +225,14 @@ public class Parser {
 		return ov;
 	}
 	
-	private ObjectValue<XPression<?>> readObjectByClass(CharReader cr) throws ManagedException {
-		return readObjectByClass(cr, new ObjectValue<XPression<?>>());
+	private ObjectValue<XPOperand<?>> readObjectByClass(CharReader cr) throws ManagedException {
+		return readObjectByClass(cr, new ObjectValue<XPOperand<?>>());
 	}
 	
-	public Value<?, XPression<?>> readPropertyValueForObject(CharReader cr) throws ManagedException {
+	public Value<?, XPOperand<?>> readPropertyValueForObject(CharReader cr) throws ManagedException {
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		
-		if(ch == null) return new BooleanValue<XPression<?>>(Boolean.TRUE);
+		if(ch == null) return new BooleanValue<XPOperand<?>>(Boolean.TRUE);
 		
 		if(ch == '{') {
 			lexingRules.nextNonBlankChar(cr);
@@ -183,28 +244,10 @@ public class Parser {
 			return readArrayBody(cr);
 		}
 		
-		if(ch == ',') return new BooleanValue<XPression<?>>(Boolean.TRUE);
+		if(ch == ',') return new BooleanValue<XPOperand<?>>(Boolean.TRUE);
 		
 		if(ch == '\'' || ch == '\"') return readString(cr, ch.toString());
-		
-		if('#' == ch) {
-			lexingRules.nextNonBlankChar(cr);
-			ch = cr.nextChar();
-			
-			if(ch == null) throw new ParsingException(String.format("Unexpected end of file. 0 or 1 exepected after #"));
-			
-			if(ch != '0' && ch != '1') throw new ParsingException(String.format("Error near # %s . 0 or 1 exepected after #", ch.toString()));
-			String expType ="#"+ch.toString();
-			
-			ch = lexingRules.nextForwardChar(cr);
-			if(ch != '\'' && ch != '\"') throw new ParsingException(String.format("Error near # %s . ' or \" expected.", ch.toString()));
-			
-			String str = readStringReturnString(cr, ch.toString());
-			XPression<?> xp = xpParser.parseString(str);
-			
-			return new CalculableValue<XPression<?>>(xp, expType);
-		}
-		
+				
 		if(XALLexingRules.NUMERIC_DIGITS.indexOf(ch) >= 0) return readNumeric(cr);
 		
 		if(XALLexingRules.VALID_PROPERTY_NAME_CHARS_LC.indexOf(ch) >= 0) {
@@ -216,7 +259,7 @@ public class Parser {
 			
 			if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 			
-			ObjectValue<XPression<?>> ov = new ObjectValue<>();
+			ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 			ov.setAttribut(PRTY_NAME, str);
 			
 			ch = lexingRules.nextForwardNonBlankChar(cr);
@@ -228,7 +271,12 @@ public class Parser {
 			
 			if('@' == ch) {
 				cr.nextChar();
-				return readObjectByClass(cr);
+				
+				readObjectByClass(cr, ov);
+				
+				
+				
+				return ov;
 			}
 			
 			return ov;
@@ -239,10 +287,17 @@ public class Parser {
 			return readObjectByClass(cr);
 		}
 		
+		if('=' == ch) {
+			cr.nextChar();
+			XPOperand<?> xp = xpParser.parse(cr, (lr, charReader) -> true );
+			
+			return calculableFor(xp);
+		}
+		
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));
 	}
 	
-	private Value<?, XPression<?>> readArrayItem(CharReader cr) throws ManagedException {
+	private Value<?, XPOperand<?>> readArrayItem(CharReader cr) throws ManagedException {
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		
 		if(ch == null) throw new ParsingException(String.format("Unexpected end of file while reading array item"));
@@ -272,7 +327,7 @@ public class Parser {
 			
 			if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 			
-			ObjectValue<XPression<?>> ov = new ObjectValue<>();
+			ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 			ov.setAttribut("_name", str);
 			
 			ch = lexingRules.nextForwardNonBlankChar(cr);
@@ -287,6 +342,7 @@ public class Parser {
 				return readObjectByClass(cr);
 			}
 			
+			
 			return ov;
 		}
 		
@@ -295,10 +351,17 @@ public class Parser {
 			return readObjectByClass(cr);
 		}
 		
+		if('=' == ch) {
+			cr.nextChar();
+			XPOperand<?> xp = xpParser.parse(cr, (lr, charReader) -> true );
+			
+			return calculableFor(xp);
+		}
+		
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));
 	}
 	
-	public ObjectValue<XPression<?>> readObjectBody(CharReader cr, ObjectValue<XPression<?>> ov) throws ManagedException {
+	public ObjectValue<XPOperand<?>> readObjectBody(CharReader cr, ObjectValue<XPOperand<?>> ov) throws ManagedException {
 		//ObjectValue ov = new ObjectValue();
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		if('}' == ch.charValue()) {
@@ -324,7 +387,7 @@ public class Parser {
 				throw new ParsingException(String.format("Error near %s . '}' or property expected.", e.getParsingString()));
 			}
 			
-			Value<?, XPression<?>> propertyValue = readPropertyValueForObject(cr);
+			Value<?, XPOperand<?>> propertyValue = readPropertyValueForObject(cr);
 			
 			ov.setAttribut(propertyName, propertyValue);
 			
@@ -343,12 +406,12 @@ public class Parser {
 		return ov;
 	}
 	
-	public Value<?, XPression<?>> readObjectBody(CharReader cr) throws ManagedException {
+	public Value<?, XPOperand<?>> readObjectBody(CharReader cr) throws ManagedException {
 		return readObjectBody(cr, new ObjectValue<>());
 	}
 	
-	public Value<?, XPression<?>> readArrayBody(CharReader cr) throws ManagedException {
-		ArrayValue<XPression<?>> av = new ArrayValue<>();
+	public Value<?, XPOperand<?>> readArrayBody(CharReader cr) throws ManagedException {
+		ArrayValue<XPOperand<?>> av = new ArrayValue<>();
 		Character ch = lexingRules.nextForwardNonBlankChar(cr);
 		if(']' == ch.charValue()) {
 			cr.nextChar();
@@ -358,7 +421,7 @@ public class Parser {
 		ch = null;
 		
 		do {
-			Value<?, XPression<?>> item = readArrayItem(cr);
+			Value<?, XPOperand<?>> item = readArrayItem(cr);
 			av.add(item);
 			
 			ch = lexingRules.nextForwardNonBlankChar(cr);
@@ -374,6 +437,22 @@ public class Parser {
 		} while(true);
 		
 		return av;
+	}
+	
+	private XALCalculabeValue<?> calculableFor(XPOperand<?> xp) {
+		TypeMan<?> type = xp.type();
+		
+		if(type == TypeMan.STRING) return new XALCalculabeValue<>(TypeMan.STRING.valueOrNull(xp));
+		
+		if(type == TypeMan.INTEGER) return new XALCalculabeValue<>(TypeMan.INTEGER.valueOrNull(xp));
+		
+		if(type == TypeMan.BOOLEAN) return new XALCalculabeValue<>(TypeMan.BOOLEAN.valueOrNull(xp));
+		
+		if(type == TypeMan.DOUBLE) return new XALCalculabeValue<>(TypeMan.DOUBLE.valueOrNull(xp));
+		
+		if(type == TypeMan.DATE) return new XALCalculabeValue<>(TypeMan.DATE.valueOrNull(xp));
+		
+		return new XALCalculabeValue<>(xp);
 	}
 
 }

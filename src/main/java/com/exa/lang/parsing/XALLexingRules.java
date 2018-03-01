@@ -20,7 +20,7 @@ public class XALLexingRules extends LexingRules {
 		
 		addWordSeparator(new WordWithOpenCloseDelimiter(this, '"','"'));
 		addWordSeparator(new WordWithOpenCloseDelimiter(this, '\'','\''));
-		addWordSeparator("[", "]", "{", "}", ",", "(", ")", ":", "=>", "?", ".");
+		addWordSeparator("[", "]", "{", "}", ",", "(", ")", ":", "=>", "?", ".", "=");
 	}
 	
 	public String nextPropertyName(CharReader cr) throws ParsingException {

@@ -26,7 +26,7 @@ refernces {
 
 entities {
 	compresseur @inventaireEquipement { 
-		?classActif = 'EQU/GECP',
+		?classActif = 'EQU/GECP'
 		
 		
 	}

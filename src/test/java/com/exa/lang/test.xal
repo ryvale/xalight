@@ -1,5 +1,11 @@
 :xlsx,
 
+references {
+	test {
+		propriete 2
+	}
+},
+
 model {
 	file 'repo:default/equipement-a-renouveler.xls',
 
@@ -7,9 +13,13 @@ model {
 		Automates,
 		
 		Forages {
-			num 2
-		}
-	]
+			index 2
+		},
+		= 4 
+		
+	],
+		
+	x = 4 
 },
 
 data [

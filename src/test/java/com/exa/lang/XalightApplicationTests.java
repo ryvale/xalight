@@ -4,7 +4,7 @@ package com.exa.lang;
 import java.util.List;
 
 import com.exa.chars.EscapeCharMan;
-import com.exa.expression.XPression;
+import com.exa.expression.XPOperand;
 import com.exa.lang.parsing.Parser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
@@ -28,13 +28,13 @@ public class XalightApplicationTests extends TestCase {
 
 	public void testXalFile() throws ManagedException {
 		Parser parser = new Parser();
-		ObjectValue<XPression<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
+		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
-		List<Value<?, XPression<?>>> l = ov.getPathAttributAsArray("model.sheets");
+		List<Value<?, XPOperand<?>>> l = ov.getPathAttributAsArray("model.sheets");
 		
 		assertTrue(l.size() > 0);
 		
@@ -42,7 +42,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
 		
-		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("num")));
+		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("index")));
 	}
 	
 	public void testEscape() {
@@ -60,7 +60,7 @@ public class XalightApplicationTests extends TestCase {
 	
 	public void testXalString() throws ManagedException {
 		Parser parser = new Parser();
-		ObjectValue<XPression<?>> ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
+		ObjectValue<XPOperand<?>> ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
 		
@@ -68,7 +68,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
-		List<Value<?, XPression<?>>> l = ov.getPathAttributAsArray("model.sheets");
+		List<Value<?, XPOperand<?>>> l = ov.getPathAttributAsArray("model.sheets");
 		
 		assertTrue(l.size() > 0);
 		
@@ -77,6 +77,19 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
 		
 		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("num")));
+	}
+	
+	public void testXalInheritance() throws ManagedException {
+		Parser parser = new Parser();
+		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
+		
+		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.property2")));
+		
+		ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
+		
+		assertTrue(new Integer(2).equals(ov1.getAttributAsInteger("property1")));
+		
+		
 	}
 
 }
