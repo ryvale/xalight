@@ -1,0 +1,29 @@
+:test,
+
+references {
+	entity1(prm) {
+		property1 2,
+		
+		cplx {
+			property0 = prm
+		}
+	},
+	
+	entity2(prm2) @entity1(prm2) {
+		property1 2,
+		
+		cplx {
+			property1=prm2
+		}
+	}
+},
+
+entities {
+	entity3 @entity2('a'+'b') {
+		property2 'a',
+		
+		cplx {
+			property2 'b'
+		}
+	}
+}

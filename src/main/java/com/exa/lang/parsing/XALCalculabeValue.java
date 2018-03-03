@@ -1,7 +1,11 @@
 package com.exa.lang.parsing;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import com.exa.expression.TypeMan;
 import com.exa.expression.XPOperand;
+import com.exa.expression.eval.XPEvaluator;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.BooleanValue;
@@ -20,15 +24,53 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	private XPOperand<T> xp;
 	
 	
-	public XALCalculabeValue(XPOperand<T> xp) {
+	private static Map<TypeMan<?>, String> mapTypeManToString = new HashMap<>();
+	
+	static {
+		mapTypeManToString.put(TypeMan.STRING, "string");
+		mapTypeManToString.put(TypeMan.INTEGER, "integer");
+		mapTypeManToString.put(TypeMan.DOUBLE, "float");
+		mapTypeManToString.put(TypeMan.BOOLEAN, "boolean");
+		mapTypeManToString.put(TypeMan.DATE, "date");
+		mapTypeManToString.put(TypeMan.OBJECT, "object");
+	}
+	//private String context = null;
+	
+	private XPEvaluator evaluator;
+	private ObjectValue<XPOperand<?>> rootObject;
+	private String context;
+	
+	private String entityContext = null;
+	
+	private XPEvalautorFactory evaluatorFactory;
+	
+
+	public XALCalculabeValue(XPOperand<T> xp, XPEvalautorFactory evaluatorFactory, ObjectValue<XPOperand<?>> rootObject, String context) {
 		super();
 		this.xp = xp;
+		
+		this.evaluatorFactory = evaluatorFactory;
+		this.rootObject = rootObject;
+		this.context = context;
+		
+		//this.evaluator = this.evaluatorFactory.create(rootObject);
+	}
+	
+	
+	public XALCalculabeValue(XPOperand<T> xp, ObjectValue<XPOperand<?>> rootObject, String context) {
+		this(xp, new Computing.StandardXPEvaluatorFactory(), rootObject, context);
 	}
 
 	@Override
 	public T getValue() {
 		try {
-			return xp.value();
+			evaluator = null;
+			T res = xp.value(getEvaluator());
+			
+			if(entityContext == null) return res;
+			
+			evaluatorFactory.clear();
+			return res;
 		} catch (ManagedException e) {
 			throw new RuntimeException(e);
 		}
@@ -76,7 +118,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public Integer asInteger() throws ManagedException {
-		if(xp.type() == TypeMan.INTEGER) return TypeMan.INTEGER.valueOrNull(xp.value());
+		if(xp.type() == TypeMan.INTEGER) return TypeMan.INTEGER.valueOrNull(xp.value(getEvaluator()));
 		
 		throw new ManagedException(String.format("This value should be aan integer"));
 	}
@@ -102,13 +144,56 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public String asString() throws ManagedException {
-		if(xp.type() == TypeMan.STRING) return TypeMan.STRING.valueOrNull(xp.value());
+		if(xp.type() == TypeMan.STRING) return TypeMan.STRING.valueOrNull(xp.value(getEvaluator()));
 		throw new ManagedException(String.format("This value should be a string"));
 	}
 
 	@Override
 	public XALCalculabeValue<T> clone() throws CloneNotSupportedException {
-		return new XALCalculabeValue<T>(xp);
+		ObjectValue<XPOperand<?>> ov = rootObject;
+		return new XALCalculabeValue<T>(xp, evaluatorFactory, ov, context);
 	}
+
+	@Override
+	public String getContext() {
+		
+		return context;
+	}
+
+	@Override
+	public String toString() {
+		if(xp == null)	return super.toString();
+		
+		if(xp.isConstant()) {
+			try {
+				Object v = xp.value(null);
+				if(v == null) return "calculable{context = "+ getContext() + ", entity =" + entityContext+ "}";
+				return v.toString();
+			} catch (ManagedException e) {
+				return "calculable{context = "+ getContext() + ", entity =" + entityContext+ "}";
+			}
+		}
+		return "calculable{context = "+ getContext() + ", entity =" + entityContext+ "}";
+	}
+	
+	
+	private XPEvaluator getEvaluator() throws ManagedException {
+		if(evaluator == null) evaluator = evaluatorFactory.create(rootObject, entityContext);
+		
+		return evaluator;
+	}
+
+
+	@Override
+	public String typeName() {
+		return mapTypeManToString.get(xp.type());
+	}
+
+
+	@Override
+	public void setContext(String context) {
+		this.entityContext = context;
+	}
+	
 
 }

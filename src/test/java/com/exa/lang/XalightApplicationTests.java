@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.XPOperand;
+import com.exa.expression.eval.MapVariableContext;
+import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.Parser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
@@ -27,7 +29,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
 		
-		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
+		assertTrue("xlsx".equals(ov.getAttributAsString(Computing.PRTY_TYPE)));
 		
 		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
 		
@@ -35,9 +37,9 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue(l.size() > 0);
 		
-		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
+		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Computing.PRTY_NAME)));
 		
-		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
+		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Computing.PRTY_NAME)));
 		
 		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("index")));
 	}
@@ -59,7 +61,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
 		
-		assertTrue("xlsx".equals(ov.getAttributAsString(Parser.PRTY_TYPE)));
+		assertTrue("xlsx".equals(ov.getAttributAsString(Computing.PRTY_TYPE)));
 		
 		System.out.println(ov.getPathAttributAsString("model.file"));
 		
@@ -69,9 +71,9 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue(l.size() > 0);
 		
-		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
+		assertTrue("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Computing.PRTY_NAME)));
 		
-		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Parser.PRTY_NAME)));
+		assertTrue("Forages".equals(l.get(1).asObjectValue().getAttributAsString(Computing.PRTY_NAME)));
 		
 		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("num")));
 	}
@@ -80,13 +82,19 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
-		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.property2")));
+		ObjectValue<XPOperand<?>> ovEntity = ov.getPathAttributAsObjecValue("entities.entity2");
 		
-		assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.cplx.property1")));
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2")));
 		
-		assertTrue("af".equals(ov.getPathAttributAsString("entities.entity2._call_params.prm")));
+		assertTrue("afb".equals(ovEntity.getPathAttributAsString("cplx.property1")));
 		
-		assertTrue("b".equals(ov.getPathAttributAsString("entities.entity2.cplx.property2")));
+		//assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.cplx.property1")));
+		
+		//assertTrue("af".equals(ov.getPathAttributAsString("entities.entity2._call_params.prm")));
+		
+		assertTrue("afc".equals(ov.getPathAttributAsString("entities.entity2.cplx.property3")));
+		
+		//assertTrue(new Integer(10).equals(ov.getPathAttribut("entities.entity2.cplx.property0")));
 		
 		ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
 		
