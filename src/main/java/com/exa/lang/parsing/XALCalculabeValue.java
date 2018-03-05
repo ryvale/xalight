@@ -3,8 +3,9 @@ package com.exa.lang.parsing;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.exa.expression.TypeMan;
+import com.exa.expression.Type;
 import com.exa.expression.XPOperand;
+import com.exa.expression.eval.ClassesMan;
 import com.exa.expression.eval.XPEvaluator;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
@@ -24,15 +25,15 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	private XPOperand<T> xp;
 	
 	
-	private static Map<TypeMan<?>, String> mapTypeManToString = new HashMap<>();
+	private static Map<Type<?>, String> mapTypeManToString = new HashMap<>();
 	
 	static {
-		mapTypeManToString.put(TypeMan.STRING, "string");
-		mapTypeManToString.put(TypeMan.INTEGER, "integer");
-		mapTypeManToString.put(TypeMan.DOUBLE, "float");
-		mapTypeManToString.put(TypeMan.BOOLEAN, "boolean");
-		mapTypeManToString.put(TypeMan.DATE, "date");
-		mapTypeManToString.put(TypeMan.OBJECT, "object");
+		mapTypeManToString.put(ClassesMan.T_STRING, "string");
+		mapTypeManToString.put(ClassesMan.T_INTEGER, "integer");
+		mapTypeManToString.put(ClassesMan.T_DOUBLE, "float");
+		mapTypeManToString.put(ClassesMan.T_BOOLEAN, "boolean");
+		mapTypeManToString.put(ClassesMan.T_DATE, "date");
+		//mapTypeManToString.put(ClassesMan.T_OBJECT, "object");
 	}
 	//private String context = null;
 	
@@ -118,7 +119,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public Integer asInteger() throws ManagedException {
-		if(xp.type() == TypeMan.INTEGER) return TypeMan.INTEGER.valueOrNull(xp.value(getEvaluator()));
+		if(xp.type() == ClassesMan.T_INTEGER) return ClassesMan.T_INTEGER.valueOrNull(xp.value(getEvaluator()));
 		
 		throw new ManagedException(String.format("This value should be aan integer"));
 	}
@@ -144,7 +145,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public String asString() throws ManagedException {
-		if(xp.type() == TypeMan.STRING) return TypeMan.STRING.valueOrNull(xp.value(getEvaluator()));
+		if(xp.type() == ClassesMan.T_STRING) return ClassesMan.T_STRING.valueOrNull(xp.value(getEvaluator()));
 		throw new ManagedException(String.format("This value should be a string"));
 	}
 

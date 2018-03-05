@@ -11,9 +11,10 @@ import java.util.Set;
 
 import com.exa.buffer.CharReader;
 import com.exa.chars.EscapeCharMan;
-import com.exa.expression.TypeMan;
+import com.exa.expression.Type;
 import com.exa.expression.VariableContext;
 import com.exa.expression.XPOperand;
+import com.exa.expression.eval.ClassesMan;
 import com.exa.expression.eval.MapVariableContext;
 import com.exa.expression.eval.XPEvaluator;
 import com.exa.lexing.ParsingException;
@@ -345,17 +346,17 @@ public class Computing {
 	}
 
 	private XALCalculabeValue<?> calculableFor(XPOperand<?> xp, String context) {
-		TypeMan<?> type = xp.type();
+		Type<?> type = xp.type();
 		
-		if(type == TypeMan.STRING) return new XALCalculabeValue<>(TypeMan.STRING.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_STRING) return new XALCalculabeValue<>(ClassesMan.T_STRING.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
 		
-		if(type == TypeMan.INTEGER) return new XALCalculabeValue<>(TypeMan.INTEGER.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_INTEGER) return new XALCalculabeValue<>(ClassesMan.T_INTEGER.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
 		
-		if(type == TypeMan.BOOLEAN) return new XALCalculabeValue<>(TypeMan.BOOLEAN.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_BOOLEAN) return new XALCalculabeValue<>(ClassesMan.T_BOOLEAN.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
 		
-		if(type == TypeMan.DOUBLE) return new XALCalculabeValue<>(TypeMan.DOUBLE.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_DOUBLE) return new XALCalculabeValue<>(ClassesMan.T_DOUBLE.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
 		
-		if(type == TypeMan.DATE) return new XALCalculabeValue<>(TypeMan.DATE.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_DATE) return new XALCalculabeValue<>(ClassesMan.T_DATE.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
 		
 		return new XALCalculabeValue<>(xp, cclEvaluatorFacory, rootObject, context);
 	}
