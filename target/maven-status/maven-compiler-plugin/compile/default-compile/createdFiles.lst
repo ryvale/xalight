@@ -1,0 +1,10 @@
+com\exa\lang\parsing\Computing$EvaluatorSetup.class
+com\exa\lang\parsing\XPParser.class
+com\exa\lang\parsing\Parser.class
+com\exa\lang\parsing\XALLexingRules.class
+com\exa\lang\XalightApplication.class
+com\exa\lang\parsing\XALCalculabeValue.class
+com\exa\lang\parsing\XPEvalautorFactory.class
+com\exa\lang\parsing\Computing$StandardXPEvaluatorFactory.class
+com\exa\lang\parsing\LexingException.class
+com\exa\lang\parsing\Computing.class

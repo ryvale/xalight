@@ -53,6 +53,8 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		this.evaluatorFactory = evaluatorFactory;
 		this.rootObject = rootObject;
 		this.context = context;
+		//this.entityContext = Computing.getVariableContextName(context);
+		
 		
 		//this.evaluator = this.evaluatorFactory.create(rootObject);
 	}
