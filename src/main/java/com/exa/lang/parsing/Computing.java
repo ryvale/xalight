@@ -1,8 +1,6 @@
 package com.exa.lang.parsing;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -34,79 +32,6 @@ public class Computing {
 		void setup(XPEvaluator evaluator) throws ManagedException;
 	}
 	
-	public static class StandardXPEvaluatorFactory implements XPEvalautorFactory {
-		private XPEvaluator evaluator;
-		
-		private EvaluatorSetup evaluatorSetup;
-		
-		public StandardXPEvaluatorFactory(EvaluatorSetup evaluatorSetup) {
-			super();
-			this.evaluatorSetup = evaluatorSetup;
-		}
-		
-		public StandardXPEvaluatorFactory() {
-			this( (evaluator) -> {} );
-		}
-
-		@Override
-		public XPEvaluator create(ObjectValue<XPOperand<?>> rootObject, String entityContext) throws ManagedException {
-			
-			if(entityContext == null) {
-				if(evaluator == null) {
-					evaluator = new XPEvaluator();
-					evaluatorSetup.setup(evaluator);
-				}
-				return evaluator;
-			}
-			
-			evaluator = new XPEvaluator();
-			evaluatorSetup.setup(evaluator);
-			
-			ObjectValue<XPOperand<?>> ovContexts = rootObject.getPathAttributAsObjecValue(entityContext + "."+PRTY_CALL_PARAMS);
-			
-			if(ovContexts == null) return evaluator;
-			
-			Map<String, Value<?, XPOperand<?>>> mpContxts = ovContexts.getValue();
-			for(String evalContext : mpContxts.keySet()) {
-				VariableContext vc = new MapVariableContext();
-				evaluator.addVariableContext(vc, evalContext, evaluator.getDefaultVariableContext());
-				
-				Value<?, XPOperand<?>> vlContxt = mpContxts.get(evalContext);
-				ObjectValue<XPOperand<?>> ovContxt = vlContxt.asRequiredObjectValue();
-				Map<String, Value<?, XPOperand<?>>> mpParams = ovContxt.getValue();
-				
-				for(String var : mpParams.keySet()) {
-					
-					Value<?, XPOperand<?>> vlParamValue = mpParams.get(var);
-					
-					try {
-						vlParamValue = vlParamValue.clone();
-					} catch (CloneNotSupportedException e) {
-						throw new ManagedException(e);
-					}
-					CalculableValue<?, XPOperand<?>> clParamValue = vlParamValue.asCalculableValue();
-					
-					Class<?> valueClass = null;
-					Object value = null; 
-					if(clParamValue == null) value = vlParamValue.getValue();
-					else {
-						clParamValue.setContext(null);
-						value = clParamValue.getValue();
-						valueClass = xalTypeMapToJava.get(clParamValue.typeName());
-					}
-					
-					vc.addVariable(var, valueClass, value);
-				}
-			}
-			
-			return evaluator;
-			
-		}
-		
-		public void clear() { evaluator = null; }
-		
-	}
-	
 	public static final String PRTY_NAME = "_name";
 	public static final String PRTY_CLASS = "_class";
 	public static final String PRTY_TYPE = "_type";
@@ -122,54 +47,55 @@ public class Computing {
 	private XALLexingRules lexingRules = new XALLexingRules();
 	private CharReader charReader;
 	
-	private final static Set<String> xalTypes = new HashSet<>();
-	
-	private static Map<Class<?>, String> valueTypeMapOnTypes = new HashMap<>();
-	private static Map<String, Class<?>> xalTypeMapToJava = new HashMap<>();
-	
 	private List<ObjectValue<XPOperand<?>>> heirsObject = new ArrayList<>();
 	
 	private XPEvalautorFactory cclEvaluatorFacory;
 	
-	static {
-		xalTypes.add("string"); xalTypes.add("int"); xalTypes.add("boolean"); xalTypes.add("float"); xalTypes.add("date");
-		xalTypes.add("object"); xalTypes.add("array");
-		
-		valueTypeMapOnTypes.put(StringValue.class, "string");
-		valueTypeMapOnTypes.put(IntegerValue.class, "int");
-		valueTypeMapOnTypes.put(DecimalValue.class, "float");
-		valueTypeMapOnTypes.put(BooleanValue.class, "boolean");
-		valueTypeMapOnTypes.put(ObjectValue.class, "object");
-		valueTypeMapOnTypes.put(ArrayValue.class, "array");
-		
-		xalTypeMapToJava.put("string", String.class);
-		xalTypeMapToJava.put("int", Integer.class);
-		xalTypeMapToJava.put("float", Double.class);
-		xalTypeMapToJava.put("boolean", Boolean.class);
-		xalTypeMapToJava.put("date", Date.class);
-	}
+	private TypeSolver typeSolver;
 	
 	public Computing(CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.rootObject = rootObject;
 		this.xpCompiler = new XPParser(rootVariableContext);
+		
+		typeSolver = new TypeSolver();
+		
+		XPEvaluator compEvaluator = xpCompiler.evaluator();
+		compEvaluator.getClassesMan().forAllTypeDo((typeName, valueClass) -> {
+			if(typeSolver.containsType(typeName)) return;
+			
+			typeSolver.registerType(typeName, valueClass);
+			
+		});
+		
 		this.charReader = charReader;
 		this.cclEvaluatorFacory = cclEvaluatorFacory;
 	}
-	
-	public Computing(CharReader charReader, XPEvalautorFactory cclEvaluatorFacory) {
-		this.xpCompiler = new XPParser(new MapVariableContext());
-		this.rootObject = new ObjectValue<>();
-		this.charReader = charReader;
-		this.cclEvaluatorFacory = cclEvaluatorFacory;
-	}
-	
+		
 	public Computing(CharReader charReader, EvaluatorSetup evSteup) throws ManagedException {
 		this.xpCompiler = new XPParser(new MapVariableContext());
-		evSteup.setup(xpCompiler.evaluator());
+		typeSolver = new TypeSolver();
+		
+		XPEvaluator compEvaluator = xpCompiler.evaluator();
+		evSteup.setup(compEvaluator);
+		
+		compEvaluator.getClassesMan().forAllTypeDo((typeName, valueClass) -> {
+			if(typeSolver.containsType(typeName)) return;
+			
+			typeSolver.registerType(typeName, valueClass);
+			
+		});
+
+		
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
-		this.cclEvaluatorFacory = new StandardXPEvaluatorFactory(evSteup);
+		
+		this.cclEvaluatorFacory = new StandardXPEvaluatorFactory(typeSolver, evSteup);
+	}
+	
+	
+	public Computing(CharReader charReader) throws ManagedException {
+		this(charReader, (evaluator) -> {} ); 
 	}
 	
 	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
@@ -177,6 +103,21 @@ public class Computing {
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
 		this.cclEvaluatorFacory = cclEvaluatorFacory;
+		
+		typeSolver = new TypeSolver();
+		
+		XPEvaluator compEvaluator = xpCompiler.evaluator();
+		compEvaluator.getClassesMan().forAllTypeDo((typeName, valueClass) -> {
+			if(typeSolver.containsType(typeName)) return;
+			
+			typeSolver.registerType(typeName, valueClass);
+			
+		});
+	}
+	
+	
+	public void addCustomType(String name, Class<?> valueClass) {
+		
 	}
 
 	public ObjectValue<XPOperand<?>> execute() throws ManagedException {
@@ -482,7 +423,8 @@ public class Computing {
 				lexingRules.nextNonBlankChar(charReader);
 				
 				type = lexingRules.nextNonNullString(charReader);
-				if(!xalTypes.contains(type)) throw new ManagedException(String.format("Unknown %s while expecting type after @", type));
+				
+				if(!typeSolver.containsType(type)) throw new ManagedException(String.format("Unknown %s while expecting type after @", type));
 				
 				
 				ch = lexingRules.nextForwardNonBlankChar(charReader);
@@ -492,7 +434,7 @@ public class Computing {
 			if(type == null) type = "string";
 			res.setAttribut(propertyName, type);
 			
-			Class<?> valueClass = xalTypeMapToJava.get(type);
+			Class<?> valueClass = typeSolver.getTypeValueClass(type);
 			vc.addVariable(propertyName, valueClass, null);
 			
 			
@@ -857,7 +799,7 @@ public class Computing {
 				
 				CalculableValue<?, XPOperand<?>> clDstPrm = vlDstPrm.asCalculableValue();
 				
-				String dstType = clDstPrm == null ? valueTypeMapOnTypes.get(vlDstPrm.getClass()) : clDstPrm.typeName();
+				String dstType = clDstPrm == null ? typeSolver.getTypeName(vlDstPrm.getClass()) : clDstPrm.typeName();
 				
 				if(dstType == null || srcType.equals(dstType)) continue;
 				
@@ -884,7 +826,7 @@ public class Computing {
 			
 			CalculableValue<?, XPOperand<?>> clDstPrm = vlDstPrm.asCalculableValue();
 			
-			String dstType = clDstPrm == null ? valueTypeMapOnTypes.get(vlDstPrm.getClass()) : clDstPrm.typeName();
+			String dstType = clDstPrm == null ? typeSolver.getTypeName(vlDstPrm.getClass()) : clDstPrm.typeName();
 			
 			//String dstType = valueTypeMapOnTypes.get(vlDstPrm.getClass());
 			

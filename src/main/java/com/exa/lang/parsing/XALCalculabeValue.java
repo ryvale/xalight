@@ -61,7 +61,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	
 	
 	public XALCalculabeValue(XPOperand<T> xp, ObjectValue<XPOperand<?>> rootObject, String context) {
-		this(xp, new Computing.StandardXPEvaluatorFactory(), rootObject, context);
+		this(xp, new StandardXPEvaluatorFactory(new TypeSolver()), rootObject, context);
 	}
 
 	@Override

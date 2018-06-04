@@ -4,7 +4,6 @@ import java.util.List;
 
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.XPOperand;
-import com.exa.expression.eval.MapVariableContext;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.Parser;
 import com.exa.utils.ManagedException;

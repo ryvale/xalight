@@ -14,7 +14,7 @@ public class Parser {
 		
 		CharReader cr = new CharReader(script);
 		
-		Computing computing = new Computing(cr, new Computing.StandardXPEvaluatorFactory());
+		Computing computing = new Computing(cr);
 		
 		return computing.execute();
 	}
@@ -49,7 +49,7 @@ public class Parser {
 		} catch (IOException e) {
 			throw new ManagedException(e);
 		}
-		Computing computing = new Computing(cr, new Computing.StandardXPEvaluatorFactory());
+		Computing computing = new Computing(cr);
 		return computing.execute();
 	}
 	
