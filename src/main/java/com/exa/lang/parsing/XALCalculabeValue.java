@@ -38,41 +38,37 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	//private String context = null;
 	
 	private XPEvaluator evaluator;
-	private ObjectValue<XPOperand<?>> rootObject;
-	private String context;
+	//private ObjectValue<XPOperand<?>> rootObject;
+	//private String context;
 	
-	private String entityContext = null;
+	//private String entityContext = null;
 	
-	private XPEvalautorFactory evaluatorFactory;
+	//private XPEvalautorFactory evaluatorFactory;
 	
 
-	public XALCalculabeValue(XPOperand<T> xp, XPEvalautorFactory evaluatorFactory, ObjectValue<XPOperand<?>> rootObject, String context) {
+	public XALCalculabeValue(XPOperand<T> xp/*, XPEvalautorFactory evaluatorFactory, ObjectValue<XPOperand<?>> rootObject, String context*/) {
 		super();
 		this.xp = xp;
 		
-		this.evaluatorFactory = evaluatorFactory;
-		this.rootObject = rootObject;
-		this.context = context;
-		//this.entityContext = Computing.getVariableContextName(context);
-		
-		
-		//this.evaluator = this.evaluatorFactory.create(rootObject);
+		//this.evaluatorFactory = evaluatorFactory;
+		//this.rootObject = rootObject;
+		//this.context = context;
 	}
 	
 	
-	public XALCalculabeValue(XPOperand<T> xp, ObjectValue<XPOperand<?>> rootObject, String context) {
+	/*public XALCalculabeValue(XPOperand<T> xp, ObjectValue<XPOperand<?>> rootObject, String context) {
 		this(xp, new StandardXPEvaluatorFactory(new TypeSolver()), rootObject, context);
-	}
+	}*/
 
 	@Override
 	public T getValue() {
 		try {
-			evaluator = null;
-			T res = xp.value(getEvaluator());
+			//evaluator = null;
+			T res = xp.value(evaluator);
 			
-			if(entityContext == null) return res;
+			/*if(entityContext == null) return res;
 			
-			evaluatorFactory.clear();
+			evaluatorFactory.clear();*/
 			return res;
 		} catch (ManagedException e) {
 			throw new RuntimeException(e);
@@ -121,9 +117,9 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public Integer asInteger() throws ManagedException {
-		if(xp.type() == ClassesMan.T_INTEGER) return ClassesMan.T_INTEGER.valueOrNull(xp.value(getEvaluator()));
+		if(xp.type() == ClassesMan.T_INTEGER) return ClassesMan.T_INTEGER.valueOrNull(xp.value(evaluator));
 		
-		throw new ManagedException(String.format("This value should be aan integer"));
+		throw new ManagedException(String.format("This value should be an integer"));
 	}
 
 	@Override
@@ -147,20 +143,20 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public String asString() throws ManagedException {
-		if(xp.type() == ClassesMan.T_STRING) return ClassesMan.T_STRING.valueOrNull(xp.value(getEvaluator()));
+		if(xp.type() == ClassesMan.T_STRING) return ClassesMan.T_STRING.valueOrNull(xp.value(evaluator));
 		throw new ManagedException(String.format("This value should be a string"));
 	}
 
 	@Override
 	public XALCalculabeValue<T> clone() throws CloneNotSupportedException {
-		ObjectValue<XPOperand<?>> ov = rootObject;
-		return new XALCalculabeValue<T>(xp, evaluatorFactory, ov, context);
+		//ObjectValue<XPOperand<?>> ov = rootObject;
+		return new XALCalculabeValue<T>(xp/*, evaluatorFactory, ov, context*/);
 	}
 
 	@Override
 	public String getContext() {
-		
-		return context;
+		return null;
+		//return context;
 	}
 
 	@Override
@@ -170,21 +166,21 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		if(xp.isConstant()) {
 			try {
 				Object v = xp.value(null);
-				if(v == null) return "calculable{context = "+ getContext() + ", entity =" + entityContext+ "}";
+				if(v == null) return "calculable";
 				return v.toString();
 			} catch (ManagedException e) {
-				return "calculable{context = "+ getContext() + ", entity =" + entityContext+ "}";
+				return "calculable";
 			}
 		}
-		return "calculable{context = "+ getContext() + ", entity =" + entityContext+ "}";
+		return "calculable";
 	}
 	
 	
-	private XPEvaluator getEvaluator() throws ManagedException {
+	/*private XPEvaluator getEvaluator() throws ManagedException {
 		if(evaluator == null) evaluator = evaluatorFactory.create(rootObject, entityContext);
 		
 		return evaluator;
-	}
+	}*/
 
 
 	@Override
@@ -195,8 +191,18 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public void setContext(String context) {
-		this.entityContext = context;
+		//this.entityContext = context;
 	}
+
+	public XPEvaluator getEvaluator() {
+		return evaluator;
+	}
+
+	public void setEvaluator(XPEvaluator evaluator) {
+		this.evaluator = evaluator;
+	}
+	
+	
 	
 
 }

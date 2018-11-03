@@ -1,4 +1,12 @@
 -------------------------------------------------------------------------------
 Test set: com.exa.lang.XalightApplicationTests
 -------------------------------------------------------------------------------
-Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.182 sec - in com.exa.lang.XalightApplicationTests
+Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.123 sec <<< FAILURE! - in com.exa.lang.XalightApplicationTests
+testXalInheritance(com.exa.lang.XalightApplicationTests)  Time elapsed: 0.024 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: null
+	at junit.framework.Assert.fail(Assert.java:55)
+	at junit.framework.Assert.assertTrue(Assert.java:22)
+	at junit.framework.Assert.assertTrue(Assert.java:31)
+	at junit.framework.TestCase.assertTrue(TestCase.java:201)
+	at com.exa.lang.XalightApplicationTests.testXalInheritance(XalightApplicationTests.java:95)
+

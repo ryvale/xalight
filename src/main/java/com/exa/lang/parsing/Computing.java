@@ -1,6 +1,7 @@
 package com.exa.lang.parsing;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +16,7 @@ import com.exa.expression.XPOperand;
 import com.exa.expression.eval.ClassesMan;
 import com.exa.expression.eval.MapVariableContext;
 import com.exa.expression.eval.XPEvaluator;
+import com.exa.expression.eval.XPEvaluator.ContextResolver;
 import com.exa.lexing.ParsingException;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
@@ -27,6 +29,7 @@ import com.exa.utils.values.StringValue;
 import com.exa.utils.values.Value;
 
 public class Computing {
+	
 	public static interface EvaluatorSetup {
 		
 		void setup(XPEvaluator evaluator) throws ManagedException;
@@ -49,14 +52,30 @@ public class Computing {
 	
 	private List<ObjectValue<XPOperand<?>>> heirsObject = new ArrayList<>();
 	
-	private XPEvalautorFactory cclEvaluatorFacory;
+	//private XPEvalautorFactory cclEvaluatorFacory;
 	
 	private TypeSolver typeSolver;
+	
+	private ContextResolver contextResolver = (vcs, context) -> {
+		VariableContext res = vcs.get(context);
+		if(res != null) return res;
+				
+		String parts[] = context.split("[.]");
+		StringBuilder sb = new StringBuilder(context);
+		for(int i=parts.length -1; i > 0; i--) {
+			String part = parts[i];
+			sb.delete(sb.length()-part.length()-1, sb.length());
+			
+			res = vcs.get(sb.toString());
+			if(res != null) return res;
+		}
+		return null;
+	};
 	
 	public Computing(CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.rootObject = rootObject;
-		this.xpCompiler = new XPParser(rootVariableContext);
+		this.xpCompiler = new XPParser(rootVariableContext, contextResolver);
 		
 		typeSolver = new TypeSolver();
 		
@@ -69,11 +88,11 @@ public class Computing {
 		});
 		
 		this.charReader = charReader;
-		this.cclEvaluatorFacory = cclEvaluatorFacory;
+		//this.cclEvaluatorFacory = cclEvaluatorFacory;
 	}
 		
 	public Computing(CharReader charReader, EvaluatorSetup evSteup) throws ManagedException {
-		this.xpCompiler = new XPParser(new MapVariableContext());
+		this.xpCompiler = new XPParser(new MapVariableContext(), contextResolver);
 		typeSolver = new TypeSolver();
 		
 		XPEvaluator compEvaluator = xpCompiler.evaluator();
@@ -85,12 +104,11 @@ public class Computing {
 			typeSolver.registerType(typeName, valueClass);
 			
 		});
-
 		
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
 		
-		this.cclEvaluatorFacory = new StandardXPEvaluatorFactory(typeSolver, evSteup);
+		//this.cclEvaluatorFacory = new StandardXPEvaluatorFactory(typeSolver, evSteup);
 	}
 	
 	
@@ -99,10 +117,10 @@ public class Computing {
 	}
 	
 	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
-		this.xpCompiler = new XPParser(vc);
+		this.xpCompiler = new XPParser(vc, contextResolver);
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
-		this.cclEvaluatorFacory = cclEvaluatorFacory;
+		//this.cclEvaluatorFacory = cclEvaluatorFacory;
 		
 		typeSolver = new TypeSolver();
 		
@@ -189,6 +207,204 @@ public class Computing {
 	
 		
 		return rootObject;
+	}
+	
+	public ObjectValue<XPOperand<?>> object(String path, XPEvaluator evaluator) throws ManagedException {
+		ObjectValue<XPOperand<?>> rootOV = execute();
+		
+		ObjectValue<XPOperand<?>> res = rootOV;
+		
+		String parts[] = path.split("[.]");
+		
+		VariableContext lastVC = null;
+		
+		StringBuilder sbVCName = new StringBuilder();
+		for(int i=0; i<parts.length; ++i) {
+			String part = parts[i];
+			
+			if(i>0) sbVCName.append(".").append(part);
+			else sbVCName.append(part);
+			
+			res = res.getRequiredAttributAsObjectValue(part);
+			
+			ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			if(ovCallParams == null) continue;
+			do {
+				lastVC = new MapVariableContext();
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, lastVC, mpParams);
+				
+				evaluator.pushVariableContext(lastVC);
+				
+				ObjectValue<XPOperand<?>> ovMother = rootOV.getPathAttributAsObjecValue(motherClass);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = res.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, res, evaluator);
+				
+				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+				
+				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			} while(true);
+		}
+		
+		try {
+			res = computeAllCalculabe(res, evaluator);
+		} catch (CloneNotSupportedException e) {
+			throw new ManagedException(e);
+		}
+		
+		return res;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private ObjectValue<XPOperand<?>> computeAllCalculabe(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator) throws CloneNotSupportedException {
+		ov = ov.clone();
+		Map<String, Value<?, XPOperand<?>>> mp = ov.getValue();
+		
+		for(String propertyName : mp.keySet()) {
+			Value<?, XPOperand<?>> vl=mp.get(propertyName);
+			
+			ObjectValue<XPOperand<?>> vov = vl.asObjectValue();
+			if(vov != null) {
+				mp.put(propertyName, computeAllCalculabe(vov, evaluator));
+				continue;
+			}
+			
+			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
+			
+			if(cl == null) continue;
+			
+			if("string".equals(cl.typeName())) {
+				XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+				xalCL.setEvaluator(evaluator);
+
+				mp.put(propertyName, new StringValue<>(xalCL.getValue()));
+				continue;
+			}
+			
+			if("integer".equals(cl.typeName())) {
+				XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+				xalCL.setEvaluator(evaluator);
+				
+				mp.put(propertyName, new IntegerValue<>(xalCL.getValue()));
+				continue;
+			}
+			
+			if("float".equals(cl.typeName())) {
+				XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+				xalCL.setEvaluator(evaluator);
+				
+				mp.put(propertyName, new DecimalValue<>(xalCL.getValue()));
+				continue;
+			}
+			
+			/*if("date".equals(cl.typeName())) {
+				XALCalculabeValue<Date> xalCL = (XALCalculabeValue<Date>) cl;
+				xalCL.setEvaluator(evaluator);
+				paramItems.set(i, new DateValu<>(xalCL.getValue()));
+				continue;
+			}*/
+			
+			if("boolean".equals(cl.typeName())) {
+				XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+				xalCL.setEvaluator(evaluator);
+				
+				mp.put(propertyName, new BooleanValue<>(xalCL.getValue()));
+				continue;
+			}
+		}
+		
+		return ov;
+		
+	}
+	
+	@SuppressWarnings("unchecked")
+	private void addParamsValueInContext(XPEvaluator evaluator, VariableContext vc, Map<String, Value<?, XPOperand<?>>> mpParams) throws ManagedException {
+		for(String paramName : mpParams.keySet()) {
+			Value<?, XPOperand<?>> vl = mpParams.get(paramName);
+			
+			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
+			if(cl != null) {
+				//XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+				
+				if("string".equals(cl.typeName())) {
+					XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+					xalCL.setEvaluator(evaluator);
+					vc.addVariable(paramName, String.class, xalCL.getValue());
+					continue;
+				}
+				
+				if("integer".equals(cl.typeName())) {
+					XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+					xalCL.setEvaluator(evaluator);
+					vc.addVariable(paramName, Integer.class, xalCL.getValue());
+					continue;
+				}
+				
+				if("float".equals(cl.typeName())) {
+					XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+					xalCL.setEvaluator(evaluator);
+					vc.addVariable(paramName, Double.class, xalCL.getValue());
+					continue;
+				}
+				
+				if("date".equals(cl.typeName())) {
+					XALCalculabeValue<Date> xalCL = (XALCalculabeValue<Date>) cl;
+					xalCL.setEvaluator(evaluator);
+					vc.addVariable(paramName, Date.class, xalCL.getValue());
+					continue;
+				}
+				
+				if("boolean".equals(cl.typeName())) {
+					XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+					xalCL.setEvaluator(evaluator);
+					vc.addVariable(paramName, Boolean.class, xalCL.getValue());
+					continue;
+				}
+				
+				continue;
+			}
+			
+			StringValue<XPOperand<?>> stVl = vl.asStringValue();
+			if(stVl != null) {
+				vc.addVariable(paramName, String.class, stVl.getValue());
+				continue;
+			}
+			
+			IntegerValue<XPOperand<?>> itVl = vl.asIntegerValue();
+			if(itVl != null) {
+				vc.addVariable(paramName, Integer.class, itVl.getValue());
+				continue;
+			}
+			
+			BooleanValue<XPOperand<?>> blVl = vl.asBooleanValue();
+			if(blVl != null) {
+				vc.addVariable(paramName, Boolean.class, blVl.getValue());
+				continue;
+			}
+			
+			DecimalValue<XPOperand<?>> dcVl = vl.asDecimalValue();
+			if(dcVl != null) {
+				vc.addVariable(paramName, Double.class, dcVl.getValue());
+				continue;
+			}
+			
+			ObjectValue<XPOperand<?>> obVl = vl.asObjectValue();
+			if(obVl != null) {
+				vc.addVariable(paramName, Object.class, obVl.getValue());
+				continue;
+			}
+		}
 	}
 	
 	private void getObjectInheritance(ObjectValue<XPOperand<?>> dst, ObjectValue<XPOperand<?>> references,  Set<String> cyclicRefs, String entity) throws ManagedException {
@@ -313,17 +529,17 @@ public class Computing {
 	private XALCalculabeValue<?> calculableFor(XPOperand<?> xp, String context) {
 		Type<?> type = xp.type();
 		
-		if(type == ClassesMan.T_STRING) return new XALCalculabeValue<>(ClassesMan.T_STRING.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_STRING) return new XALCalculabeValue<>(ClassesMan.T_STRING.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
 		
-		if(type == ClassesMan.T_INTEGER) return new XALCalculabeValue<>(ClassesMan.T_INTEGER.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_INTEGER) return new XALCalculabeValue<>(ClassesMan.T_INTEGER.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
 		
-		if(type == ClassesMan.T_BOOLEAN) return new XALCalculabeValue<>(ClassesMan.T_BOOLEAN.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_BOOLEAN) return new XALCalculabeValue<>(ClassesMan.T_BOOLEAN.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
 		
-		if(type == ClassesMan.T_DOUBLE) return new XALCalculabeValue<>(ClassesMan.T_DOUBLE.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_DOUBLE) return new XALCalculabeValue<>(ClassesMan.T_DOUBLE.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
 		
-		if(type == ClassesMan.T_DATE) return new XALCalculabeValue<>(ClassesMan.T_DATE.valueOrNull(xp), cclEvaluatorFacory, rootObject, context);
+		if(type == ClassesMan.T_DATE) return new XALCalculabeValue<>(ClassesMan.T_DATE.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
 		
-		return new XALCalculabeValue<>(xp, cclEvaluatorFacory, rootObject, context);
+		return new XALCalculabeValue<>(xp/*, cclEvaluatorFacory, rootObject, context*/);
 	}
 	
 	private VariableContext variableContextAnyWay(String context) throws ManagedException {
@@ -692,7 +908,7 @@ public class Computing {
 				ov.setAttribut(PRTY_CALL_PARAMS, ovParams);
 			}
 			
-			ovParams.setAttribut("references_"+motherClass, params);
+			ovParams.setAttribut("references."+motherClass, params);
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			if(ch == null) return ov;
@@ -712,7 +928,7 @@ public class Computing {
 		
 		checkParameters(mpSrc, mpDst);
 		
-		for(String v : mpSrc.keySet()) {
+		/*for(String v : mpSrc.keySet()) {
 			if(PRTY_PARAMS.equals(v)) continue;
 			
 			Value<?, XPOperand<?>> vlv = dst.getAttribut(v);
@@ -747,6 +963,139 @@ public class Computing {
 			} catch (CloneNotSupportedException e) {
 				throw new ManagedException(e);
 			}
+		}*/
+	}
+	
+	private void mergeInheritedObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst, XPEvaluator evaluator) throws ManagedException {
+		Map<String, Value<?, XPOperand<?>>> mpSrc = src.getValue();
+		Map<String, Value<?, XPOperand<?>>> mpDst = dst.getValue();
+		
+		//checkParameters(mpSrc, mpDst);
+		
+		for(String v : mpSrc.keySet()) {
+			if(PRTY_PARAMS.equals(v)) continue;
+			
+			Value<?, XPOperand<?>> vlv = dst.getAttribut(v);
+			if(vlv != null) {
+				ObjectValue<XPOperand<?>> dstOVAttribut = vlv.asObjectValue();
+				if(dstOVAttribut == null || dstOVAttribut.getAttribut(PRTY_CALL_PARAMS) != null) {
+					continue;
+				}
+				
+				vlv = src.getAttribut(v);
+				if(vlv == null) continue;
+				
+				ObjectValue<XPOperand<?>> srcOVAttribut = vlv.asObjectValue();
+				if(srcOVAttribut == null) continue;
+				
+				
+				mergeInheritedObject(srcOVAttribut, dstOVAttribut, evaluator);
+				continue;
+			}
+			
+			vlv = src.getAttribut(v);
+			if(vlv == null) continue;
+			
+			/*if(PRTY_CALL_PARAMS.equals(v)) {
+				try {
+					vlv = vlv.clone();
+					Map<String, Value<?, XPOperand<?>>> mpCallParams = vlv.asRequiredObjectValue().getValue();
+					
+					Iterator<Value<?, XPOperand<?>>> it = mpCallParams.values().iterator();
+					
+					ArrayValue<XPOperand<?>> aparams = it.next().asArrayValue();
+					
+					List<Value<?, XPOperand<?>>> paramItems = aparams.getValue();
+					
+					for(int i=0; i<paramItems.size(); ++i) {
+						CalculableValue<?, XPOperand<?>> cl = paramItems.get(i).asCalculableValue();
+						if(cl == null) continue;
+						
+						if("string".equals(cl.typeName())) {
+							XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+							xalCL.setEvaluator(evaluator);
+							
+							paramItems.set(i, new StringValue<>(xalCL.getValue()));
+							continue;
+						}
+						
+						if("integer".equals(cl.typeName())) {
+							XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+							xalCL.setEvaluator(evaluator);
+							paramItems.set(i, new IntegerValue<>(xalCL.getValue()));
+							continue;
+						}
+						
+						if("float".equals(cl.typeName())) {
+							XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+							xalCL.setEvaluator(evaluator);
+							paramItems.set(i, new DecimalValue<>(xalCL.getValue()));
+							continue;
+						}
+												
+						if("boolean".equals(cl.typeName())) {
+							XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+							xalCL.setEvaluator(evaluator);
+							paramItems.set(i, new BooleanValue<>(xalCL.getValue()));
+							continue;
+						}
+						
+					}
+					
+					ObjectValue<XPOperand<?>> oparams = it.next().asObjectValue();
+					
+					Map<String, Value<?, XPOperand<?>>> mpop = oparams.getValue();
+					
+					for(String paramName : mpop.keySet()) {
+						CalculableValue<?, XPOperand<?>> cl = mpop.get(paramName).asCalculableValue();
+						
+						if(cl == null) continue;
+						
+						if("string".equals(cl.typeName())) {
+							XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+							xalCL.setEvaluator(evaluator);
+
+							mpop.put(paramName, new StringValue<>(xalCL.getValue()));
+							continue;
+						}
+						
+						if("integer".equals(cl.typeName())) {
+							XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+							xalCL.setEvaluator(evaluator);
+							
+							mpop.put(paramName, new IntegerValue<>(xalCL.getValue()));
+							continue;
+						}
+						
+						if("float".equals(cl.typeName())) {
+							XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+							xalCL.setEvaluator(evaluator);
+							
+							mpop.put(paramName, new DecimalValue<>(xalCL.getValue()));
+							continue;
+						}
+						
+						
+						if("boolean".equals(cl.typeName())) {
+							XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+							xalCL.setEvaluator(evaluator);
+							
+							mpop.put(paramName, new BooleanValue<>(xalCL.getValue()));
+							continue;
+						}
+					}
+					
+					
+				} catch (CloneNotSupportedException e) {
+					throw new ManagedException(e);
+				}
+				
+				
+			}*/
+			
+			
+			mpDst.put(v, vlv);
+			
 		}
 	}
 	

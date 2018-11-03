@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.XPOperand;
+import com.exa.expression.eval.XPEvaluator;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.Parser;
 import com.exa.utils.ManagedException;
@@ -81,7 +82,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
-		ObjectValue<XPOperand<?>> ovEntity = ov.getPathAttributAsObjecValue("entities.entity2");
+		ObjectValue<XPOperand<?>> ovEntity = parser.parseFile("./src/test/java/com/exa/lang/test2.xal", "entities.entity2", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
 		
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2")));
 		
@@ -91,13 +92,27 @@ public class XalightApplicationTests extends TestCase {
 		
 		//assertTrue("af".equals(ov.getPathAttributAsString("entities.entity2._call_params.prm")));
 		
-		assertTrue("afc".equals(ov.getPathAttributAsString("entities.entity2.cplx.property3")));
+		assertTrue("afc".equals(ovEntity.getPathAttributAsString("cplx.property3")));
 		
 		//assertTrue(new Integer(10).equals(ov.getPathAttribut("entities.entity2.cplx.property0")));
 		
-		ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
+		//ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
 		
-		assertTrue(new Integer(2).equals(ov1.getAttributAsInteger("property1")));
+		//assertTrue(new Integer(2).equals(ov1.getAttributAsInteger("property1")));
+		
+		
+	}
+	
+	public void testXalInheritance2() throws ManagedException {
+		Parser parser = new Parser();
+		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.parseFile("./src/test/java/com/exa/lang/test3.xal", "entities.entity3.cplx", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
+		
+		assertTrue("b".equals(ovEntity.getPathAttributAsString("property2")));
+		
+		assertTrue("okc".equals(ovEntity.getPathAttributAsString("property")));
+	
 		
 		
 	}

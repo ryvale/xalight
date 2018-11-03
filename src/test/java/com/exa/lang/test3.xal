@@ -15,6 +15,11 @@ references {
 		cplx {
 			property1=prm2
 		}
+	},
+	
+	cplx1(prm3) {
+	
+		property = prm3 + 'c'
 	}
 },
 
@@ -22,7 +27,7 @@ entities {
 	entity3 @entity2('a'+'b') {
 		property2 'a',
 		
-		cplx {
+		cplx @cplx1('ok') {
 			property2 'b'
 		}
 	}

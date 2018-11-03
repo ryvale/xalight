@@ -4,6 +4,7 @@ import java.io.IOException;
 
 import com.exa.buffer.CharReader;
 import com.exa.expression.XPOperand;
+import com.exa.expression.eval.XPEvaluator;
 import com.exa.lang.parsing.Computing.EvaluatorSetup;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
@@ -51,6 +52,18 @@ public class Parser {
 		}
 		Computing computing = new Computing(cr);
 		return computing.execute();
+	}
+	
+	public ObjectValue<XPOperand<?>> parseFile(String scriptFile, String path, XPEvaluator evaluator) throws ManagedException {
+		
+		CharReader cr;
+		try {
+			cr = CharReader.forFile(scriptFile, false);
+		} catch (IOException e) {
+			throw new ManagedException(e);
+		}
+		Computing computing = new Computing(cr);
+		return computing.object(path, evaluator);
 	}
 	
 	
