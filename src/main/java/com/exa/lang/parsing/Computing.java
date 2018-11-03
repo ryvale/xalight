@@ -212,6 +212,63 @@ public class Computing {
 	public ObjectValue<XPOperand<?>> object(String path, XPEvaluator evaluator) throws ManagedException {
 		ObjectValue<XPOperand<?>> rootOV = execute();
 		
+		/*ObjectValue<XPOperand<?>> res = rootOV;
+		
+		String parts[] = path.split("[.]");
+		
+		VariableContext lastVC = null;
+		
+		StringBuilder sbVCName = new StringBuilder();
+		for(int i=0; i<parts.length; ++i) {
+			String part = parts[i];
+			
+			if(i>0) sbVCName.append(".").append(part);
+			else sbVCName.append(part);
+			
+			res = res.getRequiredAttributAsObjectValue(part);
+			
+			ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			if(ovCallParams == null) continue;
+			do {
+				lastVC = new MapVariableContext();
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, lastVC, mpParams);
+				
+				evaluator.pushVariableContext(lastVC);
+				
+				ObjectValue<XPOperand<?>> ovMother = rootOV.getPathAttributAsObjecValue(motherClass);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = res.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, res, evaluator);
+				
+				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+				
+				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			} while(true);
+		}
+		
+		try {
+			res = computeAllCalculabe(res, evaluator);
+		} catch (CloneNotSupportedException e) {
+			throw new ManagedException(e);
+		}
+		
+		return res;*/
+		
+		return object(rootOV, path, evaluator);
+	}
+	
+	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = rootOV;
 		
 		String parts[] = path.split("[.]");
