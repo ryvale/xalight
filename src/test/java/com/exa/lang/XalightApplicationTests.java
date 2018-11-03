@@ -82,7 +82,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
-		ObjectValue<XPOperand<?>> ovEntity = parser.parseFile("./src/test/java/com/exa/lang/test2.xal", "entities.entity2", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test2.xal", "entities.entity2", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
 		
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2")));
 		
@@ -107,7 +107,7 @@ public class XalightApplicationTests extends TestCase {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
-		ObjectValue<XPOperand<?>> ovEntity = parser.parseFile("./src/test/java/com/exa/lang/test3.xal", "entities.entity3.cplx", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test3.xal", "entities.entity3.cplx", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
 		
 		assertTrue("b".equals(ovEntity.getPathAttributAsString("property2")));
 		

@@ -54,7 +54,7 @@ public class Parser {
 		return computing.execute();
 	}
 	
-	public ObjectValue<XPOperand<?>> parseFile(String scriptFile, String path, XPEvaluator evaluator) throws ManagedException {
+	public ObjectValue<XPOperand<?>> object(String scriptFile, String path, XPEvaluator evaluator) throws ManagedException {
 		
 		CharReader cr;
 		try {
