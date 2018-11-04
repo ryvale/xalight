@@ -1,6 +1,7 @@
 package com.exa.lang.parsing;
 
 import java.io.IOException;
+import java.util.Map;
 
 import com.exa.buffer.CharReader;
 import com.exa.expression.XPOperand;
@@ -67,6 +68,21 @@ public class Parser {
 	}
 	
 	
+	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator) throws ManagedException {
+		
+		
+		return Computing.object(rootOV, path, evaluator);
+	}
+
+	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> relativeOV, String path, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+
+		return Computing.object(relativeOV, path, evaluator, libOV);
+	}
+	
+	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+
+		return Computing.object(ov, evaluator, libOV);
+	}
 
 
 }

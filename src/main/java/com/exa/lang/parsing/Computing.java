@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +45,8 @@ public class Computing {
 	public static final String PRTY_CALL_PARAMS = "_call_params";
 	public static final String PRTY_CONTEXT = "_context";
 	public static final String PRTY_ENTITY = "_entity";
+	
+	public static final String LIBN_DEFAULT = "references";
 	
 	private ObjectValue<XPOperand<?>> rootObject;
 	private XPParser xpCompiler;
@@ -212,63 +215,10 @@ public class Computing {
 	public ObjectValue<XPOperand<?>> object(String path, XPEvaluator evaluator) throws ManagedException {
 		ObjectValue<XPOperand<?>> rootOV = execute();
 		
-		/*ObjectValue<XPOperand<?>> res = rootOV;
-		
-		String parts[] = path.split("[.]");
-		
-		VariableContext lastVC = null;
-		
-		StringBuilder sbVCName = new StringBuilder();
-		for(int i=0; i<parts.length; ++i) {
-			String part = parts[i];
-			
-			if(i>0) sbVCName.append(".").append(part);
-			else sbVCName.append(part);
-			
-			res = res.getRequiredAttributAsObjectValue(part);
-			
-			ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
-			if(ovCallParams == null) continue;
-			do {
-				lastVC = new MapVariableContext();
-				
-				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
-				
-				Iterator<String> strIt = mpCallParams.keySet().iterator();
-				String motherClass = strIt.next();
-				
-				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
-				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
-				
-				addParamsValueInContext(evaluator, lastVC, mpParams);
-				
-				evaluator.pushVariableContext(lastVC);
-				
-				ObjectValue<XPOperand<?>> ovMother = rootOV.getPathAttributAsObjecValue(motherClass);
-				
-				Map<String, Value<?, XPOperand<?>>> mpRes = res.getValue();
-				mpRes.remove(PRTY_CALL_PARAMS);
-				
-				mergeInheritedObject(ovMother, res, evaluator);
-				
-				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
-				
-				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
-			} while(true);
-		}
-		
-		try {
-			res = computeAllCalculabe(res, evaluator);
-		} catch (CloneNotSupportedException e) {
-			throw new ManagedException(e);
-		}
-		
-		return res;*/
-		
 		return object(rootOV, path, evaluator);
 	}
 	
-	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator) throws ManagedException {
+	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = rootOV;
 		
 		String parts[] = path.split("[.]");
@@ -323,8 +273,112 @@ public class Computing {
 		return res;
 	}
 	
+	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> relativeOV, String path, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+		ObjectValue<XPOperand<?>> res = relativeOV;
+		
+		String parts[] = path.split("[.]");
+		
+		VariableContext lastVC = null;
+		
+		StringBuilder sbVCName = new StringBuilder();
+		for(int i=0; i<parts.length; ++i) {
+			String part = parts[i];
+			
+			if(i>0) sbVCName.append(".").append(part);
+			else sbVCName.append(part);
+			
+			res = res.getRequiredAttributAsObjectValue(part);
+			
+			ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			if(ovCallParams == null) continue;
+			do {
+				lastVC = new MapVariableContext();
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, lastVC, mpParams);
+				
+				evaluator.pushVariableContext(lastVC);
+				
+				String fqnParts[] = motherClass.split("[.]");
+
+				
+				ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
+				
+				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = res.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, res, evaluator);
+				
+				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+				
+				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			} while(true);
+		}
+		
+		try {
+			res = computeAllCalculabe(res, evaluator);
+		} catch (CloneNotSupportedException e) {
+			throw new ManagedException(e);
+		}
+		
+		return res;
+	}
+	
+	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+		ObjectValue<XPOperand<?>> res = ovEntity;
+		ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+		if(ovCallParams == null) return res;
+		
+		do {
+			VariableContext lastVC = new MapVariableContext();
+			
+			Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+			
+			Iterator<String> strIt = mpCallParams.keySet().iterator();
+			String motherClass = strIt.next();
+			
+			ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+			Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+			
+			addParamsValueInContext(evaluator, lastVC, mpParams);
+			
+			evaluator.pushVariableContext(lastVC);
+			
+			String fqnParts[] = motherClass.split("[.]");
+	
+			
+			ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
+			
+			ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
+			
+			Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
+			mpRes.remove(PRTY_CALL_PARAMS);
+			
+			mergeInheritedObject(ovMother, ovEntity, evaluator);
+			if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+		
+			ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+		} while(true);
+		try {
+			res = computeAllCalculabe(res, evaluator);
+		} catch (CloneNotSupportedException e) {
+			throw new ManagedException(e);
+		}
+		
+		return res;
+	}
+	
 	@SuppressWarnings("unchecked")
-	private ObjectValue<XPOperand<?>> computeAllCalculabe(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator) throws CloneNotSupportedException {
+	private static ObjectValue<XPOperand<?>> computeAllCalculabe(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator) throws CloneNotSupportedException {
 		ov = ov.clone();
 		Map<String, Value<?, XPOperand<?>>> mp = ov.getValue();
 		
@@ -386,13 +440,12 @@ public class Computing {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private void addParamsValueInContext(XPEvaluator evaluator, VariableContext vc, Map<String, Value<?, XPOperand<?>>> mpParams) throws ManagedException {
+	private static void addParamsValueInContext(XPEvaluator evaluator, VariableContext vc, Map<String, Value<?, XPOperand<?>>> mpParams) throws ManagedException {
 		for(String paramName : mpParams.keySet()) {
 			Value<?, XPOperand<?>> vl = mpParams.get(paramName);
 			
 			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
 			if(cl != null) {
-				//XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
 				
 				if("string".equals(cl.typeName())) {
 					XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
@@ -985,49 +1038,11 @@ public class Computing {
 		
 		checkParameters(mpSrc, mpDst);
 		
-		/*for(String v : mpSrc.keySet()) {
-			if(PRTY_PARAMS.equals(v)) continue;
-			
-			Value<?, XPOperand<?>> vlv = dst.getAttribut(v);
-			if(vlv != null) {
-				ObjectValue<XPOperand<?>> dstOVAttribut = vlv.asObjectValue();
-				if(dstOVAttribut == null) {
-					continue;
-				}
-				
-				vlv = src.getAttribut(v);
-				if(vlv == null) continue;
-				
-				ObjectValue<XPOperand<?>> srcOVAttribut = vlv.asObjectValue();
-				if(srcOVAttribut == null) continue;
-				mergeObject(srcOVAttribut, dstOVAttribut, objectClass, entity);
-				continue;
-			}
-			
-			vlv = src.getAttribut(v);
-			if(vlv == null) continue;
-			
-			try {
-				Value<?, XPOperand<?>> vl = src.getAttribut(v);
-				vl =vl.clone();
-				
-				CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
-				if(cl != null) {
-					cl.setContext(entity);
-				}
-				
-				mpDst.put(v, vl);
-			} catch (CloneNotSupportedException e) {
-				throw new ManagedException(e);
-			}
-		}*/
 	}
 	
-	private void mergeInheritedObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst, XPEvaluator evaluator) throws ManagedException {
+	private static void mergeInheritedObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst, XPEvaluator evaluator) throws ManagedException {
 		Map<String, Value<?, XPOperand<?>>> mpSrc = src.getValue();
 		Map<String, Value<?, XPOperand<?>>> mpDst = dst.getValue();
-		
-		//checkParameters(mpSrc, mpDst);
 		
 		for(String v : mpSrc.keySet()) {
 			if(PRTY_PARAMS.equals(v)) continue;

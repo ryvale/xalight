@@ -1,6 +1,8 @@
 package com.exa.lang;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.XPOperand;
@@ -99,11 +101,36 @@ public class XalightApplicationTests extends TestCase {
 		//ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
 		
 		//assertTrue(new Integer(2).equals(ov1.getAttributAsInteger("property1")));
+		Map<String, ObjectValue<XPOperand<?>>> libOV = new HashMap<>();
+		libOV.put(Computing.LIBN_DEFAULT, ov.getAttributAsObjectValue(Computing.LIBN_DEFAULT));
 		
+		ObjectValue<XPOperand<?>> ovEntity2 = parser.object(ov, "entities.entity2", new XPEvaluator(), libOV);
 		
+		assertTrue("a".equals(ovEntity2.getPathAttributAsString("property2")));
+		
+		assertTrue("afb".equals(ovEntity2.getPathAttributAsString("cplx.property1")));
+				
+		assertTrue("afc".equals(ovEntity2.getPathAttributAsString("cplx.property3")));
 	}
 	
 	public void testXalInheritance2() throws ManagedException {
+		Parser parser = new Parser();
+		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
+		
+		Map<String, ObjectValue<XPOperand<?>>> libOV = new HashMap<>();
+		libOV.put(Computing.LIBN_DEFAULT, ov.getAttributAsObjectValue(Computing.LIBN_DEFAULT));
+		
+		ObjectValue<XPOperand<?>> ovEntity2 = parser.object(ov.getAttributByPathAsObjectValue("entities.entity2"), new XPEvaluator(), libOV);
+		
+		assertTrue("a".equals(ovEntity2.getPathAttributAsString("property2")));
+		
+		assertTrue("afb".equals(ovEntity2.getPathAttributAsString("cplx.property1")));
+		
+		assertTrue("afc".equals(ovEntity2.getPathAttributAsString("cplx.property3")));
+	}
+
+	
+	public void testXalInheritance5() throws ManagedException {
 		Parser parser = new Parser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
