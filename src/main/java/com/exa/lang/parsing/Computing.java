@@ -20,6 +20,8 @@ import com.exa.expression.eval.XPEvaluator;
 import com.exa.expression.eval.XPEvaluator.ContextResolver;
 import com.exa.expression.parsing.Parser;
 import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
+
+import com.exa.lang.expression.XALCalculabeValue;
 import com.exa.lexing.ParsingException;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
@@ -36,6 +38,24 @@ public class Computing {
 	public static interface EvaluatorSetup {
 		
 		void setup(XPEvaluator evaluator) throws ManagedException;
+	}
+	
+	class XPParser extends Parser {
+
+		public XPParser(UnknownIdentifierValidation unknownIdValidation) {
+			this(new MapVariableContext(), XPEvaluator.CR_DEFAULT, unknownIdValidation);
+		}
+
+		public XPParser(VariableContext variableContext, ContextResolver contextResolver, UnknownIdentifierValidation unknownIdValidation) {
+			super(variableContext, contextResolver, unknownIdValidation);
+			
+			classesMan.registerClass(XALParser.T_OBJECT_VALUE);
+		}
+
+		public XPParser(VariableContext variableContext, ContextResolver contextResolver) {
+			this(variableContext, contextResolver, (id, context) -> null);
+		}
+		
 	}
 	
 	public static final String PRTY_NAME = "_name";
@@ -82,7 +102,7 @@ public class Computing {
 	public Computing(CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.rootObject = rootObject;
-		this.xpCompiler = new Parser(rootVariableContext, contextResolver);
+		this.xpCompiler = new XPParser(rootVariableContext, contextResolver);
 		
 		typeSolver = new TypeSolver();
 		
@@ -99,7 +119,7 @@ public class Computing {
 	}
 		
 	public Computing(CharReader charReader, EvaluatorSetup evSteup, UnknownIdentifierValidation uiv) throws ManagedException {
-		this.xpCompiler = new Parser(new MapVariableContext(), contextResolver, uiv);
+		this.xpCompiler = new XPParser(new MapVariableContext(), contextResolver, uiv);
 		typeSolver = new TypeSolver();
 		
 		XPEvaluator compEvaluator = xpCompiler.evaluator();
@@ -124,7 +144,7 @@ public class Computing {
 	}
 	
 	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
-		this.xpCompiler = new Parser(vc, contextResolver);
+		this.xpCompiler = new XPParser(vc, contextResolver);
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
 		//this.cclEvaluatorFacory = cclEvaluatorFacory;

@@ -7,11 +7,13 @@ import com.exa.buffer.CharReader;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.XPEvaluator;
 import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
+import com.exa.lang.expression.TObjectValue;
 import com.exa.lang.parsing.Computing.EvaluatorSetup;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
 
-public class XALParser {	
+public class XALParser {
+	public static final TObjectValue T_OBJECT_VALUE = new TObjectValue();
 	
 	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {
 		
