@@ -35,7 +35,8 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		mapTypeManToString.put(ClassesMan.T_DATE, "date");
 		//mapTypeManToString.put(ClassesMan.T_OBJECT, "object");
 	}
-	//private String context = null;
+	
+	private String evalTime;
 	
 	private XPEvaluator evaluator;
 	//private ObjectValue<XPOperand<?>> rootObject;
@@ -46,19 +47,11 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	//private XPEvalautorFactory evaluatorFactory;
 	
 
-	public XALCalculabeValue(XPOperand<T> xp/*, XPEvalautorFactory evaluatorFactory, ObjectValue<XPOperand<?>> rootObject, String context*/) {
+	public XALCalculabeValue(XPOperand<T> xp, String evalTime) {
 		super();
 		this.xp = xp;
-		
-		//this.evaluatorFactory = evaluatorFactory;
-		//this.rootObject = rootObject;
-		//this.context = context;
+		this.evalTime = evalTime;
 	}
-	
-	
-	/*public XALCalculabeValue(XPOperand<T> xp, ObjectValue<XPOperand<?>> rootObject, String context) {
-		this(xp, new StandardXPEvaluatorFactory(new TypeSolver()), rootObject, context);
-	}*/
 
 	@Override
 	public T getValue() {
@@ -121,6 +114,8 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		
 		throw new ManagedException(String.format("This value should be an integer"));
 	}
+	
+	
 
 	@Override
 	public ObjectValue<XPOperand<?>> asRequiredObjectValue() throws ManagedException {
@@ -150,13 +145,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	@Override
 	public XALCalculabeValue<T> clone() throws CloneNotSupportedException {
 		//ObjectValue<XPOperand<?>> ov = rootObject;
-		return new XALCalculabeValue<T>(xp/*, evaluatorFactory, ov, context*/);
-	}
-
-	@Override
-	public String getContext() {
-		return null;
-		//return context;
+		return new XALCalculabeValue<T>(xp, evalTime);
 	}
 
 	@Override
@@ -201,8 +190,17 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	public void setEvaluator(XPEvaluator evaluator) {
 		this.evaluator = evaluator;
 	}
-	
-	
-	
 
+	@Override
+	public String getEvalTime() {
+		return evalTime;
+	}
+
+	@Override
+	public Boolean asBoolean() throws ManagedException {
+		if(xp.type() == ClassesMan.T_BOOLEAN) return ClassesMan.T_BOOLEAN.valueOrNull(xp.value(evaluator));
+		
+		throw new ManagedException(String.format("This value should be an integer"));
+	}
+	
 }

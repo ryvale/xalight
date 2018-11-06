@@ -8,7 +8,7 @@ import com.exa.chars.EscapeCharMan;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.XPEvaluator;
 import com.exa.lang.parsing.Computing;
-import com.exa.lang.parsing.Parser;
+import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
@@ -28,7 +28,7 @@ public class XalightApplicationTests extends TestCase {
     }
 	
 	public void testXalFile() throws ManagedException {
-		Parser parser = new Parser();
+		XALParser parser = new XALParser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test.xal");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString(Computing.PRTY_TYPE)));
@@ -60,7 +60,7 @@ public class XalightApplicationTests extends TestCase {
 	}
 	
 	public void testXalString() throws ManagedException {
-		Parser parser = new Parser();
+		XALParser parser = new XALParser();
 		ObjectValue<XPOperand<?>> ov = parser.parseString(":xlsx, model { file 'repo:default/equipement-a-renouveler.xls', sheets [ Automates, Forages { num 2 } ] }, data [ automates { defaultSheet Automates, record [ A3 { sheet Automates,  exp code }, B8 { exp libelle} ], lists [ { sheet Forages, row 5, record [A { exp debut }] }] } ]");
 		
 		assertTrue("xlsx".equals(ov.getAttributAsString(Computing.PRTY_TYPE)));
@@ -81,7 +81,7 @@ public class XalightApplicationTests extends TestCase {
 	}
 	
 	public void testXalInheritance() throws ManagedException {
-		Parser parser = new Parser();
+		XALParser parser = new XALParser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
 		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test2.xal", "entities.entity2", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
@@ -114,7 +114,7 @@ public class XalightApplicationTests extends TestCase {
 	}
 	
 	public void testXalInheritance2() throws ManagedException {
-		Parser parser = new Parser();
+		XALParser parser = new XALParser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
 		Map<String, ObjectValue<XPOperand<?>>> libOV = new HashMap<>();
@@ -131,7 +131,7 @@ public class XalightApplicationTests extends TestCase {
 
 	
 	public void testXalInheritance5() throws ManagedException {
-		Parser parser = new Parser();
+		XALParser parser = new XALParser();
 		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
 		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test3.xal", "entities.entity3.cplx", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
@@ -143,5 +143,45 @@ public class XalightApplicationTests extends TestCase {
 		
 		
 	}
+	
+	public void testXalInheritance6() throws ManagedException {
+		XALParser parser = new XALParser();
+		//ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test4.xal");
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test4.xal", "entities.entity1", new XPEvaluator()); //ov.getPathAttributAsObjecValue("entities.entity2");
+		
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("property")));
+		
+	}
+	
+	public void testXalInheritance7() throws ManagedException {
+		XALParser parser = new XALParser();
+		//ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test4.xal");
+		
+		XPEvaluator eval = new XPEvaluator();
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test4.xal", "entities.entity2", eval); //ov.getPathAttributAsObjecValue("entities.entity2");
+		
+		eval.addVariable("prm", String.class, "3");
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("property1")));
+		
+	}
+	
+	public void testXalInheritance8() throws ManagedException {
+		XALParser parser = new XALParser();
+		//ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test4.xal");
+		
+		XPEvaluator eval = new XPEvaluator();
+		
+		eval.getCurrentVariableContext().addVariable("start", String.class, "01/02/2016");
+		eval.getCurrentVariableContext().addVariable("end", String.class, "17/08/2018");
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test2.ds.xal", "entities.entity2", eval); //ov.getPathAttributAsObjecValue("entities.entity2");
+		
+		
+		//assertTrue("2".equals(ovEntity.getPathAttributAsString("property1")));
+		
+	}
+
 
 }

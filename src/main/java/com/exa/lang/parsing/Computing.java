@@ -2,9 +2,9 @@ package com.exa.lang.parsing;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -18,6 +18,8 @@ import com.exa.expression.eval.ClassesMan;
 import com.exa.expression.eval.MapVariableContext;
 import com.exa.expression.eval.XPEvaluator;
 import com.exa.expression.eval.XPEvaluator.ContextResolver;
+import com.exa.expression.parsing.Parser;
+import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
 import com.exa.lexing.ParsingException;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
@@ -48,14 +50,16 @@ public class Computing {
 	
 	public static final String LIBN_DEFAULT = "references";
 	
+	public static final String ET_NOW = "now";
+	
+	public static final String ET_RUNTIME = "runtime";
+	
 	private ObjectValue<XPOperand<?>> rootObject;
-	private XPParser xpCompiler;
+	private Parser xpCompiler;
 	private XALLexingRules lexingRules = new XALLexingRules();
 	private CharReader charReader;
 	
 	private List<ObjectValue<XPOperand<?>>> heirsObject = new ArrayList<>();
-	
-	//private XPEvalautorFactory cclEvaluatorFacory;
 	
 	private TypeSolver typeSolver;
 	
@@ -78,7 +82,7 @@ public class Computing {
 	public Computing(CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.rootObject = rootObject;
-		this.xpCompiler = new XPParser(rootVariableContext, contextResolver);
+		this.xpCompiler = new Parser(rootVariableContext, contextResolver);
 		
 		typeSolver = new TypeSolver();
 		
@@ -94,8 +98,8 @@ public class Computing {
 		//this.cclEvaluatorFacory = cclEvaluatorFacory;
 	}
 		
-	public Computing(CharReader charReader, EvaluatorSetup evSteup) throws ManagedException {
-		this.xpCompiler = new XPParser(new MapVariableContext(), contextResolver);
+	public Computing(CharReader charReader, EvaluatorSetup evSteup, UnknownIdentifierValidation uiv) throws ManagedException {
+		this.xpCompiler = new Parser(new MapVariableContext(), contextResolver, uiv);
 		typeSolver = new TypeSolver();
 		
 		XPEvaluator compEvaluator = xpCompiler.evaluator();
@@ -116,11 +120,11 @@ public class Computing {
 	
 	
 	public Computing(CharReader charReader) throws ManagedException {
-		this(charReader, (evaluator) -> {} ); 
+		this(charReader, (evaluator) -> {}, (id, context) -> null); 
 	}
 	
 	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
-		this.xpCompiler = new XPParser(vc, contextResolver);
+		this.xpCompiler = new Parser(vc, contextResolver);
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
 		//this.cclEvaluatorFacory = cclEvaluatorFacory;
@@ -139,6 +143,13 @@ public class Computing {
 	
 	public void addCustomType(String name, Class<?> valueClass) {
 		
+	}
+	
+	public static Map<String, ObjectValue<XPOperand<?>>> getDefaultObjectLib(ObjectValue<XPOperand<?>> rootOV) throws ManagedException {
+		Map<String, ObjectValue<XPOperand<?>>> res = new HashMap<>();
+		res.put(Computing.LIBN_DEFAULT, rootOV.getAttributAsObjectValue(Computing.LIBN_DEFAULT));
+		
+		return res;
 	}
 
 	public ObjectValue<XPOperand<?>> execute() throws ManagedException {
@@ -175,8 +186,6 @@ public class Computing {
 			}
 			
 			Value<?, XPOperand<?>> propertyValue = readPropertyValueForObject(propertyName);
-			
-			//ObjectValue<XPOperand<?>> ov = propertyValue
 			
 			rootObject.setAttribut(propertyName, propertyValue);
 			
@@ -265,7 +274,7 @@ public class Computing {
 		}
 		
 		try {
-			res = computeAllCalculabe(res, evaluator);
+			res = computeAllCalculable(res, evaluator, Computing.getDefaultObjectLib(rootOV));
 		} catch (CloneNotSupportedException e) {
 			throw new ManagedException(e);
 		}
@@ -325,7 +334,7 @@ public class Computing {
 		}
 		
 		try {
-			res = computeAllCalculabe(res, evaluator);
+			res = computeAllCalculable(res, evaluator, libOV);
 		} catch (CloneNotSupportedException e) {
 			throw new ManagedException(e);
 		}
@@ -369,7 +378,7 @@ public class Computing {
 			ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 		} while(true);
 		try {
-			res = computeAllCalculabe(res, evaluator);
+			res = computeAllCalculable(res, evaluator, libOV);
 		} catch (CloneNotSupportedException e) {
 			throw new ManagedException(e);
 		}
@@ -378,22 +387,65 @@ public class Computing {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static ObjectValue<XPOperand<?>> computeAllCalculabe(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator) throws CloneNotSupportedException {
-		ov = ov.clone();
-		Map<String, Value<?, XPOperand<?>>> mp = ov.getValue();
+	private static ObjectValue<XPOperand<?>> computeAllCalculable(ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws CloneNotSupportedException, ManagedException {
+		ObjectValue<XPOperand<?>> res = ovEntity;
+		
+		ObjectValue<XPOperand<?>> ovCallParams = ovEntity.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+		if(ovCallParams != null) {
+			do {
+				VariableContext lastVC = new MapVariableContext();
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, lastVC, mpParams);
+				
+				evaluator.pushVariableContext(lastVC);
+				
+				String fqnParts[] = motherClass.split("[.]");
+		
+				
+				ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
+				
+				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, ovEntity, evaluator);
+				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+			
+				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			} while(true);
+		}
+		
+		Map<String, Value<?, XPOperand<?>>> mp = res.getValue();
 		
 		for(String propertyName : mp.keySet()) {
 			Value<?, XPOperand<?>> vl=mp.get(propertyName);
 			
+			
 			ObjectValue<XPOperand<?>> vov = vl.asObjectValue();
 			if(vov != null) {
-				mp.put(propertyName, computeAllCalculabe(vov, evaluator));
+				
+				mp.put(propertyName, computeAllCalculable(vov, evaluator, libOV));
 				continue;
 			}
 			
 			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
 			
 			if(cl == null) continue;
+			
+			if(ET_RUNTIME.equals(cl.getEvalTime())) {
+				XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+				xalCL.setEvaluator(evaluator);
+				continue;
+			}
 			
 			if("string".equals(cl.typeName())) {
 				XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
@@ -418,14 +470,7 @@ public class Computing {
 				mp.put(propertyName, new DecimalValue<>(xalCL.getValue()));
 				continue;
 			}
-			
-			/*if("date".equals(cl.typeName())) {
-				XALCalculabeValue<Date> xalCL = (XALCalculabeValue<Date>) cl;
-				xalCL.setEvaluator(evaluator);
-				paramItems.set(i, new DateValu<>(xalCL.getValue()));
-				continue;
-			}*/
-			
+						
 			if("boolean".equals(cl.typeName())) {
 				XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
 				xalCL.setEvaluator(evaluator);
@@ -435,7 +480,7 @@ public class Computing {
 			}
 		}
 		
-		return ov;
+		return res;
 		
 	}
 	
@@ -539,7 +584,7 @@ public class Computing {
 	}
 	
 	public Value<?, XPOperand<?>> readPropertyValueForObject(String context) throws ManagedException {
-		variableContextAnyWay(context);
+		//variableContextAnyWay(context);
 		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithOutDec(context);
 		if(res != null) return res;
 		Character ch = lexingRules.nextForwardChar(charReader);
@@ -555,7 +600,11 @@ public class Computing {
 	}
 	
 	private ObjectValue<XPOperand<?>> readObjectWithDeclarationParam(String context) throws ManagedException {
-		ObjectValue<XPOperand<?>> params = readFunctionParamsDeclaration(context);
+		XPEvaluator evaluator = xpCompiler.evaluator();
+		VariableContext vc = new MapVariableContext();
+		evaluator.pushVariableContext(vc);
+		
+		ObjectValue<XPOperand<?>> params = readFunctionParamsDeclaration(vc);
 		
 		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
 		res.setAttribut(PRTY_PARAMS, params);
@@ -563,15 +612,23 @@ public class Computing {
 		Character ch = lexingRules.nextForwardRequiredNonBlankChar(charReader);
 		if('{' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
-			return readObjectBody(res, context);
+			
+			res = readObjectBody(res, context);
+			evaluator.popVariableContext();
+			return res;
 		}
 		
 		if('@' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
-			return readObjectByClass(res, context);
+			res = readObjectByClass(res, context);
+			evaluator.popVariableContext();
+			return res;
 		}
 		
-		if(',' == ch) return res;
+		if(',' == ch) {
+			evaluator.popVariableContext();
+			return res;
+		}
 		
 		throw new ParsingException(String.format("'{', ',' or '@' expected after declarion params. Unexpected %S", ch.toString()));
 	}
@@ -615,9 +672,9 @@ public class Computing {
 		
 		do {
 			//xpCompiler xpCompiler = new xpCompiler(getVariablesContext(context));
-			XPOperand<?> xp = xpCompiler.parse(charReader, (lr, charReader) -> true, getVariableContextName(context));
+			XPOperand<?> xp = xpCompiler.parse(charReader, (lr, charReader) -> true, context);
 			
-			Value<?, XPOperand<?>> propetyValue = calculableFor(xp, context);
+			Value<?, XPOperand<?>> propetyValue = calculableFor(xp, "now");
 			
 			ch = lexingRules.nextForwardRequiredNonBlankChar(charReader);
 			
@@ -636,23 +693,23 @@ public class Computing {
 		return avRes;
 	}
 
-	private XALCalculabeValue<?> calculableFor(XPOperand<?> xp, String context) {
+	private XALCalculabeValue<?> calculableFor(XPOperand<?> xp, String evalTime) {
 		Type<?> type = xp.type();
 		
-		if(type == ClassesMan.T_STRING) return new XALCalculabeValue<>(ClassesMan.T_STRING.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
+		if(type == ClassesMan.T_STRING) return new XALCalculabeValue<>(ClassesMan.T_STRING.valueOrNull(xp), evalTime);
 		
-		if(type == ClassesMan.T_INTEGER) return new XALCalculabeValue<>(ClassesMan.T_INTEGER.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
+		if(type == ClassesMan.T_INTEGER) return new XALCalculabeValue<>(ClassesMan.T_INTEGER.valueOrNull(xp), evalTime);
 		
-		if(type == ClassesMan.T_BOOLEAN) return new XALCalculabeValue<>(ClassesMan.T_BOOLEAN.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
+		if(type == ClassesMan.T_BOOLEAN) return new XALCalculabeValue<>(ClassesMan.T_BOOLEAN.valueOrNull(xp), evalTime);
 		
-		if(type == ClassesMan.T_DOUBLE) return new XALCalculabeValue<>(ClassesMan.T_DOUBLE.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
+		if(type == ClassesMan.T_DOUBLE) return new XALCalculabeValue<>(ClassesMan.T_DOUBLE.valueOrNull(xp), evalTime);
 		
-		if(type == ClassesMan.T_DATE) return new XALCalculabeValue<>(ClassesMan.T_DATE.valueOrNull(xp)/*, cclEvaluatorFacory, rootObject, context*/);
+		if(type == ClassesMan.T_DATE) return new XALCalculabeValue<>(ClassesMan.T_DATE.valueOrNull(xp), evalTime);
 		
-		return new XALCalculabeValue<>(xp/*, cclEvaluatorFacory, rootObject, context*/);
+		return new XALCalculabeValue<>(xp, evalTime);
 	}
 	
-	private VariableContext variableContextAnyWay(String context) throws ManagedException {
+	/*private VariableContext variableContextAnyWay(String context) throws ManagedException {
 		String varContextName  = getVariableContextName(context);
 		XPEvaluator evaluator = xpCompiler.evaluator();
 		VariableContext res = evaluator.getVariableContext(varContextName);
@@ -663,6 +720,19 @@ public class Computing {
 		
 		return res;
 	}
+	*/
+	
+	/*private VariableContext variableContextAnyWay(String context) throws ManagedException {
+		
+		XPEvaluator evaluator = xpCompiler.evaluator();
+		VariableContext res = new MapVariableContext();
+		evaluator.pushVariableContext(res);
+		
+		
+		return res;
+	}
+	*/
+	
 	public static String getVariableContextName(String context) {
 		String parts[] = context.split("[.]");
 		return parts.length > 1 ? parts[0] + "_" + parts[1] : parts[0];
@@ -728,10 +798,11 @@ public class Computing {
 		return ov;
 	}
 	
-	private ObjectValue<XPOperand<?>> readFunctionParamsDeclaration(String context) throws ManagedException {
+	private ObjectValue<XPOperand<?>> readFunctionParamsDeclaration(VariableContext vc) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
 		
-		VariableContext vc = variableContextAnyWay(context);
+		//VariableContext vc = variableContextAnyWay(context);
+		
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
 		if(')' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
@@ -836,11 +907,19 @@ public class Computing {
 		
 		if('=' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
+			XPOperand<?> xp; String evalTime;
 			
-			XPOperand<?> xp = xpCompiler.parse(charReader, (lr, charReader) -> true, getVariableContextName(context));
+			ch = lexingRules.nextForwardChar(charReader);
+			if(ch == '>') {
+				charReader.nextChar();
+				evalTime = "runtime";
+			}
+			else evalTime = "now";
+			xp = xpCompiler.parse(charReader, (lr, charReader) -> true, context);
 			
-			return calculableFor(xp, context);
+			return calculableFor(xp, evalTime);
 		}
+		
 		
 		return null;
 	}
@@ -985,10 +1064,19 @@ public class Computing {
 		
 		if('=' == ch) {
 			charReader.nextChar();
-			getVariableContextName(context);
-			XPOperand<?> xp = xpCompiler.parse(charReader, (lr, charReader) -> true, getVariableContextName(context));
 			
-			return calculableFor(xp, context);
+			ch = lexingRules.nextForwardChar(charReader);
+			
+			XPOperand<?> xp; String evalTime;
+			if('>' == ch) {
+				charReader.nextChar();
+				evalTime = "runtime";
+			}
+			else evalTime = "now";
+			
+			xp = xpCompiler.parse(charReader, (lr, charReader) -> true, context);
+			
+			return calculableFor(xp, evalTime);
 		}
 		
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));
