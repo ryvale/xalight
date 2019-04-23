@@ -41,6 +41,7 @@ public class XALParser {
 	
 	public ObjectValue<XPOperand<?>> parseFile(String script, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) throws ManagedException {
 		CharReader cr = null;
+
 		try {
 			cr = CharReader.forFile(script, false);
 			Computing computing = new Computing(cr, evaluatorSetup, uiv);
@@ -94,7 +95,7 @@ public class XALParser {
 	}
 
 	
-	/*public Computing getComputeObjectFormFile(String script, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) throws ManagedException {
+	public Computing getComputeObjectFormFile(String script, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) throws ManagedException {
 		CharReader cr;
 		try {
 			cr = CharReader.forFile(script, false);
@@ -103,7 +104,7 @@ public class XALParser {
 		}
 		
 		return new Computing(cr, evaluatorSetup, uiv);
-	}*/
+	}
 
 }
 

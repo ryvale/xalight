@@ -1,5 +1,6 @@
 package com.exa.lang.parsing;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -160,6 +161,9 @@ public class Computing {
 		});
 	}
 	
+	public void closeCharReader() throws IOException {
+		this.charReader.close();
+	}
 	
 	public void addCustomType(String name, Class<?> valueClass) {
 		
@@ -709,6 +713,13 @@ public class Computing {
 					continue;
 				}
 				
+				XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+				xalCL.setEvaluator(evaluator);
+				xalCL.setVariableContext(currentVC);
+				
+				Type<?> tp = evaluator.getClassesMan().getType(cl.typeName());
+				
+				newVC.addVariable(paramName, tp.valueClass(), xalCL.getValue());
 				continue;
 			}
 			

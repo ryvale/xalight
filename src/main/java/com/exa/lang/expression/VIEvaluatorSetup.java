@@ -8,7 +8,6 @@ import com.exa.expression.eval.XPEvaluator;
 import com.exa.lang.expression.params.GlobalParams;
 import com.exa.lang.expression.params.TGlobalParams;
 import com.exa.utils.ManagedException;
-import com.jayway.jsonpath.internal.filter.Evaluator;
 
 public class VIEvaluatorSetup implements XPEvaluatorSetup {
 	
@@ -47,6 +46,14 @@ public class VIEvaluatorSetup implements XPEvaluatorSetup {
 
 	public void injectVariables(XPEvaluator evaluator) throws ManagedException {
 		evaluator.addVariable("params", globalParams.getClass(), globalParams);
+		for(String varName : managedVariables.keySet()) {
+			ValueInfo<?> value = managedVariables.get(varName);
+			if("params".equals(varName)) continue;
+			evaluator.assignOrDeclareVariable(varName, value.valueClass, value.value);
+		}
+	}
+	
+	public void addParamsVariables(XPEvaluator evaluator) throws ManagedException {
 		for(String varName : managedVariables.keySet()) {
 			ValueInfo<?> value = managedVariables.get(varName);
 			if("params".equals(varName)) continue;

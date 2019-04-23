@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<<<<<<< HEAD
 <testsuite name="com.exa.lang.XalightApplicationTests" time="0.121" tests="9" errors="0" skipped="0" failures="0">
+=======
+<testsuite name="com.exa.lang.XalightApplicationTests" time="0.212" tests="9" errors="0" skipped="0" failures="0">
+>>>>>>> 5a1ac0ca7f667055bbed33d2808599d4ac82ad77
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_201\jre\bin"/>
@@ -26,7 +30,11 @@
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="user.variant" value=""/>
     <property name="os.name" value="Windows 10"/>
+<<<<<<< HEAD
     <property name="classworlds.conf" value="D:\p-project\exa-xal-light\.metadata\.plugins\org.eclipse.m2e.launching\launches\m2conf4392956727228092687.tmp"/>
+=======
+    <property name="classworlds.conf" value="C:\Projets\-communs\exa-xal-light\.metadata\.plugins\org.eclipse.m2e.launching\launches\m2conf9098378160033464459.tmp"/>
+>>>>>>> 5a1ac0ca7f667055bbed33d2808599d4ac82ad77
     <property name="sun.jnu.encoding" value="Cp1252"/>
     <property name="java.library.path" value="C:\Program Files\Java\jdk1.8.0_201\bin;C:\Windows\Sun\Java\bin;C:\Windows\system32;C:\Windows;C:/Program Files/Java/jre1.8.0_201/bin/server;C:/Program Files/Java/jre1.8.0_201/bin;C:/Program Files/Java/jre1.8.0_201/lib/amd64;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\nodejs\;C:\Users\leader\AppData\Local\Microsoft\WindowsApps;C:\Users\leader\AppData\Roaming\npm;C:\Users\leader\AppData\Local\Programs\Microsoft VS Code\bin;C:\Outils\dev\java\sts-bundle\sts-3.8.3.RELEASE;;."/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
@@ -60,6 +68,7 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
+<<<<<<< HEAD
   <testcase name="testXalString" classname="com.exa.lang.XalightApplicationTests" time="0.084"/>
   <testcase name="testXalInheritance2" classname="com.exa.lang.XalightApplicationTests" time="0.016"/>
   <testcase name="testXalInheritance5" classname="com.exa.lang.XalightApplicationTests" time="0.004"/>
@@ -69,4 +78,15 @@
   <testcase name="testXalInheritance" classname="com.exa.lang.XalightApplicationTests" time="0.004"/>
   <testcase name="testEscape" classname="com.exa.lang.XalightApplicationTests" time="0"/>
   <testcase name="testXalFile" classname="com.exa.lang.XalightApplicationTests" time="0.003"/>
+=======
+  <testcase name="testXalString" classname="com.exa.lang.XalightApplicationTests" time="0.098"/>
+  <testcase name="testXalInheritance2" classname="com.exa.lang.XalightApplicationTests" time="0.018"/>
+  <testcase name="testXalInheritance5" classname="com.exa.lang.XalightApplicationTests" time="0.011"/>
+  <testcase name="testXalInheritance6" classname="com.exa.lang.XalightApplicationTests" time="0.013"/>
+  <testcase name="testXalInheritance7" classname="com.exa.lang.XalightApplicationTests" time="0.005"/>
+  <testcase name="testXalInheritance8" classname="com.exa.lang.XalightApplicationTests" time="0.039"/>
+  <testcase name="testXalInheritance" classname="com.exa.lang.XalightApplicationTests" time="0.01"/>
+  <testcase name="testEscape" classname="com.exa.lang.XalightApplicationTests" time="0.001"/>
+  <testcase name="testXalFile" classname="com.exa.lang.XalightApplicationTests" time="0.017"/>
+>>>>>>> 5a1ac0ca7f667055bbed33d2808599d4ac82ad77
 </testsuite>
