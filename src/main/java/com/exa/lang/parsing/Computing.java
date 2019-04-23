@@ -17,11 +17,11 @@ import com.exa.expression.XPOperand;
 import com.exa.expression.eval.ClassesMan;
 import com.exa.expression.eval.MapVariableContext;
 import com.exa.expression.eval.XPEvaluator;
-import com.exa.expression.eval.XPEvaluator.ContextResolver;
 import com.exa.expression.parsing.Parser;
 import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
 
 import com.exa.lang.expression.XALCalculabeValue;
+import com.exa.lang.expression.XPEvaluatorSetup;
 import com.exa.lexing.ParsingException;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
@@ -35,25 +35,25 @@ import com.exa.utils.values.Value;
 
 public class Computing {
 	
-	public static interface EvaluatorSetup {
+	/*public static interface EvaluatorSetup {
 		
 		void setup(XPEvaluator evaluator) throws ManagedException;
-	}
+	}*/
 	
 	class XPParser extends Parser {
 
 		public XPParser(UnknownIdentifierValidation unknownIdValidation) {
-			this(new MapVariableContext(), XPEvaluator.CR_DEFAULT, unknownIdValidation);
+			this(new MapVariableContext()/*, XPEvaluator.CR_DEFAULT*/, unknownIdValidation);
 		}
 
-		public XPParser(VariableContext variableContext, ContextResolver contextResolver, UnknownIdentifierValidation unknownIdValidation) {
-			super(variableContext, contextResolver, unknownIdValidation);
+		public XPParser(VariableContext variableContext/*, ContextResolver contextResolver*/, UnknownIdentifierValidation unknownIdValidation) {
+			super(variableContext/*, contextResolver*/, unknownIdValidation);
 			
 			classesMan.registerClass(XALParser.T_OBJECT_VALUE);
 		}
 
-		public XPParser(VariableContext variableContext, ContextResolver contextResolver) {
-			this(variableContext, contextResolver, (id, context) -> null);
+		public XPParser(VariableContext variableContext/*, ContextResolver contextResolver*/) {
+			this(variableContext/*, contextResolver*/, (id, context) -> null);
 		}
 		
 	}
@@ -83,7 +83,7 @@ public class Computing {
 	
 	private TypeSolver typeSolver;
 	
-	private ContextResolver contextResolver = (vcs, context) -> {
+	/*private ContextResolver contextResolver = (vcs, context) -> {
 		VariableContext res = vcs.get(context);
 		if(res != null) return res;
 				
@@ -97,12 +97,12 @@ public class Computing {
 			if(res != null) return res;
 		}
 		return null;
-	};
+	};*/
 	
 	public Computing(CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.rootObject = rootObject;
-		this.xpCompiler = new XPParser(rootVariableContext, contextResolver);
+		this.xpCompiler = new XPParser(rootVariableContext/*, contextResolver*/);
 		
 		typeSolver = new TypeSolver();
 		
@@ -118,8 +118,8 @@ public class Computing {
 		//this.cclEvaluatorFacory = cclEvaluatorFacory;
 	}
 		
-	public Computing(CharReader charReader, EvaluatorSetup evSteup, UnknownIdentifierValidation uiv) throws ManagedException {
-		this.xpCompiler = new XPParser(new MapVariableContext(), contextResolver, uiv);
+	public Computing(CharReader charReader, XPEvaluatorSetup evSteup, UnknownIdentifierValidation uiv) throws ManagedException {
+		this.xpCompiler = new XPParser(new MapVariableContext()/*, contextResolver*/, uiv);
 		typeSolver = new TypeSolver();
 		
 		XPEvaluator compEvaluator = xpCompiler.evaluator();
@@ -144,7 +144,7 @@ public class Computing {
 	}
 	
 	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
-		this.xpCompiler = new XPParser(vc, contextResolver);
+		this.xpCompiler = new XPParser(vc/*, contextResolver*/);
 		this.rootObject = new ObjectValue<>();
 		this.charReader = charReader;
 		//this.cclEvaluatorFacory = cclEvaluatorFacory;
@@ -241,32 +241,40 @@ public class Computing {
 		return rootObject;
 	}
 	
-	public ObjectValue<XPOperand<?>> object(String path, XPEvaluator evaluator) throws ManagedException {
+	/*public ObjectValue<XPOperand<?>> object(String path, XPEvaluator evaluator) throws ManagedException {
 		ObjectValue<XPOperand<?>> rootOV = execute();
 		
 		return object(rootOV, path, evaluator);
-	}
+	}*/
 	
-	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator) throws ManagedException {
+	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = rootOV;
 		
 		String parts[] = path.split("[.]");
 		
 		VariableContext lastVC = null;
 		
-		StringBuilder sbVCName = new StringBuilder();
-		for(int i=0; i<parts.length; ++i) {
+		VariableContext parentVC = evaluator.getCurrentVariableContext();
+		
+		VariableContext entityParentVC = null;
+		//StringBuilder sbVCName = new StringBuilder();
+		for(int i=0; i<parts.length-1; ++i) {
 			String part = parts[i];
 			
-			if(i>0) sbVCName.append(".").append(part);
-			else sbVCName.append(part);
+			/*if(i>0) sbVCName.append(".").append(part);
+			else sbVCName.append(part);*/
 			
 			res = res.getRequiredAttributAsObjectValue(part);
 			
 			ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 			if(ovCallParams == null) continue;
+			boolean firtVC = true;
 			do {
-				lastVC = new MapVariableContext();
+				lastVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+				if(firtVC) {
+					entityParentVC = lastVC;
+					firtVC = false;
+				}
 				
 				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
 				
@@ -276,52 +284,55 @@ public class Computing {
 				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
 				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
 				
-				addParamsValueInContext(evaluator, lastVC, mpParams);
-				
-				evaluator.pushVariableContext(lastVC);
+				addParamsValueInContext(evaluator, parentVC, lastVC, mpParams);
 				
 				ObjectValue<XPOperand<?>> ovMother = rootOV.getPathAttributAsObjecValue(motherClass);
 				
 				Map<String, Value<?, XPOperand<?>>> mpRes = res.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
 				
-				mergeInheritedObject(ovMother, res, evaluator);
+				mergeInheritedObject(ovMother, res, evaluator, lastVC);
+				
+				parentVC = lastVC;
 				
 				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
 				
 				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 			} while(true);
 		}
+		if(entityParentVC != null) entityVC.setParent(entityParentVC);
 		
-		try {
-			res = computeAllCalculable(res, evaluator, Computing.getDefaultObjectLib(rootOV));
-		} catch (CloneNotSupportedException e) {
-			throw new ManagedException(e);
-		}
-		
-		return res;
+		return object(res.getRequiredAttributAsObjectValue(parts[parts.length-1]), evaluator, entityVC, Computing.getDefaultObjectLib(rootOV));
 	}
 	
-	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> relativeOV, String path, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> relativeOV, String path, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = relativeOV;
 		
 		String parts[] = path.split("[.]");
 		
 		VariableContext lastVC = null;
 		
-		StringBuilder sbVCName = new StringBuilder();
-		for(int i=0; i<parts.length; ++i) {
+		VariableContext parentVC = evaluator.getCurrentVariableContext();
+		
+		VariableContext entityParentVC = null;
+		//StringBuilder sbVCName = new StringBuilder();
+		for(int i=0; i<parts.length-1; ++i) {
 			String part = parts[i];
 			
-			if(i>0) sbVCName.append(".").append(part);
-			else sbVCName.append(part);
+			/*if(i>0) sbVCName.append(".").append(part);
+			else sbVCName.append(part);*/
 			
 			res = res.getRequiredAttributAsObjectValue(part);
 			
 			ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 			if(ovCallParams == null) continue;
+			boolean firtVC = true;
 			do {
-				lastVC = new MapVariableContext();
+				lastVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+				if(firtVC) {
+					entityParentVC = lastVC;
+					firtVC = false;
+				}
 				
 				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
 				
@@ -331,7 +342,7 @@ public class Computing {
 				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
 				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
 				
-				addParamsValueInContext(evaluator, lastVC, mpParams);
+				addParamsValueInContext(evaluator, parentVC, lastVC, mpParams);
 				
 				evaluator.pushVariableContext(lastVC);
 				
@@ -345,7 +356,9 @@ public class Computing {
 				Map<String, Value<?, XPOperand<?>>> mpRes = res.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
 				
-				mergeInheritedObject(ovMother, res, evaluator);
+				mergeInheritedObject(ovMother, res, evaluator, lastVC);
+				
+				parentVC = lastVC;
 				
 				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
 				
@@ -353,67 +366,21 @@ public class Computing {
 			} while(true);
 		}
 		
-		try {
-			res = computeAllCalculable(res, evaluator, libOV);
-		} catch (CloneNotSupportedException e) {
-			throw new ManagedException(e);
-		}
+		if(entityParentVC != null) entityVC.setParent(entityParentVC);
 		
-		return res;
+		return object(res.getRequiredAttributAsObjectValue(parts[parts.length-1]), evaluator, entityVC, libOV);
 	}
 	
-	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+	public static ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		ObjectValue<XPOperand<?>> res = ovEntity;
 		ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
-		if(ovCallParams == null) return res;
 		
-		do {
-			VariableContext lastVC = new MapVariableContext();
-			
-			Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
-			
-			Iterator<String> strIt = mpCallParams.keySet().iterator();
-			String motherClass = strIt.next();
-			
-			ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
-			Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
-			
-			addParamsValueInContext(evaluator, lastVC, mpParams);
-			
-			evaluator.pushVariableContext(lastVC);
-			
-			String fqnParts[] = motherClass.split("[.]");
-	
-			
-			ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
-			
-			ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
-			
-			Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
-			mpRes.remove(PRTY_CALL_PARAMS);
-			
-			mergeInheritedObject(ovMother, ovEntity, evaluator);
-			if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
 		
-			ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
-		} while(true);
-		try {
-			res = computeAllCalculable(res, evaluator, libOV);
-		} catch (CloneNotSupportedException e) {
-			throw new ManagedException(e);
-		}
-		
-		return res;
-	}
-	
-	@SuppressWarnings("unchecked")
-	private static ObjectValue<XPOperand<?>> computeAllCalculable(ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, Map<String, ObjectValue<XPOperand<?>>> libOV) throws CloneNotSupportedException, ManagedException {
-		ObjectValue<XPOperand<?>> res = ovEntity;
-		
-		ObjectValue<XPOperand<?>> ovCallParams = ovEntity.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 		if(ovCallParams != null) {
+			VariableContext parentVC = entityVC;
+			evaluator.pushVariableContext(entityVC);
 			do {
-				VariableContext lastVC = new MapVariableContext();
+				VariableContext lastVC = new MapVariableContext(parentVC);
 				
 				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
 				
@@ -423,9 +390,9 @@ public class Computing {
 				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
 				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
 				
-				addParamsValueInContext(evaluator, lastVC, mpParams);
+				addParamsValueInContext(evaluator, parentVC, lastVC, mpParams);
 				
-				evaluator.pushVariableContext(lastVC);
+				//evaluator.pushVariableContext(lastVC);
 				
 				String fqnParts[] = motherClass.split("[.]");
 		
@@ -437,9 +404,194 @@ public class Computing {
 				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
 				
-				mergeInheritedObject(ovMother, ovEntity, evaluator);
+				mergeInheritedObject(ovMother, ovEntity, evaluator, lastVC);
+				
+				//evaluator.popVariableContext();
+				
 				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
 			
+				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+				
+				parentVC = lastVC;
+			} while(true);
+			evaluator.popVariableContext();
+		}
+		try {
+			res = computeAllCalculable(res, evaluator, entityVC, libOV);
+		} catch (CloneNotSupportedException e) {
+			throw new ManagedException(e);
+		}
+		
+		return res;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static ArrayValue<XPOperand<?>> array(ArrayValue<XPOperand<?>> avSrc, XPEvaluator evaluator, VariableContext arrayVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+		ArrayValue<XPOperand<?>> res = avSrc;
+		
+		List<Value<?, XPOperand<?>>> lSrc = avSrc.getValue();
+		
+		for(int i=0; i< lSrc.size(); ++i) {
+			Value<?,  XPOperand<?>> vl = lSrc.get(i);
+			ObjectValue<XPOperand<?>> ov = vl.asObjectValue();
+			if(ov == null) {
+				CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
+				
+				if(cl == null) {
+					ArrayValue<XPOperand<?>> av = vl.asArrayValue();
+					if(av == null) continue;
+					
+					lSrc.set(i, array(av, evaluator, arrayVC, libOV));
+					continue;
+				}
+				
+				if(ET_RUNTIME.equals(cl.getEvalTime())) {
+					XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+					xalCL.setVariableContext(arrayVC);
+					xalCL.setEvaluator(evaluator);
+					continue;
+				}
+				
+				if("string".equals(cl.typeName())) {
+					XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+					xalCL.setVariableContext(arrayVC);
+					xalCL.setEvaluator(evaluator);
+
+					lSrc.set(i, new StringValue<>(xalCL.getValue()));
+					continue;
+				}
+				
+				if("integer".equals(cl.typeName())) {
+					XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+					xalCL.setVariableContext(arrayVC);
+					xalCL.setEvaluator(evaluator);
+					
+					lSrc.set(i, new IntegerValue<>(xalCL.getValue()));
+					continue;
+				}
+				
+				if("float".equals(cl.typeName())) {
+					XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+					xalCL.setVariableContext(arrayVC);
+					xalCL.setEvaluator(evaluator);
+					
+					lSrc.set(i, new DecimalValue<>(xalCL.getValue()));
+					continue;
+				}
+							
+				if("boolean".equals(cl.typeName())) {
+					XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+					xalCL.setVariableContext(arrayVC);
+					xalCL.setEvaluator(evaluator);
+					
+					lSrc.set(i, new BooleanValue<>(xalCL.getValue()));
+					continue;
+				}
+
+				continue;
+			}
+			
+			VariableContext vc = new MapVariableContext(arrayVC);
+			
+			lSrc.set(i, object(ov, evaluator, vc, libOV));
+		}
+		
+		return res;
+	}
+	
+	public static ArrayValue<XPOperand<?>> array(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator, VariableContext arrayVC) throws ManagedException {
+		//ArrayValue<XPOperand<?>> av = ovRoot.getPathAttributAsArrayValue(path);
+		
+		ObjectValue<XPOperand<?>> ov = rootOV;
+		
+		String parts[] = path.split("[.]");
+		
+		VariableContext lastVC = null;
+		
+		VariableContext parentVC = evaluator.getCurrentVariableContext();
+		
+		StringBuilder sbVCName = new StringBuilder();
+		for(int i=0; i<parts.length-1; ++i) {
+			String part = parts[i];
+			
+			if(i>0) sbVCName.append(".").append(part);
+			else sbVCName.append(part);
+			
+			ov = ov.getRequiredAttributAsObjectValue(part);
+			
+			ObjectValue<XPOperand<?>> ovCallParams = ov.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			if(ovCallParams == null) continue;
+			do {
+				lastVC = new MapVariableContext(parentVC);
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, parentVC, lastVC, mpParams);
+				
+				evaluator.pushVariableContext(lastVC);
+				
+				ObjectValue<XPOperand<?>> ovMother = rootOV.getPathAttributAsObjecValue(motherClass);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = ov.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, ov, evaluator, lastVC);
+				
+				parentVC = lastVC;
+				if(ov.getAttribut(PRTY_CALL_PARAMS) == null) break;
+				
+				ovCallParams = ov.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			} while(true);
+		}
+		
+		ArrayValue<XPOperand<?>> res = ov.getRequiredAttributAsArrayValue(parts[parts.length-1]);
+		arrayVC.setParent(parentVC);
+		
+		return array(res, evaluator, arrayVC, Computing.getDefaultObjectLib(rootOV));
+	}
+	
+	@SuppressWarnings("unchecked")
+	private static ObjectValue<XPOperand<?>> computeAllCalculable(ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, VariableContext vc, Map<String, ObjectValue<XPOperand<?>>> libOV) throws CloneNotSupportedException, ManagedException {
+		ObjectValue<XPOperand<?>> res = ovEntity;
+		
+		ObjectValue<XPOperand<?>> ovCallParams = ovEntity.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+		if(ovCallParams != null) {
+			VariableContext parentVC = vc;
+			do {
+				VariableContext lastVC = new MapVariableContext(vc);
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, parentVC, lastVC, mpParams);
+				
+				//evaluator.pushVariableContext(lastVC);
+				
+				String fqnParts[] = motherClass.split("[.]");
+		
+				
+				ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
+				
+				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, ovEntity, evaluator, lastVC);
+				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+			
+				parentVC = lastVC;
 				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 			} while(true);
 		}
@@ -453,7 +605,7 @@ public class Computing {
 			ObjectValue<XPOperand<?>> vov = vl.asObjectValue();
 			if(vov != null) {
 				
-				mp.put(propertyName, computeAllCalculable(vov, evaluator, libOV));
+				mp.put(propertyName, computeAllCalculable(vov, evaluator, vc, libOV));
 				continue;
 			}
 			
@@ -463,12 +615,14 @@ public class Computing {
 			
 			if(ET_RUNTIME.equals(cl.getEvalTime())) {
 				XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+				if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
 				xalCL.setEvaluator(evaluator);
 				continue;
 			}
 			
 			if("string".equals(cl.typeName())) {
 				XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+				if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
 				xalCL.setEvaluator(evaluator);
 
 				mp.put(propertyName, new StringValue<>(xalCL.getValue()));
@@ -477,6 +631,7 @@ public class Computing {
 			
 			if("integer".equals(cl.typeName())) {
 				XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+				if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
 				xalCL.setEvaluator(evaluator);
 				
 				mp.put(propertyName, new IntegerValue<>(xalCL.getValue()));
@@ -485,6 +640,7 @@ public class Computing {
 			
 			if("float".equals(cl.typeName())) {
 				XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+				if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
 				xalCL.setEvaluator(evaluator);
 				
 				mp.put(propertyName, new DecimalValue<>(xalCL.getValue()));
@@ -493,6 +649,7 @@ public class Computing {
 						
 			if("boolean".equals(cl.typeName())) {
 				XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+				if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
 				xalCL.setEvaluator(evaluator);
 				
 				mp.put(propertyName, new BooleanValue<>(xalCL.getValue()));
@@ -505,7 +662,7 @@ public class Computing {
 	}
 	
 	@SuppressWarnings("unchecked")
-	private static void addParamsValueInContext(XPEvaluator evaluator, VariableContext vc, Map<String, Value<?, XPOperand<?>>> mpParams) throws ManagedException {
+	private static void addParamsValueInContext(XPEvaluator evaluator, VariableContext currentVC, VariableContext newVC, Map<String, Value<?, XPOperand<?>>> mpParams) throws ManagedException {
 		for(String paramName : mpParams.keySet()) {
 			Value<?, XPOperand<?>> vl = mpParams.get(paramName);
 			
@@ -515,35 +672,40 @@ public class Computing {
 				if("string".equals(cl.typeName())) {
 					XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
 					xalCL.setEvaluator(evaluator);
-					vc.addVariable(paramName, String.class, xalCL.getValue());
+					xalCL.setVariableContext(currentVC);
+					newVC.addVariable(paramName, String.class, xalCL.getValue());
 					continue;
 				}
 				
 				if("integer".equals(cl.typeName())) {
 					XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
 					xalCL.setEvaluator(evaluator);
-					vc.addVariable(paramName, Integer.class, xalCL.getValue());
+					xalCL.setVariableContext(currentVC);
+					newVC.addVariable(paramName, Integer.class, xalCL.getValue());
 					continue;
 				}
 				
 				if("float".equals(cl.typeName())) {
 					XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
 					xalCL.setEvaluator(evaluator);
-					vc.addVariable(paramName, Double.class, xalCL.getValue());
+					xalCL.setVariableContext(currentVC);
+					newVC.addVariable(paramName, Double.class, xalCL.getValue());
 					continue;
 				}
 				
 				if("date".equals(cl.typeName())) {
 					XALCalculabeValue<Date> xalCL = (XALCalculabeValue<Date>) cl;
 					xalCL.setEvaluator(evaluator);
-					vc.addVariable(paramName, Date.class, xalCL.getValue());
+					xalCL.setVariableContext(currentVC);
+					newVC.addVariable(paramName, Date.class, xalCL.getValue());
 					continue;
 				}
 				
 				if("boolean".equals(cl.typeName())) {
 					XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
 					xalCL.setEvaluator(evaluator);
-					vc.addVariable(paramName, Boolean.class, xalCL.getValue());
+					xalCL.setVariableContext(currentVC);
+					newVC.addVariable(paramName, Boolean.class, xalCL.getValue());
 					continue;
 				}
 				
@@ -552,31 +714,31 @@ public class Computing {
 			
 			StringValue<XPOperand<?>> stVl = vl.asStringValue();
 			if(stVl != null) {
-				vc.addVariable(paramName, String.class, stVl.getValue());
+				newVC.addVariable(paramName, String.class, stVl.getValue());
 				continue;
 			}
 			
 			IntegerValue<XPOperand<?>> itVl = vl.asIntegerValue();
 			if(itVl != null) {
-				vc.addVariable(paramName, Integer.class, itVl.getValue());
+				newVC.addVariable(paramName, Integer.class, itVl.getValue());
 				continue;
 			}
 			
 			BooleanValue<XPOperand<?>> blVl = vl.asBooleanValue();
 			if(blVl != null) {
-				vc.addVariable(paramName, Boolean.class, blVl.getValue());
+				newVC.addVariable(paramName, Boolean.class, blVl.getValue());
 				continue;
 			}
 			
 			DecimalValue<XPOperand<?>> dcVl = vl.asDecimalValue();
 			if(dcVl != null) {
-				vc.addVariable(paramName, Double.class, dcVl.getValue());
+				newVC.addVariable(paramName, Double.class, dcVl.getValue());
 				continue;
 			}
 			
 			ObjectValue<XPOperand<?>> obVl = vl.asObjectValue();
 			if(obVl != null) {
-				vc.addVariable(paramName, Object.class, obVl.getValue());
+				newVC.addVariable(paramName, Object.class, obVl.getValue());
 				continue;
 			}
 		}
@@ -1148,7 +1310,8 @@ public class Computing {
 		
 	}
 	
-	private static void mergeInheritedObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst, XPEvaluator evaluator) throws ManagedException {
+	@SuppressWarnings("unchecked")
+	private static void mergeInheritedObject(ObjectValue<XPOperand<?>> src, ObjectValue<XPOperand<?>> dst, XPEvaluator evaluator, VariableContext vc) throws ManagedException {
 		Map<String, Value<?, XPOperand<?>>> mpSrc = src.getValue();
 		Map<String, Value<?, XPOperand<?>>> mpDst = dst.getValue();
 		
@@ -1169,110 +1332,18 @@ public class Computing {
 				if(srcOVAttribut == null) continue;
 				
 				
-				mergeInheritedObject(srcOVAttribut, dstOVAttribut, evaluator);
+				mergeInheritedObject(srcOVAttribut, dstOVAttribut, evaluator, vc);
 				continue;
 			}
 			
 			vlv = src.getAttribut(v);
 			if(vlv == null) continue;
 			
-			/*if(PRTY_CALL_PARAMS.equals(v)) {
-				try {
-					vlv = vlv.clone();
-					Map<String, Value<?, XPOperand<?>>> mpCallParams = vlv.asRequiredObjectValue().getValue();
-					
-					Iterator<Value<?, XPOperand<?>>> it = mpCallParams.values().iterator();
-					
-					ArrayValue<XPOperand<?>> aparams = it.next().asArrayValue();
-					
-					List<Value<?, XPOperand<?>>> paramItems = aparams.getValue();
-					
-					for(int i=0; i<paramItems.size(); ++i) {
-						CalculableValue<?, XPOperand<?>> cl = paramItems.get(i).asCalculableValue();
-						if(cl == null) continue;
-						
-						if("string".equals(cl.typeName())) {
-							XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
-							xalCL.setEvaluator(evaluator);
-							
-							paramItems.set(i, new StringValue<>(xalCL.getValue()));
-							continue;
-						}
-						
-						if("integer".equals(cl.typeName())) {
-							XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
-							xalCL.setEvaluator(evaluator);
-							paramItems.set(i, new IntegerValue<>(xalCL.getValue()));
-							continue;
-						}
-						
-						if("float".equals(cl.typeName())) {
-							XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
-							xalCL.setEvaluator(evaluator);
-							paramItems.set(i, new DecimalValue<>(xalCL.getValue()));
-							continue;
-						}
-												
-						if("boolean".equals(cl.typeName())) {
-							XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
-							xalCL.setEvaluator(evaluator);
-							paramItems.set(i, new BooleanValue<>(xalCL.getValue()));
-							continue;
-						}
-						
-					}
-					
-					ObjectValue<XPOperand<?>> oparams = it.next().asObjectValue();
-					
-					Map<String, Value<?, XPOperand<?>>> mpop = oparams.getValue();
-					
-					for(String paramName : mpop.keySet()) {
-						CalculableValue<?, XPOperand<?>> cl = mpop.get(paramName).asCalculableValue();
-						
-						if(cl == null) continue;
-						
-						if("string".equals(cl.typeName())) {
-							XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
-							xalCL.setEvaluator(evaluator);
-
-							mpop.put(paramName, new StringValue<>(xalCL.getValue()));
-							continue;
-						}
-						
-						if("integer".equals(cl.typeName())) {
-							XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
-							xalCL.setEvaluator(evaluator);
-							
-							mpop.put(paramName, new IntegerValue<>(xalCL.getValue()));
-							continue;
-						}
-						
-						if("float".equals(cl.typeName())) {
-							XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
-							xalCL.setEvaluator(evaluator);
-							
-							mpop.put(paramName, new DecimalValue<>(xalCL.getValue()));
-							continue;
-						}
-						
-						
-						if("boolean".equals(cl.typeName())) {
-							XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
-							xalCL.setEvaluator(evaluator);
-							
-							mpop.put(paramName, new BooleanValue<>(xalCL.getValue()));
-							continue;
-						}
-					}
-					
-					
-				} catch (CloneNotSupportedException e) {
-					throw new ManagedException(e);
-				}
-				
-				
-			}*/
-			
+			CalculableValue<?, XPOperand<?>> cl = vlv.asCalculableValue();
+			if(cl != null) {
+				XALCalculabeValue<XPOperand<?>> xalCl = (XALCalculabeValue<XPOperand<?>>)cl;
+				xalCl.setVariableContext(vc);
+			}
 			
 			mpDst.put(v, vlv);
 			
@@ -1367,6 +1438,10 @@ public class Computing {
 		
 		ovDstContexts.setAttribut("references_" + motherClass, ovDst);
 		//mpOvDst.put(PRTY_CALL_PARAMS, ovDst);
+	}
+	
+	public XPEvaluator getXPEvaluator() {
+		return xpCompiler.evaluator();
 	}
 
 }

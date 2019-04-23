@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.exa.expression.Type;
+import com.exa.expression.VariableContext;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.ClassesMan;
 import com.exa.expression.eval.XPEvaluator;
@@ -24,7 +25,6 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	
 	private XPOperand<T> xp;
 	
-	
 	private static Map<Type<?>, String> mapTypeManToString = new HashMap<>();
 	
 	static {
@@ -39,13 +39,8 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	private String evalTime;
 	
 	private XPEvaluator evaluator;
-	//private ObjectValue<XPOperand<?>> rootObject;
-	//private String context;
-	
-	//private String entityContext = null;
-	
-	//private XPEvalautorFactory evaluatorFactory;
-	
+
+	protected VariableContext variableContext;
 
 	public XALCalculabeValue(XPOperand<T> xp, String evalTime) {
 		super();
@@ -56,8 +51,9 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	@Override
 	public T getValue() {
 		try {
-			//evaluator = null;
+			evaluator.pushVariableContext(variableContext);
 			T res = xp.value(evaluator);
+			evaluator.popVariableContext();
 			
 			/*if(entityContext == null) return res;
 			
@@ -110,7 +106,14 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public Integer asInteger() throws ManagedException {
-		if(xp.type() == ClassesMan.T_INTEGER) return ClassesMan.T_INTEGER.valueOrNull(xp.value(evaluator));
+		if(xp.type() == ClassesMan.T_INTEGER) {
+			
+			evaluator.pushVariableContext(variableContext);
+			Integer res = ClassesMan.T_INTEGER.valueOrNull(xp.value(evaluator));
+			evaluator.popVariableContext();
+			
+			return res;
+		}
 		
 		throw new ManagedException(String.format("This value should be an integer"));
 	}
@@ -138,7 +141,12 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public String asString() throws ManagedException {
-		if(xp.type() == ClassesMan.T_STRING) return ClassesMan.T_STRING.valueOrNull(xp.value(evaluator));
+		if(xp.type() == ClassesMan.T_STRING) {
+			evaluator.pushVariableContext(variableContext);
+			String res = ClassesMan.T_STRING.valueOrNull(xp.value(evaluator));
+			evaluator.popVariableContext();
+			return res;
+		}
 		throw new ManagedException(String.format("This value should be a string"));
 	}
 
@@ -198,9 +206,24 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public Boolean asBoolean() throws ManagedException {
-		if(xp.type() == ClassesMan.T_BOOLEAN) return ClassesMan.T_BOOLEAN.valueOrNull(xp.value(evaluator));
+		if(xp.type() == ClassesMan.T_BOOLEAN) {
+			evaluator.pushVariableContext(variableContext);
+			Boolean res = ClassesMan.T_BOOLEAN.valueOrNull(xp.value(evaluator));
+			evaluator.popVariableContext();
+			return res;
+		}
 		
 		throw new ManagedException(String.format("This value should be an integer"));
 	}
+
+	public VariableContext getVariableContext() {
+		return variableContext;
+	}
+
+	public void setVariableContext(VariableContext variableContext) {
+		this.variableContext = variableContext;
+	}
+	
+	
 	
 }

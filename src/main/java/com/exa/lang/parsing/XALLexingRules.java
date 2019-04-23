@@ -111,4 +111,6 @@ public class XALLexingRules extends LexingRules {
 	public boolean isInteger(String str) {
 		return isInteger(str, false);
 	}
+
+	
 }
