@@ -1,5 +1,6 @@
 package com.exa.lang;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import com.exa.expression.VariableContext;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.MapVariableContext;
 import com.exa.expression.eval.XPEvaluator;
+import com.exa.lang.expression.VIEvaluatorSetup;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
@@ -203,6 +205,60 @@ public class XalightApplicationTests extends TestCase {
 		
 		
 		//assertTrue("2".equals(ovEntity.getPathAttributAsString("property1")));
+		
+	}
+	
+	public void testXalInheritance9() throws ManagedException {
+		XALParser parser = new XALParser();
+		//ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test4.xal");
+		
+		//XPEvaluator evaluator = new XPEvaluator();
+		
+		//VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		//evaluator.getCurrentVariableContext().addVariable("start", String.class, "01/02/2016");
+		//evaluator.getCurrentVariableContext().addVariable("end", String.class, "17/08/2018");
+		
+		VIEvaluatorSetup evSetup = new VIEvaluatorSetup();
+		evSetup.addVaraiable("start", String.class, "01/02/2016");
+		evSetup.addVaraiable("end", String.class, "17/08/2018");
+		
+		
+		
+		Computing computing = parser.getComputeObjectFormFile("./src/test/java/com/exa/lang/private/stats-intervention.ds.xal", evSetup, (id, context) -> {
+			if("rootOv".equals(id)) return "ObjectValue";
+			//String p[] = context.split("[.]");
+			
+			return null;
+		});
+		
+		//ObjectValue<XPOperand<?>> rootOv = computing.execute();
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		ObjectValue<XPOperand<?>> rootOV = computing.execute();
+		
+		try {
+			computing.closeCharReader();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		evaluator.addVariable("rootOv", ObjectValue.class, rootOV);
+		ObjectValue<XPOperand<?>> ovEntities = rootOV.getAttributAsObjectValue("entities");
+		
+		VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
+		evaluator.pushVariableContext(vc);
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object(ovEntities, "sdtt", evaluator, vc, Computing.getDefaultObjectLib(rootOV));		
+		
+		assertTrue("row-to-field".equals(ovEntity.getPathAttributAsString("dt.type")));
+		
+		assertTrue("int".equals(ovEntity.getPathAttributAsString("dt.fields.type")));
+		
+		assertTrue("sql".equals(ovEntity.getPathAttributAsString("dt.source.type")));
+		
+		System.out.println(ovEntity.getPathAttributAsString("dt.source.criteria"));
 		
 	}
 

@@ -90,7 +90,6 @@ public class XALParser {
 	}
 	
 	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
-
 		return Computing.object(ov, evaluator, entityVC, libOV);
 	}
 

@@ -20,3 +20,7 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+
+#secifics
+/src/test/java/com/exa/lang/private/
+/target/test-classes/com/exa/lang/private/

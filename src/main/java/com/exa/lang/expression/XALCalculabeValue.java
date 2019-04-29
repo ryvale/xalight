@@ -55,9 +55,6 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 			T res = xp.value(evaluator);
 			evaluator.popVariableContext();
 			
-			/*if(entityContext == null) return res;
-			
-			evaluatorFactory.clear();*/
 			return res;
 		} catch (ManagedException e) {
 			throw new RuntimeException(e);
