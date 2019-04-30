@@ -1,0 +1,33 @@
+:test,
+
+refereneces {
+	
+	e1 {
+		property 1
+	},
+	
+	e2 {
+		property 2
+	}
+},
+
+entities {
+
+	entity1 *if(true) {
+		_then {
+			property 2
+		},
+		
+		_else {
+			property 3
+		}
+	},
+	
+	entity2 *if(true) {
+		_then @e1,
+		
+		_else @e2
+	}
+	
+	
+}

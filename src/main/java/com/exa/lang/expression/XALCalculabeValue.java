@@ -146,6 +146,17 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		}
 		throw new ManagedException(String.format("This value should be a string"));
 	}
+	
+	/*@Override
+	public Boolean asBoolean() throws ManagedException {
+		if(xp.type() == ClassesMan.T_STRING) {
+			evaluator.pushVariableContext(variableContext);
+			String res = ClassesMan.T_STRING.valueOrNull(xp.value(evaluator));
+			evaluator.popVariableContext();
+			return res;
+		}
+		throw new ManagedException(String.format("This value should be a string"));
+	}*/
 
 	@Override
 	public XALCalculabeValue<T> clone() throws CloneNotSupportedException {
@@ -219,6 +230,13 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	public void setVariableContext(VariableContext variableContext) {
 		this.variableContext = variableContext;
+	}
+
+	@Override
+	public Boolean asRequiredBoolean() throws ManagedException {
+		Boolean res = asBoolean();
+		if(res == null) throw new ManagedException(String.format("This value should be a non null integer"));
+		return res;
 	}
 	
 	

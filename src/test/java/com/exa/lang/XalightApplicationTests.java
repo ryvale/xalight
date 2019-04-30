@@ -86,7 +86,7 @@ public class XalightApplicationTests extends TestCase {
 	
 	public void testXalInheritance() throws ManagedException {
 		XALParser parser = new XALParser();
-		ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
+		//ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test2.xal");
 		
 		XPEvaluator evaluator = new XPEvaluator();
 		
@@ -262,5 +262,16 @@ public class XalightApplicationTests extends TestCase {
 		
 	}
 
+	public void testStatementIf() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity1", evaluator, entityVC); //ov.getPathAttributAsObjecValue("entities.entity2");
+		
+		assertTrue(new Integer(2).equals(ovEntity.getAttributAsInteger("property")));
+	}
 
 }
