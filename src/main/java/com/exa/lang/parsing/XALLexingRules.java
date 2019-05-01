@@ -11,7 +11,7 @@ public class XALLexingRules extends LexingRules {
 	
 	static final String EXTENDED_PROPERTY_FIRST_CHARS = "$";
 	
-	static final String NUMERIC_DIGITS = "0123456789";
+	public static final String NUMERIC_DIGITS = "0123456789";
 	
 	static final String EXTENDED_NUMERIC_TERMINATION = "d";
 

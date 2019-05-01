@@ -1,6 +1,6 @@
 :test,
 
-refereneces {
+references {
 	
 	e1 {
 		property 1
@@ -8,6 +8,10 @@ refereneces {
 	
 	e2 {
 		property 2
+	},
+	
+	e3(p) {
+		property = p
 	}
 },
 
@@ -27,6 +31,34 @@ entities {
 		_then @e1,
 		
 		_else @e2
+	},
+	
+	entity3 *if(true) {
+		property 10
+	},
+	
+	entity4(v @boolean) {
+		cplx *if(v) {
+			property "a",
+			
+			_else {
+				property "b"
+			}
+		}
+	},
+	
+	entity5(v @boolean) {
+		cplx *if(v) {
+			proeprty "a"
+		}
+	},
+	
+	entity6(v @boolean) {
+		property *if(v) "a"
+	},
+	
+	entity7(v @boolean) {
+		cplx *if(v) @e3("a")
 	}
 	
 	

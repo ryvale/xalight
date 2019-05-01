@@ -269,9 +269,37 @@ public class XalightApplicationTests extends TestCase {
 		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
+		
 		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity1", evaluator, entityVC); //ov.getPathAttributAsObjecValue("entities.entity2");
 		
 		assertTrue(new Integer(2).equals(ovEntity.getAttributAsInteger("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity3", evaluator, entityVC);
+		assertTrue(new Integer(10).equals(ovEntity.getAttributAsInteger("property")));
+		
+		entityVC.addVariable("v", Boolean.class, Boolean.TRUE);
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity4", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx.property")));
+		
+		
+		entityVC.assignContextVariable("v", Boolean.FALSE);
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity4", evaluator, entityVC);
+		assertTrue("b".equals(ovEntity.getPathAttributAsString("cplx.property")));
+		
+		
+		entityVC.assignContextVariable("v", Boolean.FALSE);
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity5", evaluator, entityVC);
+		assertTrue(ovEntity.getAttribut("cplx") == null);
+		
+		
+		entityVC.assignContextVariable("v", Boolean.TRUE);
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity6", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getAttributAsString("property")));
+		
+		
+		entityVC.assignContextVariable("v", Boolean.TRUE);
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity7", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx.property")));
 	}
 
 }

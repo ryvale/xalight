@@ -23,7 +23,7 @@ public class XALParser {
 	private Map<String, ComputingStatement> statements = new HashMap<>();
 	
 	public XALParser() {
-		statements.put("if", new STIf());
+		statements.put("if", new STIf(this));
 	}
 	
 	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {

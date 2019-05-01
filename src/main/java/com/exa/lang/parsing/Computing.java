@@ -301,13 +301,87 @@ public class Computing {
 		return object(parser, relativeOV.getRequiredAttributAsObjectValue(path), evaluator, entityVC, libOV);
 	}
 	
+	public static Value<?, XPOperand<?>> value(XALParser parser, Value<?, XPOperand<?>> vlEntity, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+		
+		ObjectValue<XPOperand<?>> ovEntity = vlEntity.asObjectValue();
+		if(ovEntity == null) {
+			return vlEntity;
+		}
+		Map<String, Value<?, XPOperand<?>>> mpProperties = ovEntity.getValue();
+		
+		if(mpProperties.containsKey(PRTY_STATEMENT)) {
+			ComputingStatement cs = parser.getStatements().get(ovEntity.getRequiredAttributAsString(PRTY_STATEMENT));
+			
+			Value<?, XPOperand<?>> vl = cs.translate(ovEntity, evaluator, entityVC, libOV);
+			if(vl == null) return null;
+			ovEntity = vl.asObjectValue();
+			
+			if(ovEntity == null) return vl;
+		}
+		
+		ObjectValue<XPOperand<?>> res = ovEntity;
+		
+		ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+		
+		if(ovCallParams == null) {
+			computeCalculabe(parser, ovEntity, evaluator, entityVC, libOV);
+		} else {
+			VariableContext parentVC = entityVC;
+			
+			do {
+				VariableContext lastVC = new MapVariableContext(parentVC);
+				
+				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
+				
+				Iterator<String> strIt = mpCallParams.keySet().iterator();
+				String motherClass = strIt.next();
+				
+				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				
+				addParamsValueInContext(evaluator, parentVC, lastVC, mpParams);
+				
+				String fqnParts[] = motherClass.split("[.]");
+		
+				
+				ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
+				
+				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
+				
+				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
+				mpRes.remove(PRTY_CALL_PARAMS);
+				
+				mergeInheritedObject(ovMother, ovEntity, evaluator, lastVC);
+				
+				computeCalculabe(parser, ovEntity, evaluator, lastVC, libOV);
+				
+				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
+			
+				ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+				
+				parentVC = lastVC;
+			} while(true);
+			//evaluator.popVariableContext();
+		}
+		
+		
+		return res;
+	}
+	
+	
+	public Value<?, XPOperand<?>> value(Value<?, XPOperand<?>> vlEntity, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+		return value(parser, vlEntity, evaluator, entityVC, libOV);
+	}
+	
 	public static ObjectValue<XPOperand<?>> object(XALParser parser, ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		Map<String, Value<?, XPOperand<?>>> mpProperties = ovEntity.getValue();
 		
 		if(mpProperties.containsKey(PRTY_STATEMENT)) {
 			ComputingStatement cs = parser.getStatements().get(ovEntity.getRequiredAttributAsString(PRTY_STATEMENT));
 			
-			ovEntity = cs.translate(ovEntity, evaluator, entityVC).asRequiredObjectValue();
+			Value<?, XPOperand<?>> vl = cs.translate(ovEntity, evaluator, entityVC, libOV);
+			if(vl == null) return null;
+			ovEntity = vl.asRequiredObjectValue();
 		}
 		
 		ObjectValue<XPOperand<?>> res = ovEntity;
@@ -363,15 +437,24 @@ public class Computing {
 	public static void computeCalculabe(XALParser parser, ObjectValue<XPOperand<?>> ovEntity, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		Map<String, Value<?, XPOperand<?>>> mp = ovEntity.getValue();
 		
+		List<String> propeertiesTodelete = new ArrayList<>();
 		for(String propertyName : mp.keySet()) {
 			Value<?, XPOperand<?>> vl=mp.get(propertyName);
 			
 			ObjectValue<XPOperand<?>> vov = vl.asObjectValue();
 			if(vov != null) {
 
-				mp.put(propertyName, object(parser, vov, evaluator, entityVC, libOV));
+				vl = value(parser, vov, evaluator, entityVC, libOV);
+				if(vl == null) {
+					propeertiesTodelete.add(propertyName);
+					continue;
+				}
 				
-				continue;
+				CalculableValue<?, XPOperand<?>> cli = vl.asCalculableValue();
+				if(cli == null) {
+					mp.put(propertyName, vl);
+					continue;
+				}
 			}
 			
 			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
@@ -420,6 +503,10 @@ public class Computing {
 				mp.put(propertyName, new BooleanValue<>(xalCL.getValue()));
 				continue;
 			}
+		}
+		
+		for(String p : propeertiesTodelete) {
+			mp.remove(p);
 		}
 
 	}
@@ -771,7 +858,7 @@ public class Computing {
 	public Value<?, XPOperand<?>> readPropertyValueForObject(String context) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		//variableContextAnyWay(context);
-		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithOutDec(context);
+		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithoutDec(context);
 		if(res != null) return res;
 		Character ch = lexingRules.nextForwardChar(charReader);
 		
@@ -830,7 +917,7 @@ public class Computing {
 			do {
 				String propertyName = lexingRules.nextRequiredPropertyName(charReader);
 				
-				Value<?, XPOperand<?>> propetyValue = _readPropertyValueForObjectWithOutDec(context);
+				Value<?, XPOperand<?>> propetyValue = _readPropertyValueForObjectWithoutDec(context);
 				
 				ch = lexingRules.nextForwardRequiredNonBlankChar(charReader);
 				
@@ -1040,7 +1127,7 @@ public class Computing {
 		return res;
 	}
 	
-	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithOutDec(String context) throws ManagedException {
+	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithoutDec(String context) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
@@ -1093,6 +1180,11 @@ public class Computing {
 			return ov;
 		}
 		
+		if('*' == ch) {
+			lexingRules.nextNonBlankChar(charReader);
+			return readStatement(context);
+		}
+		
 		if('@' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
 			return readObjectByClass(context);
@@ -1113,15 +1205,10 @@ public class Computing {
 			return calculableFor(xp, evalTime);
 		}
 		
-		if('*' == ch) {
-			lexingRules.nextNonBlankChar(charReader);
-			return readStatement(context);
-		}
-		
 		return null;
 	}
 	
-	private Value<?, XPOperand<?>> readStatement(String context) throws ManagedException {
+	private ObjectValue<XPOperand<?>> readStatement(String context) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		String str = lexingRules.nextNonNullString(charReader);
@@ -1136,7 +1223,7 @@ public class Computing {
 		return readObjectByClass(new ObjectValue<XPOperand<?>>(), context);
 	}
 	
-	private Value<? extends Number, XPOperand<?>> readNumeric() throws ManagedException {
+	public Value<? extends Number, XPOperand<?>> readNumeric() throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		String str = lexingRules.nextNonNullString(charReader);
@@ -1165,7 +1252,7 @@ public class Computing {
 		return new IntegerValue<XPOperand<?>>(Integer.parseInt(str));
 	}
 	
-	private StringValue<XPOperand<?>> readString(String end) throws ManagedException {
+	public StringValue<XPOperand<?>> readString(String end) throws ManagedException {
 		String str = readStringReturnString(end);
 		
 		return new StringValue<XPOperand<?>>(str);
@@ -1314,22 +1401,26 @@ public class Computing {
 		ch = lexingRules.nextForwardNonBlankChar(charReader);
 		if(ch == null) return ov;
 		
+		ObjectValue<XPOperand<?>> ovParams;
+		Value<?, XPOperand<?>> params;
 		if('(' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
-			Value<?, XPOperand<?>> params = readFunctionCallParams(context);
+			params = readFunctionCallParams(context);
 			
-			ObjectValue<XPOperand<?>> ovParams = ov.getAttributAsObjectValue(PRTY_CALL_PARAMS);
-			if(ovParams == null) {
-				ovParams = new ObjectValue<>();
-				ov.setAttribut(PRTY_CALL_PARAMS, ovParams);
-			}
-			
-			ovParams.setAttribut("references."+motherClass, params);
-			
-			ch = lexingRules.nextForwardNonBlankChar(charReader);
-			if(ch == null) return ov;
+			ovParams = ov.getAttributAsObjectValue(PRTY_CALL_PARAMS);
+			if(ovParams == null) ovParams = new ObjectValue<>();
 		}
-	
+		else {
+			ovParams = new ObjectValue<>();
+			params = new ArrayValue<>();
+		}
+		
+		ovParams.setAttribut("references."+motherClass, params);
+		ov.setAttribut(PRTY_CALL_PARAMS, ovParams);
+		
+		ch = lexingRules.nextForwardNonBlankChar(charReader);
+		if(ch == null) return ov;
+		
 		if('{' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
 			return readObjectBody(ov, context);
@@ -1387,49 +1478,52 @@ public class Computing {
 	}
 	
 	private void checkParameters(Map<String, Value<?, XPOperand<?>>> mpOvSrc, Map<String, Value<?, XPOperand<?>>> mpOvDst) throws ManagedException {
-		Value<?, XPOperand<?>> src = mpOvSrc.get(PRTY_PARAMS);
+		Value<?, XPOperand<?>> prmSrc = mpOvSrc.get(PRTY_PARAMS);
+		if(prmSrc == null) {
+			prmSrc = new ObjectValue<>();
+		}
 		
-		Value<?, XPOperand<?>> dstContexts = mpOvDst.get(PRTY_CALL_PARAMS);
-		
-		if(src == null && dstContexts == null) return;
-		
-		ObjectValue<XPOperand<?>> ovDstContexts = dstContexts.asRequiredObjectValue();
-	
+		Value<?, XPOperand<?>> prmDstContexts = mpOvDst.get(PRTY_CALL_PARAMS);
 		
 		String motherClass = mpOvDst.get(PRTY_OBJECT).asRequiredString();
-		Iterator<Value<?, XPOperand<?>>> it = ovDstContexts.getValue().values().iterator();
-		Value<?, XPOperand<?>> dst = it.hasNext() ? it.next() : null;
 		
-		//Value<?, XPOperand<?>> dst = ovDstContexts.getRequiredAttribut("references_" + motherClass);
+		if(prmSrc.asObjectValue().getValue().size() == 0 && prmDstContexts == null) 
+			return;
 		
-		if(src == null || dst == null) throw new ManagedException(String.format("The number arguments does'nt match."));
 		
-		//ArrayValue<XPOperand<?>> avSrc = src.asArrayValue();
+		ObjectValue<XPOperand<?>> ovPrmDstContexts = prmDstContexts.asRequiredObjectValue();
+	
+		Iterator<Value<?, XPOperand<?>>> it = ovPrmDstContexts.getValue().values().iterator();
+		Value<?, XPOperand<?>> prmDst = it.hasNext() ? it.next() : null;
 		
-		ObjectValue<XPOperand<?>> ovSrc = src.asObjectValue();
+		if(prmDst == null) throw new ManagedException(String.format("The number arguments does'nt match."));
 		
-		if(ovSrc == null) throw new ManagedException(String.format("The called source arguments are invalid."));
 		
-		ArrayValue<XPOperand<?>> avDst = dst.asArrayValue();
 		
-		ObjectValue<XPOperand<?>> ovDst = dst.asObjectValue();
+		ObjectValue<XPOperand<?>> ovPrmSrc = prmSrc.asObjectValue();
 		
-		if(avDst == null && ovDst == null) throw new ManagedException(String.format("The caller destination arguments are invalid."));
+		if(ovPrmSrc == null) throw new ManagedException(String.format("The called source arguments are invalid."));
 		
-		Map<String, Value<?, XPOperand<?>>> mpSrc = ovSrc.getValue();
+		ArrayValue<XPOperand<?>> avDst = prmDst.asArrayValue();
 		
-		int nbSrc = mpSrc.keySet().size();
+		ObjectValue<XPOperand<?>> ovPrmDst = prmDst.asObjectValue();
+		
+		if(avDst == null && ovPrmDst == null) throw new ManagedException(String.format("The caller destination arguments are invalid."));
+		
+		Map<String, Value<?, XPOperand<?>>> mpPrmSrc = ovPrmSrc.getValue();
+		
+		int nbSrc = mpPrmSrc.keySet().size();
 		if(avDst == null) {
-			Map<String, Value<?, XPOperand<?>>> mpDst = ovDst.getValue();
+			Map<String, Value<?, XPOperand<?>>> mpDst = ovPrmDst.getValue();
 			int nbDst = mpDst.keySet().size();
 			
 			if(nbSrc != nbDst) throw new ManagedException(String.format("The number of source argument ( %s ) is different than the number of destination on ( %s )", nbSrc, nbDst));
 			
-			for(String v : mpSrc.keySet()) {
+			for(String v : mpPrmSrc.keySet()) {
 				Value<?, XPOperand<?>> vlDstPrm = mpDst.get(v);
 				if(vlDstPrm == null) throw new ManagedException(String.format("The parameter %s is not defined", v));
 				
-				Value<?, XPOperand<?>> vlSrcPrm = mpSrc.get(v);
+				Value<?, XPOperand<?>> vlSrcPrm = mpPrmSrc.get(v);
 				
 				String srcType = vlSrcPrm.asString();
 				
@@ -1446,17 +1540,17 @@ public class Computing {
 			return;
 		}
 		
-		ovDst = new ObjectValue<>();
+		ovPrmDst = new ObjectValue<>();
 		List<Value<?, XPOperand<?>>> lsDst = avDst.getValue();
 		int nbDst = lsDst.size();
 		if(nbSrc != nbDst) throw new ManagedException(String.format("The number of source argument ( %s ) is different than the number of destination on ( %s )", nbSrc, nbDst));
 		
 		int i= 0;
-		for(String v : mpSrc.keySet()) {
+		for(String v : mpPrmSrc.keySet()) {
 			Value<?, XPOperand<?>> vlDstPrm = lsDst.get(i);
 			if(vlDstPrm == null) throw new ManagedException(String.format("The %s th parameter is not defined", i));
 			
-			Value<?, XPOperand<?>> vlSrcPrm = mpSrc.get(v);
+			Value<?, XPOperand<?>> vlSrcPrm = mpPrmSrc.get(v);
 			
 			String srcType = vlSrcPrm.asString();
 			
@@ -1466,13 +1560,13 @@ public class Computing {
 			
 			//String dstType = valueTypeMapOnTypes.get(vlDstPrm.getClass());
 			
-			if(dstType == null || srcType.equals(dstType)) { ovDst.setAttribut(v, vlDstPrm);  i++; continue;}
+			if(dstType == null || srcType.equals(dstType)) { ovPrmDst.setAttribut(v, vlDstPrm);  i++; continue;}
 			
 			throw new ManagedException(String.format("Type mismatch %s %s", srcType, dstType));
 			
 		}
 		
-		ovDstContexts.setAttribut("references_" + motherClass, ovDst);
+		ovPrmDstContexts.setAttribut("references_" + motherClass, ovPrmDst);
 		//mpOvDst.put(PRTY_CALL_PARAMS, ovDst);
 	}
 	
