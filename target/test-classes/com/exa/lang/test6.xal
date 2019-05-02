@@ -1,0 +1,21 @@
+:test,
+
+references {
+	
+	e1 {
+		property 1
+	},
+	
+	e2 {
+		property "a"
+	}
+},
+
+entities {
+
+	entity *for(n in ['a', 'b']) {
+		_name = 'entity' + n
+	}
+	
+	
+}

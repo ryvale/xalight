@@ -299,7 +299,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		entityVC.assignContextVariable("v", Boolean.TRUE);
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity7", evaluator, entityVC);
-		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx.property")));
+		assertTrue(new Integer(2).equals(ovEntity.getPathAttributAsInteger("cplx.property")));
 	}
 
 }

@@ -67,6 +67,7 @@ public class Computing {
 	public static final String PRTY_CONDITION = "_condition";
 	public static final String PRTY_THEN = "_then";
 	public static final String PRTY_ELSE = "_else";
+	public static final String PRTY_INCORPORATED = "_incorporated";
 	
 	public static final String LIBN_DEFAULT = "references";
 	
@@ -317,6 +318,8 @@ public class Computing {
 			ovEntity = vl.asObjectValue();
 			
 			if(ovEntity == null) return vl;
+			
+			if(ovEntity.containsAttribut(PRTY_INCORPORATED)) return ovEntity;
 		}
 		
 		ObjectValue<XPOperand<?>> res = ovEntity;
@@ -1270,7 +1273,7 @@ public class Computing {
 		return sb.toString();
 	}
 	
-	public Value<?, XPOperand<?>> readArrayBody(String context) throws ManagedException {
+	public ArrayValue<XPOperand<?>> readArrayBody(String context) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		ArrayValue<XPOperand<?>> av = new ArrayValue<>();
@@ -1585,7 +1588,28 @@ public class Computing {
 	public CharReader getCharReader() {
 		return charReader;
 	}
+
+	public TypeSolver getTypeSolver() {
+		return typeSolver;
+	}
 	
-	
+	public String getTypeName(Value<?, XPOperand<?>> vl) throws ManagedException {
+		if(vl.asStringValue() != null) return typeSolver.getTypeName(String.class);
+		
+		if(vl.asIntegerValue() != null) return typeSolver.getTypeName(Integer.class);
+		
+		if(vl.asBooleanValue() != null) return typeSolver.getTypeName(Integer.class);
+		
+		if(vl.asDecimalValue() != null) return typeSolver.getTypeName(Double.class);
+		
+		if(vl.asObjectValue() != null) return XALParser.T_OBJECT_VALUE.typeName();
+		
+		
+		CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
+		if(cl != null) return cl.typeName();
+		
+		throw new ManagedException("Unable to retreive type name");
+			
+	}
 
 }
