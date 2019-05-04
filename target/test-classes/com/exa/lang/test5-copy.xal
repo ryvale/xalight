@@ -15,7 +15,8 @@ references {
 	}
 },
 
-entities(gv @boolean, gi @int) {
+entities(gv @boolean) {
+
 	entity1 *if(true) {
 		_then {
 			property 2
@@ -72,17 +73,6 @@ entities(gv @boolean, gi @int) {
 		property1 "9-1a",
 		
 		property2 "9-2a"
-	},
-	
-	*if(gi == 1) {
-		_name "entity10",
-		
-		property = gi,
-		
-		_else {
-			property = gi+1
-		}
-		
 	}
 	
 	

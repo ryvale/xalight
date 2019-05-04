@@ -13,9 +13,13 @@ references {
 
 entities {
 
-	entity *for(n in ['a', 'b']) {
-		_name = 'entity' + n
+	
+	*for(n in ['a', 'b']) {
+		_name = "p_" + n,
+		
+		property1 "a"
 	}
+	
 	
 	
 }

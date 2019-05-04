@@ -15,8 +15,7 @@ references {
 	}
 },
 
-entities {
-
+entities(gv @boolean, gi @int) {
 	entity1 *if(true) {
 		_then {
 			property 2
@@ -59,6 +58,31 @@ entities {
 	
 	entity7(v @boolean) {
 		cplx *if(v) @e2
+	},
+	
+	*if(gv) {
+		entity8 {
+			property "8a"
+		}
+	},
+	
+	*if(gv) {
+		_name "entity9",
+		
+		property1 "9-1a",
+		
+		property2 "9-2a"
+	},
+	
+	*if(gi == 1) {
+		_name "entity10",
+		
+		property = gi,
+		
+		_else {
+			property = gi+2
+		}
+		
 	}
 	
 	

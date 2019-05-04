@@ -55,6 +55,7 @@ public class STIf implements ComputingStatement {
 				res = realRes;
 			}
 		}
+		res.setAttribut(Computing.PRTY_CONTEXT, context);
 		res.setAttribut(Computing.PRTY_STATEMENT, "if");
 		res.setAttribut(Computing.PRTY_CONDITION, Computing.calculableFor(xpCondition, "now"));
 		
@@ -86,6 +87,7 @@ public class STIf implements ComputingStatement {
 				return Computing.value(parser, ov.getRequiredAttribut(Computing.PRTY_THEN), evaluator, ovc, libOV);
 			
 			if(mp.containsKey(Computing.PRTY_ELSE)) mp.remove(Computing.PRTY_ELSE);
+			mp.remove(Computing.PRTY_STATEMENT);
 			return ov;
 		}
 		

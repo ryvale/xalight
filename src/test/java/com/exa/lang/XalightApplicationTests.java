@@ -269,6 +269,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
+		entityVC.assignContextVariable("gv", Boolean.TRUE);
 		
 		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity1", evaluator, entityVC); //ov.getPathAttributAsObjecValue("entities.entity2");
 		
@@ -301,5 +302,43 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity7", evaluator, entityVC);
 		assertTrue(new Integer(2).equals(ovEntity.getPathAttributAsInteger("cplx.property")));
 	}
+	
+	public void testStatementIf2() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		entityVC.assignContextVariable("gv", Boolean.TRUE);
+		entityVC.assignContextVariable("v", Boolean.TRUE);
+		entityVC.assignContextVariable("gi", 1);
+		
+		ObjectValue<XPOperand<?>>  ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity8", evaluator, entityVC);
+		assertTrue("8a".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity9", evaluator, entityVC);
+		assertTrue("9-1a".equals(ovEntity.getPathAttributAsString("property1")));
+		assertTrue("9-2a".equals(ovEntity.getPathAttributAsString("property2")));
+		
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity10", evaluator, entityVC);
+		assertTrue(new Integer(1).equals(ovEntity.getPathAttributAsInteger("property")));
+		
+		entityVC.assignContextVariable("gi", 0);
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test5.xal", "entities.entity10", evaluator, entityVC);
+		assertTrue(new Integer(2).equals(ovEntity.getPathAttributAsInteger("property")));
+	}
+	
+	
+	/*public void testStatementFor() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity", evaluator, entityVC);
 
+	}*/
 }

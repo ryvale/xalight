@@ -13,18 +13,28 @@ import com.exa.expression.parsing.Parser;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.ComputingStatement;
 import com.exa.lang.parsing.XALLexingRules;
+import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
 public class STFor implements ComputingStatement {
+	
+	private XALParser parser;
+	
+	
+	public STFor(XALParser parser) {
+		super();
+		this.parser = parser;
+	}
 
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
 		final CharReader charReader = computing.getCharReader();
 		final XALLexingRules lexingRules = computing.getParser().getLexingRules();
 		final Parser xpCompiler = computing.getXpCompiler();
+		final XPEvaluator evaluator = xpCompiler.evaluator();
 		
 		Character ch = lexingRules.nextNonBlankChar(charReader);
 		if(ch == null || ch != '(') throw new ManagedException("'(' expected after for statement");
@@ -72,21 +82,25 @@ public class STFor implements ComputingStatement {
 					else if(!type.equals(vlType)) throw new ManagedException("");
 				}
 				
-				
-				
-				VariableContext vc = new MapVariableContext();
-				
 				ch = lexingRules.nextNonBlankChar(charReader);
 				if(ch == null || ')' != ch) throw new ManagedException("Incorrect syntax in for statement; ')' expected");
 				
+				VariableContext vc = new MapVariableContext();
+				vc.addVariable(var, computing.getTypeSolver().getTypeValueClass(type), null);
+				evaluator.pushVariableContext(vc);
 				
 				Value<?, XPOperand<?>> vlDo = computing.readPropertyValueForObject(context);
 				
+				evaluator.popVariableContext();
+				
 				ObjectValue<XPOperand<?>> res = new ObjectValue<>();
+				res.setAttribut(Computing.PRTY_CONTEXT, context);
 				res.setAttribut(Computing.PRTY_STATEMENT, "for");
 				res.setAttribut(Computing.PRTY_TYPE, "in");
 				
 				res.setAttribut("_var", var);
+				
+				res.setAttribut("_vartype", type);
 				
 				res.setAttribut("_values", values);
 				
@@ -107,11 +121,35 @@ public class STFor implements ComputingStatement {
 		if("in".equals(type)) {
 			ArrayValue<XPOperand<?>> values = ov.getRequiredAttributAsArrayValue("_values");
 			
+			String var = ov.getRequiredAttributAsString("_var");
+			String varType = ov.getRequiredAttributAsString("_vartype");
+			
+			VariableContext vc = new MapVariableContext(ovc);
+			vc.addVariable(var, evaluator.getClassesMan().getType(varType).valueClass(), null);
+			
+			ArrayValue<XPOperand<?>> arRes = new ArrayValue<>();
+			
 			List<Value<?, XPOperand<?>>> lstValues = values.getValue();
 			
+			Value<?, XPOperand<?>> vlDo = ov.getRequiredAttribut("_do");
+			
 			for(Value<?, XPOperand<?>> vl : lstValues) {
-				
+				vc.assignContextVariable(var, vl.getValue());
+				try {
+					Value<?, XPOperand<?>> rawItem = vlDo.clone();
+					
+					Value<?, XPOperand<?>> item = Computing.value(parser, rawItem, evaluator, vc, libOV);
+					
+					arRes.add(item);
+					
+				} catch (CloneNotSupportedException e) {
+					throw new ManagedException(e);
+				}
 			}
+			
+			ObjectValue<XPOperand<?>> res = new ObjectValue<>();
+			
+			res.setAttribut(Computing.PRTY_INCORPORATE, arRes);
 		}
 		return null;
 	}
