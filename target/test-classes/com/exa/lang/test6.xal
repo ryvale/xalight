@@ -12,12 +12,39 @@ references {
 },
 
 entities {
-
 	
-	*for(n in ['a', 'b']) {
-		_name = "p_" + n,
-		
+	*for(n in [1, 2]) 
+	_name = "entity" + n {
+	
 		property1 "a"
+		
+	},
+	
+	entity3 {
+	
+		property1 *for(i in ['a', 'b']) i
+		
+	},
+	
+	
+	entity4 {
+		property1 *for(i in ['1', '2']) {
+			property = i
+		}
+	},
+	
+	
+	entity5 {
+	
+		cplx *for(i in ['1', '2']) _name = "property" + i {
+			property = i
+		}
+		
+	},
+	
+	
+	entity6 {
+		*for(i in ['1', '2']) _name = "property" + i : i
 	}
 	
 	

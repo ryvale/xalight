@@ -68,8 +68,13 @@ public class Computing {
 	public static final String PRTY_CONDITION = "_condition";
 	public static final String PRTY_THEN = "_then";
 	public static final String PRTY_ELSE = "_else";
-	public static final String PRTY_INCORPORATE = "_incorporate";
+	public static final String PRTY_INSERTION = "_insertion";
 	public static final String PRTY_PREF_SUBSTITUTION = "_substitution";
+	public static final String PRTY_VALUE = "_value";
+	
+	public static final String VL_INCORPORATE = "incorporate";
+	public static final String VL_ARRAY = "array";
+	public static final String VL_VALUE = "value";
 	
 	public static final String LIBN_DEFAULT = "references";
 	
@@ -281,7 +286,33 @@ public class Computing {
 			
 			if(ovEntity == null) return vl;
 			
-			if(ovEntity.containsAttribut(PRTY_INCORPORATE)) return ovEntity;
+			String insertion = ovEntity.getAttributAsString(PRTY_INSERTION);
+			if(insertion != null) {
+				if(VL_VALUE.equals(insertion)) {
+					ArrayValue<XPOperand<?>> av = ovEntity.getAttributAsArrayValue(PRTY_VALUE);
+					
+					return av.get(0);
+				}
+				
+				if(VL_INCORPORATE.equals(insertion)) {
+					ArrayValue<XPOperand<?>> av = ovEntity.getAttributAsArrayValue(PRTY_VALUE);
+					
+					ObjectValue<XPOperand<?>> newOvEntity = new ObjectValue<>();
+					
+					List<Value<?, XPOperand<?>>> lst = av.getValue();
+					for(Value<?, XPOperand<?>> vlIncorporateItem : lst) {
+						ObjectValue<XPOperand<?>> ovValue = vlIncorporateItem.asRequiredObjectValue();
+						
+						Map<String, Value<?, XPOperand<?>>> mpValue = ovValue.getValue();
+						
+						for(String newPropName : mpValue.keySet()) {
+							newOvEntity.setAttribut(newPropName, mpValue.get(newPropName));
+						}
+					}
+					
+					return newOvEntity;
+				}
+			};
 		}
 		
 		ObjectValue<XPOperand<?>> res = ovEntity;
@@ -349,6 +380,28 @@ public class Computing {
 			ovEntity = vl.asRequiredObjectValue();
 		}
 		
+		String insertion = ovEntity.getAttributAsString(PRTY_INSERTION);
+		if(insertion != null) {
+			if(insertion.equals(VL_INCORPORATE)) {
+				ArrayValue<XPOperand<?>> av = ovEntity.getAttributAsArrayValue(PRTY_VALUE);
+				
+				ObjectValue<XPOperand<?>> newOvEntity = new ObjectValue<>();
+				
+				List<Value<?, XPOperand<?>>> lst = av.getValue();
+				for(Value<?, XPOperand<?>> vlIncorporateItem : lst) {
+					ObjectValue<XPOperand<?>> ovValue = vlIncorporateItem.asRequiredObjectValue();
+					
+					Map<String, Value<?, XPOperand<?>>> mpValue = ovValue.getValue();
+					
+					for(String newPropName : mpValue.keySet()) {
+						newOvEntity.setAttribut(newPropName, mpValue.get(newPropName));
+					}
+				}
+				
+				ovEntity = newOvEntity;
+			}
+		}
+		
 		ObjectValue<XPOperand<?>> res = ovEntity;
 		
 		ObjectValue<XPOperand<?>> ovCallParams = res.getAttributAsObjectValue(PRTY_CALL_PARAMS);
@@ -414,6 +467,7 @@ public class Computing {
 
 				if(propertyName.startsWith(PRTY_PREF_SUBSTITUTION)) {
 					propertiesTodelete.add(propertyName);
+					
 					Value<?, XPOperand<?>> vlNewPropValues = currentMpEntity.get(propertyName);
 					ObjectValue<XPOperand<?>> ovNewPropValues = vlNewPropValues.asObjectValue();
 					if(ovNewPropValues == null) {
@@ -423,8 +477,52 @@ public class Computing {
 						continue;
 					}
 					
+					if(ovNewPropValues.containsAttribut(Computing.PRTY_STATEMENT)) {
+						vlNewPropValues = value(parser, ovNewPropValues, evaluator, entityVC, libOV);
+						if(vlNewPropValues == null) continue;
+						
+						ovNewPropValues = vlNewPropValues.asObjectValue();
+						
+						if(ovNewPropValues == null) {
+							ArrayValue<XPOperand<?>> avNewPropValues = vlNewPropValues.asArrayValue();
+							if(avNewPropValues == null) throw new ManagedException(String.format("Invalid syntax for substitution id %s. ObjectValue expected.", propertyName));
+							// TODO
+							continue;
+						}
+						
+					}
+					
+					String insertion = ovNewPropValues.getAttributAsString(PRTY_INSERTION);
+					if(insertion != null) {
+						ArrayValue<XPOperand<?>> arInsertion = ovNewPropValues.getRequiredAttributAsArrayValue(PRTY_VALUE);
+						
+						String context = ovNewPropValues.getAttributAsString(PRTY_CONTEXT);
+						
+						if(insertion.equals(VL_INCORPORATE)) {
+							List<Value<?, XPOperand<?>>> lstIncorporate = arInsertion.getValue();
+							for(Value<?, XPOperand<?>> vlIncorporateItem : lstIncorporate) {
+								ObjectValue<XPOperand<?>> ovValue = vlIncorporateItem.asRequiredObjectValue();
+								
+								Map<String, Value<?, XPOperand<?>>> mpValue = ovValue.getValue();
+								
+								for(String newPropName : mpValue.keySet()) {
+									propertiesToAdd.put(newPropName, mpValue.get(newPropName));
+								}
+							}
+							continue;
+						}
+						
+						if(insertion.equals(VL_ARRAY)) {
+							currentMpEntity.put(propertyName, arInsertion);
+							continue;
+						}
+						
+						throw new ManagedException(String.format("Unknown type of insertion %s in context %s", insertion, context));
+					}
+							
+					
 					Map<String, Value<?, XPOperand<?>>> mpNewPropValue = ovNewPropValues.getValue();
-					if(mpNewPropValue.containsKey(PRTY_NAME)) {
+					/*if(mpNewPropValue.containsKey(PRTY_NAME)) {
 						propertyName = ovNewPropValues.getAttributAsString(PRTY_NAME);
 						mpNewPropValue.remove(PRTY_NAME);
 						
@@ -432,8 +530,7 @@ public class Computing {
 						
 						propertiesToAdd.put(propertyName, vlNewPropValue);
 						continue;
-					}
-					
+					}*/
 					
 					for(String newPropName : mpNewPropValue.keySet()) {
 						Value<?, XPOperand<?>> vlNewPropValue = mpNewPropValue.get(newPropName);
