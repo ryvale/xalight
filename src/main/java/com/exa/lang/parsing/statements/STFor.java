@@ -184,8 +184,14 @@ public class STFor implements ComputingStatement {
 					vc.assignContextVariable(var, vl.getValue());
 					try {
 						Value<?, XPOperand<?>> rawItem = vlDo.clone();
+						CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
+						Value<?, XPOperand<?>> item;
 						
-						Value<?, XPOperand<?>> item = Computing.value(parser, rawItem, evaluator, vc, libOV);
+						item = Computing.value(parser, rawItem, evaluator, vc, libOV);
+						if(cl == null) item = Computing.value(parser, rawItem, evaluator, vc, libOV);
+						else {
+							item = Computing.computeCalculableValue(cl, evaluator, vc);
+						}
 						if(item == null) continue;
 						
 						arRes.add(item);

@@ -366,7 +366,22 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity2", evaluator, entityVC);
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property1")));
 		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity3", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("property1[0]")));
+		
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity6", evaluator, entityVC);
 		assertTrue("1".equals(ovEntity.getPathAttributAsString("property1")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity6", evaluator, entityVC);
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("property2")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity7", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx1.property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity8", evaluator, entityVC);
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("cplx1.property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity8", evaluator, entityVC);
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("cplx2.property")));
 	}
 }

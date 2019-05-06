@@ -312,6 +312,12 @@ public class Computing {
 					
 					return newOvEntity;
 				}
+				
+				if(VL_ARRAY.equals(insertion)) {
+					ArrayValue<XPOperand<?>> av = ovEntity.getAttributAsArrayValue(PRTY_VALUE);
+					
+					return av;
+				}
 			};
 		}
 		
@@ -519,18 +525,8 @@ public class Computing {
 						
 						throw new ManagedException(String.format("Unknown type of insertion %s in context %s", insertion, context));
 					}
-							
-					
+		
 					Map<String, Value<?, XPOperand<?>>> mpNewPropValue = ovNewPropValues.getValue();
-					/*if(mpNewPropValue.containsKey(PRTY_NAME)) {
-						propertyName = ovNewPropValues.getAttributAsString(PRTY_NAME);
-						mpNewPropValue.remove(PRTY_NAME);
-						
-						Value<?, XPOperand<?>> vlNewPropValue = value(parser, ovNewPropValues, evaluator, entityVC, libOV);
-						
-						propertiesToAdd.put(propertyName, vlNewPropValue);
-						continue;
-					}*/
 					
 					for(String newPropName : mpNewPropValue.keySet()) {
 						Value<?, XPOperand<?>> vlNewPropValue = mpNewPropValue.get(newPropName);
@@ -551,6 +547,7 @@ public class Computing {
 					
 					continue;
 				}
+		
 				
 				vl = value(parser, vov, evaluator, entityVC, libOV);
 				if(vl == null) {
@@ -564,8 +561,6 @@ public class Computing {
 					continue;
 				}
 			}
-			
-			
 			
 			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
 			

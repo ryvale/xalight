@@ -8,6 +8,10 @@ references {
 	
 	e2 {
 		property "a"
+	},
+	
+	e3(p) {
+		property = p
 	}
 },
 
@@ -22,7 +26,7 @@ entities {
 	
 	entity3 {
 	
-		property1 *for(i in ['a', 'b']) i
+		property1 *for(i in ['a', 'b']) : i
 		
 	},
 	
@@ -42,9 +46,16 @@ entities {
 		
 	},
 	
-	
 	entity6 {
 		*for(i in ['1', '2']) _name = "property" + i : i
+	},
+	
+	entity7 {
+		*for(i in ['1', '2']) _name = "cplx" + i @e2
+	},
+	
+	entity8 {
+		*for(i in ['1', '2']) _name = "cplx" + i @e3(i)
 	}
 	
 	
