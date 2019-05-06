@@ -40,11 +40,11 @@ public class Computing {
 	class XPParser extends Parser {
 
 		public XPParser(UnknownIdentifierValidation unknownIdValidation) {
-			this(new MapVariableContext()/*, XPEvaluator.CR_DEFAULT*/, unknownIdValidation);
+			this(new MapVariableContext(), unknownIdValidation);
 		}
 
-		public XPParser(VariableContext variableContext/*, ContextResolver contextResolver*/, UnknownIdentifierValidation unknownIdValidation) {
-			super(variableContext/*, contextResolver*/, unknownIdValidation);
+		public XPParser(VariableContext variableContext, UnknownIdentifierValidation unknownIdValidation) {
+			super(variableContext, unknownIdValidation);
 			
 			classesMan.registerClass(XALParser.T_OBJECT_VALUE);
 		}
@@ -71,10 +71,15 @@ public class Computing {
 	public static final String PRTY_INSERTION = "_insertion";
 	public static final String PRTY_PREF_SUBSTITUTION = "_substitution";
 	public static final String PRTY_VALUE = "_value";
+	public static final String PRTY_FILE = "_file";
+	public static final String PRTY_SOURCE = "_source";
+	public static final String PRTY_DESTINATION = "_destination";
+	public static final String PRTY_ENTITIES = "_entities";
 	
 	public static final String VL_INCORPORATE = "incorporate";
 	public static final String VL_ARRAY = "array";
 	public static final String VL_VALUE = "value";
+	public static final String VL_ALL = "all";
 	
 	public static final String LIBN_DEFAULT = "references";
 	
@@ -1622,8 +1627,6 @@ public class Computing {
 		Value<?, XPOperand<?>> prmDst = it.hasNext() ? it.next() : null;
 		
 		if(prmDst == null) throw new ManagedException(String.format("The number arguments does'nt match."));
-		
-		
 		
 		ObjectValue<XPOperand<?>> ovPrmSrc = prmSrc.asObjectValue();
 		

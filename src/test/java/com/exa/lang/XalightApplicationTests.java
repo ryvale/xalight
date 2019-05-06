@@ -97,29 +97,9 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2")));
 		
 		assertTrue("afb".equals(ovEntity.getPathAttributAsString("cplx.property1")));
-		
-		//assertTrue("a".equals(ov.getPathAttributAsString("entities.entity2.cplx.property1")));
-		
-		//assertTrue("af".equals(ov.getPathAttributAsString("entities.entity2._call_params.prm")));
-		
+				
 		assertTrue("afc".equals(ovEntity.getPathAttributAsString("cplx.property3")));
 		
-		//assertTrue(new Integer(10).equals(ov.getPathAttribut("entities.entity2.cplx.property0")));
-		
-		//ObjectValue<XPOperand<?>> ov1 = ov.getPathAttributAsObjecValue("entities.entity2");
-		
-		//assertTrue(new Integer(2).equals(ov1.getAttributAsInteger("property1")));
-		/*Map<String, ObjectValue<XPOperand<?>>> libOV = new HashMap<>();
-		libOV.put(Computing.LIBN_DEFAULT, ov.getAttributAsObjectValue(Computing.LIBN_DEFAULT));
-		
-		entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
-		ObjectValue<XPOperand<?>> ovEntity2 = parser.object(ov, "entities.entity2", evaluator, entityVC, libOV);
-		
-		assertTrue("a".equals(ovEntity2.getPathAttributAsString("property2")));
-		
-		assertTrue("afb".equals(ovEntity2.getPathAttributAsString("cplx.property1")));
-				
-		assertTrue("afc".equals(ovEntity2.getPathAttributAsString("cplx.property3")));*/
 	}
 	
 	public void testXalInheritance2() throws ManagedException {
@@ -210,14 +190,6 @@ public class XalightApplicationTests extends TestCase {
 	
 	public void testXalInheritance9() throws ManagedException {
 		XALParser parser = new XALParser();
-		//ObjectValue<XPOperand<?>> ov = parser.parseFile("./src/test/java/com/exa/lang/test4.xal");
-		
-		//XPEvaluator evaluator = new XPEvaluator();
-		
-		//VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
-		
-		//evaluator.getCurrentVariableContext().addVariable("start", String.class, "01/02/2016");
-		//evaluator.getCurrentVariableContext().addVariable("end", String.class, "17/08/2018");
 		
 		VIEvaluatorSetup evSetup = new VIEvaluatorSetup();
 		evSetup.addVaraiable("start", String.class, "01/02/2016");
@@ -231,8 +203,7 @@ public class XalightApplicationTests extends TestCase {
 			
 			return null;
 		});
-		
-		//ObjectValue<XPOperand<?>> rootOv = computing.execute();
+
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
 		
@@ -369,10 +340,12 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity3", evaluator, entityVC);
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property1[0]")));
 		
-		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity6", evaluator, entityVC);
-		assertTrue("1".equals(ovEntity.getPathAttributAsString("property1")));
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity4", evaluator, entityVC);
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("cplx[0].property")));
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("cplx[1].property")));
 		
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity6", evaluator, entityVC);
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("property1")));
 		assertTrue("2".equals(ovEntity.getPathAttributAsString("property2")));
 		
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity7", evaluator, entityVC);
@@ -380,8 +353,21 @@ public class XalightApplicationTests extends TestCase {
 		
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity8", evaluator, entityVC);
 		assertTrue("1".equals(ovEntity.getPathAttributAsString("cplx1.property")));
-		
-		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity8", evaluator, entityVC);
 		assertTrue("2".equals(ovEntity.getPathAttributAsString("cplx2.property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity9", evaluator, entityVC);
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("cplx2.property")));
+		assertTrue("1a".equals(ovEntity.getPathAttributAsString("cplx1.newProperty")));
+		assertTrue("2a".equals(ovEntity.getPathAttributAsString("cplx2.newProperty")));
+	}
+	
+	public void testStatementImport() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity1", evaluator, entityVC);
 	}
 }

@@ -13,6 +13,7 @@ import com.exa.lang.expression.TObjectValue;
 import com.exa.lang.expression.XPEvaluatorSetup;
 import com.exa.lang.parsing.statements.STFor;
 import com.exa.lang.parsing.statements.STIf;
+import com.exa.lang.parsing.statements.STImport;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
 
@@ -27,6 +28,8 @@ public class XALParser {
 		statements.put("if", new STIf(this));
 		
 		statements.put("for", new STFor(this));
+		
+		statements.put("import", new STImport(this));
 	}
 	
 	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {
