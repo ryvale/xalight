@@ -1,5 +1,6 @@
 package com.exa.lang;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
@@ -14,6 +15,8 @@ import com.exa.lang.expression.VIEvaluatorSetup;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
+import com.exa.utils.io.FilesRepositories;
+import com.exa.utils.io.OSFileRepoPart;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
@@ -362,12 +365,21 @@ public class XalightApplicationTests extends TestCase {
 	}
 	
 	public void testStatementImport() throws ManagedException {
-		XALParser parser = new XALParser();
+		
+		FilesRepositories fr = new FilesRepositories();
+		
+		fr.addRepoPart("default", new OSFileRepoPart("./src/test/java/com/exa/lang"));
+		
+		XALParser parser = new XALParser(fr);
 		
 		XPEvaluator evaluator = new XPEvaluator();
 		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
-		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity1", evaluator, entityVC);
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity2", evaluator, entityVC);
+		assertTrue("2".equals(ovEntity.getPathAttributAsInteger("property1").toString()));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity3", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2").toString()));
 	}
 }

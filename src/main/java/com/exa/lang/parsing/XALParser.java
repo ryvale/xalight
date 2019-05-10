@@ -15,21 +15,31 @@ import com.exa.lang.parsing.statements.STFor;
 import com.exa.lang.parsing.statements.STIf;
 import com.exa.lang.parsing.statements.STImport;
 import com.exa.utils.ManagedException;
+import com.exa.utils.io.FilesRepositories;
 import com.exa.utils.values.ObjectValue;
+import com.exa.utils.values.Value;
 
 public class XALParser {
 	public static final TObjectValue T_OBJECT_VALUE = new TObjectValue();
+	
+	private FilesRepositories filesRepos;
 	
 	private XALLexingRules lexingRules = new XALLexingRules();
 	
 	private Map<String, ComputingStatement> statements = new HashMap<>();
 	
-	public XALParser() {
+	public XALParser(FilesRepositories filesRepos) {
+		this.filesRepos = filesRepos;
+		
 		statements.put("if", new STIf(this));
 		
 		statements.put("for", new STFor(this));
 		
 		statements.put("import", new STImport(this));
+	}
+	
+	public XALParser() {
+		this(new FilesRepositories());
 	}
 	
 	public ObjectValue<XPOperand<?>> parseString(String script) throws ManagedException {
@@ -92,12 +102,13 @@ public class XALParser {
 	}
 	
 	public ObjectValue<XPOperand<?>> object(String scriptFile, String path, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
-		return Computing.object(this, parseFile(scriptFile), path, evaluator, entityVC);
+		Computing computing = getExecutedComputeObjectFormFile(scriptFile);
+		
+		return Computing.object(this, computing, path, evaluator, entityVC);
 	}
 	
-	
-	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
-		return Computing.object(this, rootOV, path, evaluator, entityVC);
+	public ObjectValue<XPOperand<?>> object(Computing executedComputing, String path, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
+		return Computing.object(this, executedComputing, path, evaluator, entityVC);
 	}
 
 	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> relativeOV, String path, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
@@ -106,6 +117,18 @@ public class XALParser {
 	
 	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		return Computing.object(this, ov, evaluator, entityVC, libOV);
+	}
+	
+	public ObjectValue<XPOperand<?>> object(String scriptFile, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
+		Computing executedComputing = getExecutedComputeObjectFormFile(scriptFile);
+		
+		//ObjectValue<XPOperand<?>> ovRoot = parseFile(scriptFile);
+		Map<String, Value<?, XPOperand<?>>> mpRoot = executedComputing.getResult().getValue();
+		
+		for(String entityName : mpRoot.keySet()) {
+			mpRoot.put(entityName, object(executedComputing, entityName, evaluator, entityVC));
+		}
+		return executedComputing.getResult(); 
 	}
 
 	
@@ -119,6 +142,18 @@ public class XALParser {
 		
 		return new Computing(this, cr, evaluatorSetup, uiv);
 	}
+	
+	public Computing getExecutedComputeObjectFormFile(String script) throws ManagedException {
+		CharReader cr;
+		try {
+			cr = CharReader.forFile(script, false);
+		} catch (IOException e) {
+			throw new ManagedException(e);
+		}
+		Computing res = new Computing(this, cr);
+		res.execute();
+		return res;
+	}
 
 	public XALLexingRules getLexingRules() {
 		return lexingRules;
@@ -126,6 +161,14 @@ public class XALParser {
 
 	public Map<String, ComputingStatement> getStatements() {
 		return statements;
+	}
+
+	public FilesRepositories getFilesRepos() {
+		return filesRepos;
+	}
+
+	public void setFilesRepos(FilesRepositories filesRepos) {
+		this.filesRepos = filesRepos;
 	}
 
 	

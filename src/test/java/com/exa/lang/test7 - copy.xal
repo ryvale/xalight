@@ -12,12 +12,16 @@ references {
 	*import [* -> t4_*] 'test2.xal',
 	
 	*import {
-		file 'test2.xal',
+		_file 'test2.xal',
 		
-		entities [ "entity1", { src "entity3", dest "t3_entity2" } ]
+		_entities [ "entity1", { _source "entity3", _destination "t3_entity2" } ]
 	}
 },
 
 entities {
-	entity1
+	entity1 {},
+	
+	entity2 @entity1('a') {},
+	
+	*import [entities.entity2 -> entity3] 'test2.xal'
 }

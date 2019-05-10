@@ -91,7 +91,7 @@ public class STIf implements ComputingStatement {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 		Value<?, XPOperand<?>> vlCond = ov.getAttribut(Computing.PRTY_CONDITION);
 		
 		Boolean cond;

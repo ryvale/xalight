@@ -41,14 +41,13 @@ public class STImport implements ComputingStatement {
 		res.setAttribut(Computing.PRTY_STATEMENT, "import");
 		ArrayValue<XPOperand<?>> avEntities = new ArrayValue<>();
 		res.setAttribut(Computing.PRTY_ENTITIES, avEntities);
+		res.setAttribut(Computing.PRTY_CONTEXT, context);
 		
 		if(ch == '[') {
 			lexingRules.nextNonBlankChar(charReader);
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			if(ch == null) throw new ParsingException(String.format("Unexpected end of file. Expected identifier or ']' in import statement in context %s", context));
-			
-			
 			
 			if(ch == ']') {
 				
@@ -217,11 +216,116 @@ public class STImport implements ComputingStatement {
 		return res.toString();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc,
-			Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
+		String context = ov.getAttributAsString(Computing.PRTY_CONTEXT);
 		
-		return null;
+		Value<?, XPOperand<?>> vl = ov.getRequiredAttribut(Computing.PRTY_FILE);
+		CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
+		
+		String fileName;
+		if(cl == null) {
+			fileName = vl.asRequiredString();
+		}
+		else {
+			if(Computing.CS_IMPORT.equals(cmd)) return null;
+			
+			XALCalculabeValue<String> xalCLStr = (XALCalculabeValue<String>) vl;
+			if(xalCLStr.getVariableContext() == null) xalCLStr.setVariableContext(ovc);
+			xalCLStr.setEvaluator(evaluator);
+			fileName = xalCLStr.asRequiredString();
+		}
+		fileName = parser.getFilesRepos().getName(fileName);
+		
+		ArrayValue<XPOperand<?>> avEntities = ov.getAttributAsArrayValue(Computing.PRTY_ENTITIES);
+		if(avEntities == null) throw new ManagedException(String.format("The property '%s' is misconfigured in context %s in import statement", Computing.PRTY_ENTITIES, context));
+		
+		List<Value<?, XPOperand<?>>> lstEntities = avEntities.getValue();
+		
+		ArrayValue<XPOperand<?>> arRes = new ArrayValue<>();
+		
+		for(Value<?, XPOperand<?>> vlImport : lstEntities) {
+			ObjectValue<XPOperand<?>> ovImport = vlImport.asObjectValue();
+			if(ovImport == null) throw new ManagedException(String.format("The property '%s' is misconfigured in context %s in import statement", Computing.PRTY_ENTITIES, context));
+			
+			String source;
+			vl = ovImport.getAttribut(Computing.PRTY_SOURCE);
+			cl = vl.asCalculableValue();
+			if(cl == null) {
+				source = vl.asRequiredString();
+			}
+			else {
+				if(Computing.CS_IMPORT.equals(cmd)) return null;
+				XALCalculabeValue<String> xalCLStr = (XALCalculabeValue<String>) vl;
+				if(xalCLStr.getVariableContext() == null) xalCLStr.setVariableContext(ovc);
+				xalCLStr.setEvaluator(evaluator);
+				source = xalCLStr.asRequiredString();
+			}
+			
+			String dest;
+			vl = ovImport.getAttribut(Computing.PRTY_DESTINATION);
+			cl = vl.asCalculableValue();
+			if(cl == null) dest = vl.asRequiredString();
+			else {
+				if(Computing.CS_IMPORT.equals(cmd)) return null;
+				XALCalculabeValue<String> xalCLStr = (XALCalculabeValue<String>) vl;
+				if(xalCLStr.getVariableContext() == null) xalCLStr.setVariableContext(ovc);
+				xalCLStr.setEvaluator(evaluator);
+				dest = xalCLStr.asRequiredString();
+			}
+			
+			ObjectValue<XPOperand<?>> ovDest;
+			if(source.endsWith("*")) {
+				String parts[] = source.split("[.]");
+				ObjectValue<XPOperand<?>> ovSrc;
+				
+				if(parts.length > 2) {
+					String entitPath = source.substring(0, source.length() - parts[parts.length-1].length() - 1);
+					ovSrc = parser.object(fileName, entitPath, evaluator, ovc);
+				}
+				else {
+					ovSrc = parser.object(fileName, evaluator, ovc);
+				}
+				
+				ovDest = new ObjectValue<>();
+				
+				Map<String, Value<?, XPOperand<?>>> mpSrc = ovSrc.getValue();
+				for(String property : mpSrc.keySet()) {
+					Value<?, XPOperand<?>> vlSrc = mpSrc.get(property);
+					
+					if(vlSrc == null) continue;
+					
+					ovDest.setAttribut(dest.replaceAll("[*]", property), vlSrc);
+				}
+			}
+			else {
+				
+				ObjectValue<XPOperand<?>> ovDestInt;
+				
+				if(Computing.CS_IMPORT.equals(cmd)) {
+					ObjectValue<XPOperand<?>> rootOV = parser.parseFile(fileName);
+					ovDestInt = rootOV.getPathAttributAsObjecValue(source);
+				}
+				else ovDestInt = parser.object(fileName, source, evaluator, ovc);
+				
+				String parts[] = dest.split("[.]");
+				
+				ovDest = new ObjectValue<>();
+				ovDest.setAttribut(parts[parts.length - 1], ovDestInt);
+			}
+			
+			arRes.add(ovDest);
+		}
+		
+		ObjectValue<XPOperand<?>> res = new ObjectValue<XPOperand<?>>();
+		
+		res.setAttribut(Computing.PRTY_CONTEXT, ov.getAttribut(Computing.PRTY_CONTEXT));
+		res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_INCORPORATE);
+		res.setAttribut(Computing.PRTY_VALUE, arRes);
+		
+		
+		return res;
 	}
 
 }

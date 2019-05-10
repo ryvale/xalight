@@ -12,5 +12,7 @@ import com.exa.utils.values.Value;
 public interface ComputingStatement {
 	ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException;
 	
-	Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException;
+	Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException;
+	
+	//Value<?, XPOperand<?>> import(ObjectValue<XPOperand<?>> ov);
 }

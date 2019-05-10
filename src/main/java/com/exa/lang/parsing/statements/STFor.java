@@ -161,7 +161,7 @@ public class STFor implements ComputingStatement {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 		String type = ov.getAttributAsString(Computing.PRTY_TYPE);
 		
 		if("in".equals(type)) {
@@ -227,12 +227,8 @@ public class STFor implements ComputingStatement {
 						xalCL.setEvaluator(evaluator);
 						
 						propName = xalCL.asRequiredString();
-							
-						
 						
 						ObjectValue<XPOperand<?>> ovProp = new ObjectValue<>();
-						
-						//Value<?, XPOperand<?>> itemName = Computing.value(parser, rawItemName, evaluator, vc, libOV);
 						
 						ovProp.setAttribut(propName, item);
 						

@@ -1,13 +1,14 @@
 :test,
 
 references {
+
 	entity1(prm2) {
 		property1 = 2,
 		
 		cplx {
 			property0 10,
 			
-			property3 = prm2 +'c'
+			property3 = prm2 + 'c'
 		}
 	},
 	
@@ -15,9 +16,10 @@ references {
 		property4 2,
 		
 		cplx {
-			property1=prm+'b'
+			property1 = prm + 'b'
 		}
 	}
+	
 },
 
 entities {

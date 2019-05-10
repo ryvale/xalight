@@ -75,11 +75,15 @@ public class Computing {
 	public static final String PRTY_SOURCE = "_source";
 	public static final String PRTY_DESTINATION = "_destination";
 	public static final String PRTY_ENTITIES = "_entities";
+	public static final String PRTY_GENERATED = "_generated";
 	
 	public static final String VL_INCORPORATE = "incorporate";
 	public static final String VL_ARRAY = "array";
 	public static final String VL_VALUE = "value";
 	public static final String VL_ALL = "all";
+	
+	public static final String CS_VALUE = "get-value";
+	public static final String CS_IMPORT = "import";
 	
 	public static final String LIBN_DEFAULT = "references";
 	
@@ -87,7 +91,7 @@ public class Computing {
 	
 	public static final String ET_RUNTIME = "runtime";
 	
-	private ObjectValue<XPOperand<?>> rootObject;
+	private ObjectValue<XPOperand<?>> result;
 	private Parser xpCompiler;
 	
 	private XALParser parser;
@@ -101,7 +105,7 @@ public class Computing {
 	public Computing(XALParser parser, CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.parser = parser;
-		this.rootObject = rootObject;
+		this.result = rootObject;
 		this.xpCompiler = new XPParser(rootVariableContext/*, contextResolver*/);
 		
 		typeSolver = new TypeSolver();
@@ -133,7 +137,7 @@ public class Computing {
 			
 		});
 		
-		this.rootObject = new ObjectValue<>();
+		this.result = new ObjectValue<>();
 		this.charReader = charReader;
 	}
 	
@@ -143,7 +147,7 @@ public class Computing {
 	
 	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
 		this.xpCompiler = new XPParser(vc);
-		this.rootObject = new ObjectValue<>();
+		this.result = new ObjectValue<>();
 		this.charReader = charReader;
 		
 		typeSolver = new TypeSolver();
@@ -167,7 +171,12 @@ public class Computing {
 	
 	public static Map<String, ObjectValue<XPOperand<?>>> getDefaultObjectLib(ObjectValue<XPOperand<?>> rootOV) throws ManagedException {
 		Map<String, ObjectValue<XPOperand<?>>> res = new HashMap<>();
-		res.put(Computing.LIBN_DEFAULT, rootOV.getAttributAsObjectValue(Computing.LIBN_DEFAULT));
+		
+		ObjectValue<XPOperand<?>> ovLib = rootOV.getAttributAsObjectValue(Computing.LIBN_DEFAULT);
+		
+		if(ovLib == null) ovLib = new ObjectValue<>();
+		
+		res.put(Computing.LIBN_DEFAULT, ovLib);
 		
 		return res;
 	}
@@ -179,11 +188,11 @@ public class Computing {
 			lexingRules.nextNonBlankChar(charReader);
 			
 			String type = lexingRules.nextNonNullString(charReader);
-			rootObject.setAttribut(PRTY_TYPE, type);
+			result.setAttribut(PRTY_TYPE, type);
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			
-			if(ch == null) return rootObject;
+			if(ch == null) return result;
 			
 			if(ch != ',') throw new ParsingException(String.format("',' expected after type value."));
 			lexingRules.nextNonBlankChar(charReader);
@@ -201,14 +210,14 @@ public class Computing {
 				if(e.isRealParsingException()) throw e;
 				
 				if(e.getParsingString() == null) {
-					if(ch == null) return rootObject;
+					if(ch == null) return result;
 				}
 				throw e;
 			}
 			
 			Value<?, XPOperand<?>> propertyValue = readPropertyValueForObject(propertyName);
 			
-			rootObject.setAttribut(propertyName, propertyValue);
+			result.setAttribut(propertyName, propertyValue);
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			
@@ -220,13 +229,13 @@ public class Computing {
 		}
 		while(true);
 		
-		Value<?, XPOperand<?>> vlReferences = rootObject.getAttribut("references");
+		Value<?, XPOperand<?>> vlReferences = result.getAttribut("references");
 		
-		if(vlReferences == null) return rootObject;
+		if(vlReferences == null) return result;
 		
 		ObjectValue<XPOperand<?>> references = vlReferences.asObjectValue();
 		
-		if(references == null) return rootObject;
+		if(references == null) return result;
 		
 		for(ObjectValue<XPOperand<?>> ov : heirsObject) {
 		
@@ -238,18 +247,35 @@ public class Computing {
 		}
 	
 		
-		return rootObject;
+		return result;
 	}
 	
-	/*public ObjectValue<XPOperand<?>> object(String path, XPEvaluator evaluator) throws ManagedException {
-		ObjectValue<XPOperand<?>> rootOV = execute();
-		
-		return object(rootOV, path, evaluator);
-	}*/
+	public void resolveHeirsObject(ObjectValue<XPOperand<?>> ovLib) throws ManagedException {
+		for(ObjectValue<XPOperand<?>> ov : heirsObject) {
+			
+			Set<String> cyclicRefs = new HashSet<>();
+			
+			String entity = ov.getAttributAsString(PRTY_ENTITY);
+			
+			getObjectInheritance(ov, ovLib, cyclicRefs, entity);
+		}
+	}
 	
-	public static ObjectValue<XPOperand<?>> object(XALParser parser, ObjectValue<XPOperand<?>> rootOV, String path, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
+	public static ObjectValue<XPOperand<?>> object(XALParser parser, Computing executedcomputing, String path, XPEvaluator evaluator, VariableContext entityVC) throws ManagedException {
+		
+		ObjectValue<XPOperand<?>> rootOV = executedcomputing.getResult();
+		
+		Map<String, ObjectValue<XPOperand<?>>> mpLib = Computing.getDefaultObjectLib(rootOV);
+		
+		loadImport(parser, mpLib);
+		
+		for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
+			executedcomputing.resolveHeirsObject(ovLib);
+		}
+		
 		ObjectValue<XPOperand<?>> ovEntity =  rootOV.getAttributByPathAsObjectValue(path);
-		if(ovEntity != null) return object(parser, ovEntity, evaluator, entityVC, Computing.getDefaultObjectLib(rootOV));
+		
+		if(ovEntity != null) return object(parser, ovEntity, evaluator, entityVC, mpLib);
 		
 		String ovPath = path;
 		int p;
@@ -262,11 +288,9 @@ public class Computing {
 			baseOvEntity =  rootOV.getAttributByPathAsObjectValue(ovPath);
 		} while(baseOvEntity == null);
 		
-		baseOvEntity = object(parser, baseOvEntity, evaluator, entityVC, Computing.getDefaultObjectLib(rootOV));
+		baseOvEntity = object(parser, baseOvEntity, evaluator, entityVC, mpLib);
 		
 		return baseOvEntity.getAttributAsObjectValue(path.substring(p+1));
-		
-		
 	}
 	
 	public static ObjectValue<XPOperand<?>> object(XALParser parser, ObjectValue<XPOperand<?>> relativeOV, String path, XPEvaluator evaluator, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
@@ -285,7 +309,7 @@ public class Computing {
 		if(mpProperties.containsKey(PRTY_STATEMENT)) {
 			ComputingStatement cs = parser.getStatements().get(ovEntity.getRequiredAttributAsString(PRTY_STATEMENT));
 			
-			Value<?, XPOperand<?>> vl = cs.translate(ovEntity, evaluator, entityVC, libOV);
+			Value<?, XPOperand<?>> vl = cs.translate(ovEntity, evaluator, entityVC, libOV, CS_VALUE);
 			if(vl == null) return null;
 			ovEntity = vl.asObjectValue();
 			
@@ -386,7 +410,7 @@ public class Computing {
 		if(mpProperties.containsKey(PRTY_STATEMENT)) {
 			ComputingStatement cs = parser.getStatements().get(ovEntity.getRequiredAttributAsString(PRTY_STATEMENT));
 			
-			Value<?, XPOperand<?>> vl = cs.translate(ovEntity, evaluator, entityVC, libOV);
+			Value<?, XPOperand<?>> vl = cs.translate(ovEntity, evaluator, entityVC, libOV, CS_VALUE);
 			if(vl == null) return null;
 			ovEntity = vl.asRequiredObjectValue();
 		}
@@ -583,8 +607,6 @@ public class Computing {
 		for(String p : propertiesToAdd.keySet()) {
 			currentMpEntity.put(p, propertiesToAdd.get(p));
 		}
-
-
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -629,6 +651,69 @@ public class Computing {
 		}
 		
 		return cl;
+	}
+	
+	
+	public static void loadImport(XALParser parser, Map<String, ObjectValue<XPOperand<?>>> mpRefs) throws ManagedException {
+		
+		for(ObjectValue<XPOperand<?>> ovLib : mpRefs.values()) {
+			Map<String, Value<?, XPOperand<?>>> mpRef = ovLib.getValue();
+			
+			List<String> propertiesTodelete = new ArrayList<>();
+			Map<String, Value<?, XPOperand<?>>> propertiesToAdd = new LinkedHashMap<>();
+			
+			for(String oname : mpRef.keySet()) {
+				if(oname.startsWith(PRTY_PREF_SUBSTITUTION)) {
+					Value<?, XPOperand<?>> vlImport = mpRef.get(oname);
+					ObjectValue<XPOperand<?>> ovImport = vlImport.asObjectValue();
+					if(ovImport == null) continue;
+					
+					String statement = ovImport.getAttributAsString(Computing.PRTY_STATEMENT);
+					
+					if(!"import".equals(statement)) continue;
+					
+					ComputingStatement cs = parser.getStatements().get(statement);
+					if(cs == null) continue;
+					
+					propertiesTodelete.add(oname);
+					
+					Value<?, XPOperand<?>> vlImportRes = cs.translate(ovImport, null, new MapVariableContext(), new LinkedHashMap<>(), CS_IMPORT);
+					
+					if(vlImportRes == null) continue;
+					
+					ObjectValue<XPOperand<?>> ovImportRes = vlImportRes.asObjectValue();
+					if(ovImportRes == null) continue;
+					
+					String insertion = ovImportRes.getAttributAsString(PRTY_INSERTION);
+					if(VL_INCORPORATE.equals(insertion)) {
+						ArrayValue<XPOperand<?>> av = ovImportRes.getAttributAsArrayValue(PRTY_VALUE);
+						
+						List<Value<?, XPOperand<?>>> lst = av.getValue();
+						
+						for(Value<?, XPOperand<?>> vlIncorporateItem : lst) {
+							ObjectValue<XPOperand<?>> ovValue = vlIncorporateItem.asRequiredObjectValue();
+							
+							Map<String, Value<?, XPOperand<?>>> mpValue = ovValue.getValue();
+							
+							for(String newPropName : mpValue.keySet()) {
+								propertiesToAdd.put(newPropName, mpValue.get(newPropName));
+							}
+						}
+						
+					}
+				}
+			}
+			
+			for(String p : propertiesTodelete) {
+				mpRef.remove(p);
+			}
+			
+			for(String p : propertiesToAdd.keySet()) {
+				mpRef.put(p, propertiesToAdd.get(p).asObjectValue());
+			}
+		}
+		
+		
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -1209,8 +1294,6 @@ public class Computing {
 		
 		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
 		
-		//VariableContext vc = variableContextAnyWay(context);
-		
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
 		if(')' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
@@ -1736,4 +1819,9 @@ public class Computing {
 		
 	}
 
+	public ObjectValue<XPOperand<?>> getResult() {
+		return result;
+	}
+
+	
 }
