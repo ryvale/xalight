@@ -382,4 +382,33 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity3", evaluator, entityVC);
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2").toString()));
 	}
+	
+	public void testStatementName() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		entityVC.assignContextVariable("p", "param");
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity1", evaluator, entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity_param", evaluator, entityVC);
+		assertTrue("b".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity2", evaluator, entityVC);
+		assertTrue("c".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity4", evaluator, entityVC);
+		assertTrue("d".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity5", evaluator, entityVC);
+		assertTrue("e".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity6", evaluator, entityVC);
+		assertTrue("e".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity7", evaluator, entityVC);
+		assertTrue("ea".equals(ovEntity.getPathAttributAsString("property")));
+	}
 }

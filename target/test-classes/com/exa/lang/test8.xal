@@ -1,0 +1,46 @@
+:test,
+
+references {
+	base {
+		property "d"
+	},
+	
+	base1 {
+		*name "property" "e"
+	},
+	
+	base2(i) {
+		*name "property" = "e" + i
+	}
+},
+
+entities(p) {
+	
+	*name "entity1" {
+		property "a"
+	},
+	
+	*name = "entity_" + p {
+		property "b"
+	},
+	
+	entity2 {
+		*name "property" : "c"
+	},
+	
+	entity3 {
+		*name "property" = "c"
+	},
+	
+	*name "entity4" @base {
+	},
+	
+	*name "entity5" @base1 {
+	
+	},
+	
+	*name "entity6" @base1,
+	
+	*name "entity7" @base1("a")
+	
+}

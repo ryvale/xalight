@@ -14,6 +14,7 @@ import com.exa.lang.expression.XPEvaluatorSetup;
 import com.exa.lang.parsing.statements.STFor;
 import com.exa.lang.parsing.statements.STIf;
 import com.exa.lang.parsing.statements.STImport;
+import com.exa.lang.parsing.statements.STName;
 import com.exa.utils.ManagedException;
 import com.exa.utils.io.FilesRepositories;
 import com.exa.utils.values.ObjectValue;
@@ -36,6 +37,8 @@ public class XALParser {
 		statements.put("for", new STFor(this));
 		
 		statements.put("import", new STImport(this));
+		
+		statements.put("name", new STName(this));
 	}
 	
 	public XALParser() {

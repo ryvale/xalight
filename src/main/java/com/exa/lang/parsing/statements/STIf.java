@@ -23,7 +23,6 @@ public class STIf implements ComputingStatement {
 	
 	private XALParser parser;
 	
-	
 	public STIf(XALParser parser) {
 		super();
 		this.parser = parser;
