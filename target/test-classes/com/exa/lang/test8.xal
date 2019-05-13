@@ -41,6 +41,6 @@ entities(p) {
 	
 	*name "entity6" @base1,
 	
-	*name "entity7" @base1("a")
+	*name "entity7" @base2("a")
 	
 }
