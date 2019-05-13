@@ -410,5 +410,9 @@ public class XalightApplicationTests extends TestCase {
 		
 		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity7", evaluator, entityVC);
 		assertTrue("ea".equals(ovEntity.getPathAttributAsString("property")));
+		
+		ovEntity = parser.object("./src/test/java/com/exa/lang/test8.xal", "entities.entity8", evaluator, entityVC);
+		assertTrue("0".equals(ovEntity.getPathAttributAsString("property0")));
+		assertTrue("ea".equals(ovEntity.getPathAttributAsString("propertya")));
 	}
 }
