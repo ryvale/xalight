@@ -173,7 +173,6 @@ public class XALParser {
 	public void setFilesRepos(FilesRepositories filesRepos) {
 		this.filesRepos = filesRepos;
 	}
-
 	
 }
 
