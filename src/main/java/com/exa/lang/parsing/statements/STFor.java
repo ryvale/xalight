@@ -170,8 +170,8 @@ public class STFor implements ComputingStatement {
 			String var = ov.getRequiredAttributAsString("_var");
 			String varType = ov.getRequiredAttributAsString("_vartype");
 			
-			VariableContext vc = new MapVariableContext(ovc);
-			vc.addVariable(var, evaluator.getClassesMan().getType(varType).valueClass(), null);
+			/*VariableContext vc = new MapVariableContext(ovc);
+			vc.addVariable(var, evaluator.getClassesMan().getType(varType).valueClass(), null);*/
 			
 			ArrayValue<XPOperand<?>> arRes = new ArrayValue<>();
 			
@@ -181,6 +181,7 @@ public class STFor implements ComputingStatement {
 			
 			if(ov.getRequiredAttributAsString(Computing.PRTY_INSERTION).equals(Computing.VL_ARRAY))
 				for(Value<?, XPOperand<?>> vl : lstValues) {
+					VariableContext vc = new MapVariableContext(ovc);
 					vc.assignContextVariable(var, vl.getValue());
 					try {
 						Value<?, XPOperand<?>> rawItem = vlDo.clone();
@@ -204,6 +205,7 @@ public class STFor implements ComputingStatement {
 				Value<?, XPOperand<?>> vlName = ov.getRequiredAttribut(Computing.PRTY_NAME);
 				
 				for(Value<?, XPOperand<?>> vl : lstValues) {
+					VariableContext vc = new MapVariableContext(ovc);
 					vc.assignContextVariable(var, vl.getValue());
 					try {
 						Value<?, XPOperand<?>> rawItem = vlDo.clone();
@@ -244,7 +246,6 @@ public class STFor implements ComputingStatement {
 			res.setAttribut(Computing.PRTY_CONTEXT, ov.getAttribut(Computing.PRTY_CONTEXT));
 			
 			res.setAttribut(Computing.PRTY_VALUE, arRes);
-			
 			
 			return res;
 		}

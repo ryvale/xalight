@@ -610,7 +610,7 @@ public class Computing {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public static Value<?, XPOperand<?>> computeCalculableValue(CalculableValue<?, XPOperand<?>> cl, XPEvaluator evaluator, VariableContext entityVC) {
+	/*public static Value<?, XPOperand<?>> computeCalculableValue(CalculableValue<?, XPOperand<?>> cl, XPEvaluator evaluator, VariableContext entityVC) {
 		if(ET_RUNTIME.equals(cl.getEvalTime())) {
 			XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
 			if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
@@ -649,6 +649,52 @@ public class Computing {
 			
 			return new BooleanValue<>(xalCL.getValue());
 		}
+		
+		return cl;
+	}*/
+	
+	public static Value<?, XPOperand<?>> computeCalculableValue(CalculableValue<?, XPOperand<?>> cl, XPEvaluator evaluator, VariableContext entityVC) {
+		XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+		if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
+		xalCL.setEvaluator(evaluator);
+		/*if(ET_RUNTIME.equals(cl.getEvalTime())) {
+			XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+			if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
+			xalCL.setEvaluator(evaluator);
+			return xalCL;
+		}
+		
+		if("string".equals(cl.typeName())) {
+			XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+			if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
+			xalCL.setEvaluator(evaluator);
+
+			return new StringValue<>(xalCL.getValue());
+		}
+		
+		if("integer".equals(cl.typeName())) {
+			XALCalculabeValue<Integer> xalCL = (XALCalculabeValue<Integer>) cl;
+			if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
+			xalCL.setEvaluator(evaluator);
+			
+			return new IntegerValue<>(xalCL.getValue());
+		}
+		
+		if("float".equals(cl.typeName())) {
+			XALCalculabeValue<Double> xalCL = (XALCalculabeValue<Double>) cl;
+			if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
+			xalCL.setEvaluator(evaluator);
+			
+			return new DecimalValue<>(xalCL.getValue());
+		}
+					
+		if("boolean".equals(cl.typeName())) {
+			XALCalculabeValue<Boolean> xalCL = (XALCalculabeValue<Boolean>) cl;
+			if(xalCL.getVariableContext() == null) xalCL.setVariableContext(entityVC);
+			xalCL.setEvaluator(evaluator);
+			
+			return new BooleanValue<>(xalCL.getValue());
+		}*/
 		
 		return cl;
 	}
@@ -1681,11 +1727,16 @@ public class Computing {
 			
 			CalculableValue<?, XPOperand<?>> cl = vlv.asCalculableValue();
 			if(cl != null) {
-				XALCalculabeValue<XPOperand<?>> xalCl = (XALCalculabeValue<XPOperand<?>>)cl;
-				xalCl.setVariableContext(vc);
+				XALCalculabeValue<XPOperand<?>> xalCl;
+				try {
+					xalCl = (XALCalculabeValue<XPOperand<?>>)cl.clone();
+					xalCl.setVariableContext(vc);
+					mpDst.put(v, xalCl);
+				} catch (CloneNotSupportedException e) {
+					throw new ManagedException(e);
+				}
 			}
-			
-			mpDst.put(v, vlv);
+			else mpDst.put(v, vlv);
 			
 		}
 	}
