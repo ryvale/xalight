@@ -1111,7 +1111,7 @@ public class Computing {
 		//variableContextAnyWay(context);
 		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithoutDec(context);
 		if(res != null) return res;
-		Character ch = lexingRules.nextForwardChar(charReader);
+		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
 		
 		
 		if('(' == ch) {
@@ -1517,7 +1517,7 @@ public class Computing {
 		return new StringValue<XPOperand<?>>(str);
 	}
 	
-	private String readStringReturnString(String end) throws ManagedException {
+	public String readStringReturnString(String end) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		String str = lexingRules.nextNonNullString(charReader);

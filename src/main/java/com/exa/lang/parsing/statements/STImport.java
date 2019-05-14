@@ -99,7 +99,7 @@ public class STImport implements ComputingStatement {
 				
 				if(ch != '"'  && ch !='\'') throw new ParsingException(String.format("Syntax error near %s.File name expected in import statement in context %s", ch.toString(), context));
 				
-				String file = computing.readString(ch.toString()).asString();
+				String file = computing.readStringReturnString(ch.toString());
 				res.setAttribut(Computing.PRTY_FILE, file);
 				
 			}

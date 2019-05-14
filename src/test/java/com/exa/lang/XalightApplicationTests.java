@@ -415,4 +415,14 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("0".equals(ovEntity.getPathAttributAsString("property0")));
 		assertTrue("ea".equals(ovEntity.getPathAttributAsString("propertya")));
 	}
+	
+	public void testRealCaseSyncConfigurer() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		entityVC.assignContextVariable("updateMode", "insert");
+		ObjectValue<XPOperand<?>> ovEntity = parser.object("./src/test/java/com/exa/lang/private/sync.xal", "entities.execute", evaluator, entityVC);
+	}
 }
