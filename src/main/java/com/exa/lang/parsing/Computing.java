@@ -1403,7 +1403,7 @@ public class Computing {
 			return readArrayBody(context);
 		}
 		
-		if(ch == ',') return new BooleanValue<XPOperand<?>>(Boolean.TRUE);
+		if(ch == ',' || ch == '}') return new BooleanValue<XPOperand<?>>(Boolean.TRUE);
 		
 		if(ch == '\'' || ch == '\"') return readString(ch.toString());
 				
