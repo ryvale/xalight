@@ -101,19 +101,8 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		return this;
 	}
 
-	@Override
-	public Integer asInteger() throws ManagedException {
-		if(xp.type() == ClassesMan.T_INTEGER) {
-			
-			evaluator.pushVariableContext(variableContext);
-			Integer res = ClassesMan.T_INTEGER.valueOrNull(xp.value(evaluator));
-			evaluator.popVariableContext();
-			
-			return res;
-		}
-		
-		throw new ManagedException(String.format("This value should be an integer"));
-	}
+	
+	
 	
 	
 
@@ -223,6 +212,33 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		
 		throw new ManagedException(String.format("This value should be an integer"));
 	}
+	
+	@Override
+	public Integer asInteger() throws ManagedException {
+		if(xp.type() == ClassesMan.T_INTEGER) {
+			
+			evaluator.pushVariableContext(variableContext);
+			Integer res = ClassesMan.T_INTEGER.valueOrNull(xp.value(evaluator));
+			evaluator.popVariableContext();
+			
+			return res;
+		}
+		
+		throw new ManagedException(String.format("This value should be an integer"));
+	}
+	
+	@Override
+	public Double asDouble() throws ManagedException {
+		Type<?> t = xp.type();
+		if(t == ClassesMan.T_DOUBLE) {
+			evaluator.pushVariableContext(variableContext);
+			Double res = ClassesMan.T_DOUBLE.valueOrNull(xp.value(evaluator));
+			evaluator.popVariableContext();
+			return res;
+		}
+		
+		throw new ManagedException(String.format("This value should be an integer"));
+	}
 
 	public VariableContext getVariableContext() {
 		return variableContext;
@@ -238,6 +254,14 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		if(res == null) throw new ManagedException(String.format("This value should be a non null integer"));
 		return res;
 	}
+
+	@Override
+	public Double asRequiredDouble() throws ManagedException {
+		Double res = asDouble();
+		if(res == null) throw new ManagedException(String.format("This value should be a non null double"));
+		return res;
+	}
+
 	
 	
 	
