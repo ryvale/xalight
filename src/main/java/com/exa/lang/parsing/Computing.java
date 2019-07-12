@@ -576,7 +576,6 @@ public class Computing {
 					
 					continue;
 				}
-		
 				
 				vl = value(parser, vov, evaluator, entityVC, libOV);
 				if(vl == null) {
@@ -589,6 +588,45 @@ public class Computing {
 					currentMpEntity.put(propertyName, vl);
 					continue;
 				}
+			}
+			
+			ArrayValue<XPOperand<?>> vav = vl.asArrayValue();
+			if(vav != null) {
+				List<Value<?, XPOperand<?>>> lstVav = vav.getValue();
+				
+				for(int i = 0; i<lstVav.size(); i++) {
+					Value<?, XPOperand<?>> vlVav = lstVav.get(i);
+					
+					CalculableValue<?, XPOperand<?>> clVav = vlVav.asCalculableValue();
+					if(clVav != null) {
+						computeCalculableValue(clVav, evaluator, entityVC);
+						continue;
+					}
+					
+					ObjectValue<XPOperand<?>> ovVav = vlVav.asObjectValue();
+					if(ovVav != null) {
+						Value<?, XPOperand<?>> newVlVav = Computing.value(parser, ovVav, evaluator, entityVC, libOV);
+						
+						lstVav.set(i, newVlVav);
+						continue;
+					}
+				}
+				
+				/*for(Value<?, XPOperand<?>> vlVav : lstVav) {
+					CalculableValue<?, XPOperand<?>> clVav = vlVav.asCalculableValue();
+					if(clVav != null) {
+						computeCalculableValue(clVav, evaluator, entityVC);
+						continue;
+					}
+					
+					ObjectValue<XPOperand<?>> ovVav = vlVav.asObjectValue();
+					if(ovVav != null) {
+						continue;
+					}
+				}*/
+				
+				// TODO
+				continue;
 			}
 			
 			CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
