@@ -326,6 +326,19 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx.property")));
 	}
 	
+	public void testDoubleFormuleProperties() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		XPEvaluator evaluator = new XPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		entityVC.assignContextVariable("prm", "123456");
+		ObjectValue<XPOperand<?>>  ovEntity = parser.object("./src/test/java/com/exa/lang/test9.xal", "entities.entity1", evaluator, entityVC);
+		
+		System.out.println(ovEntity.getAttributAsString("p1"));
+		System.out.println(ovEntity.getAttributAsString("p2"));
+	}
 	
 	public void testStatementFor() throws ManagedException {
 		XALParser parser = new XALParser();

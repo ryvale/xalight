@@ -1164,7 +1164,8 @@ public class Computing {
 	private ObjectValue<XPOperand<?>> readObjectWithDeclarationParam(String context) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		XPEvaluator evaluator = xpCompiler.evaluator();
-		VariableContext vc = new MapVariableContext();
+		
+		VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
 		evaluator.pushVariableContext(vc);
 		
 		ObjectValue<XPOperand<?>> params = readFunctionParamsDeclaration(vc);

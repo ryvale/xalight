@@ -179,7 +179,9 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public String typeName() {
-		return mapTypeManToString.get(xp.type());
+		//if(evaluator == null) return mapTypeManToString.get(xp.type());
+		
+		return xp.type().typeName();
 	}
 
 
