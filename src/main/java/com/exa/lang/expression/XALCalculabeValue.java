@@ -136,20 +136,8 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		throw new ManagedException(String.format("This value should be a string"));
 	}
 	
-	/*@Override
-	public Boolean asBoolean() throws ManagedException {
-		if(xp.type() == ClassesMan.T_STRING) {
-			evaluator.pushVariableContext(variableContext);
-			String res = ClassesMan.T_STRING.valueOrNull(xp.value(evaluator));
-			evaluator.popVariableContext();
-			return res;
-		}
-		throw new ManagedException(String.format("This value should be a string"));
-	}*/
-
 	@Override
 	public XALCalculabeValue<T> clone() throws CloneNotSupportedException {
-		//ObjectValue<XPOperand<?>> ov = rootObject;
 		return new XALCalculabeValue<T>(xp, evalTime);
 	}
 
@@ -168,26 +156,19 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		}
 		return "calculable";
 	}
-	
-	
-	/*private XPEvaluator getEvaluator() throws ManagedException {
-		if(evaluator == null) evaluator = evaluatorFactory.create(rootObject, entityContext);
-		
-		return evaluator;
-	}*/
-
 
 	@Override
 	public String typeName() {
-		//if(evaluator == null) return mapTypeManToString.get(xp.type());
-		
 		return xp.type().typeName();
 	}
 
+	public XPOperand<T> getXp() {
+		return xp;
+	}
 
 	@Override
 	public void setContext(String context) {
-		//this.entityContext = context;
+		
 	}
 
 	public XPEvaluator getEvaluator() {
