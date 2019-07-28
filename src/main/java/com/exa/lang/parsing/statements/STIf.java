@@ -12,7 +12,6 @@ import com.exa.lang.expression.XALCalculabeValue;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.ComputingStatement;
 import com.exa.lang.parsing.XALLexingRules;
-import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.CalculableValue;
@@ -20,13 +19,6 @@ import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
 public class STIf implements ComputingStatement {
-	
-	private XALParser parser;
-	
-	public STIf(XALParser parser) {
-		super();
-		this.parser = parser;
-	}
 
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
@@ -90,9 +82,10 @@ public class STIf implements ComputingStatement {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, Computing executedComputing, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 		Value<?, XPOperand<?>> vlCond = ov.getAttribut(Computing.PRTY_CONDITION);
 		
+		XPEvaluator evaluator = executedComputing.getXPEvaluator();
 		Boolean cond;
 		CalculableValue<?, XPOperand<?>> cl = vlCond.asCalculableValue();
 		if(cl == null) cond = vlCond.asRequiredBoolean();
@@ -120,7 +113,7 @@ public class STIf implements ComputingStatement {
 					ObjectValue<XPOperand<?>> ovRes = res.asObjectValue();
 					
 					finalRes.setAttribut(Computing.PRTY_INSERTION, ovRes == null ? Computing.VL_VALUE : Computing.VL_INCORPORATE);
-					avRes.add(Computing.value(parser, res, evaluator, ovc, libOV));
+					avRes.add(executedComputing.value(res, ovc, libOV));
 				}
 				else {
 					XALCalculabeValue<String> xalCLName = (XALCalculabeValue<String>) vlName;
@@ -128,7 +121,7 @@ public class STIf implements ComputingStatement {
 					xalCLName.setEvaluator(evaluator);
 					
 					ObjectValue<XPOperand<?>> ovRes = new ObjectValue<>();
-					ovRes.setAttribut(xalCLName.getValue(), Computing.value(parser, res, evaluator, ovc, libOV));
+					ovRes.setAttribut(xalCLName.getValue(), executedComputing.value(res, ovc, libOV));
 					avRes.add(ovRes);
 					finalRes.setAttribut(Computing.PRTY_INSERTION, Computing.VL_INCORPORATE);
 				}
@@ -150,7 +143,7 @@ public class STIf implements ComputingStatement {
 					
 					ObjectValue<XPOperand<?>> ovRes = new ObjectValue<>();
 					
-					ovRes.setAttribut(xalCLName.getValue(), Computing.value(parser, ov, evaluator, ovc, libOV));
+					ovRes.setAttribut(xalCLName.getValue(), executedComputing.value(ov, ovc, libOV));
 					avRes.add(ovRes);
 				}
 			}
@@ -168,7 +161,7 @@ public class STIf implements ComputingStatement {
 				
 				finalRes.setAttribut(Computing.PRTY_INSERTION, ovRes == null ? Computing.VL_VALUE : Computing.VL_INCORPORATE);
 				
-				avRes.add(Computing.value(parser, res, evaluator, ovc, libOV));
+				avRes.add(executedComputing.value(res, ovc, libOV));
 			}
 			else {
 				XALCalculabeValue<String> xalCLName = (XALCalculabeValue<String>) vlName;
@@ -176,7 +169,7 @@ public class STIf implements ComputingStatement {
 				xalCLName.setEvaluator(evaluator);
 				
 				ObjectValue<XPOperand<?>> ovRes = new ObjectValue<>();
-				ovRes.setAttribut(xalCLName.getValue(), Computing.value(parser, res, evaluator, ovc, libOV));
+				ovRes.setAttribut(xalCLName.getValue(), executedComputing.value(res, ovc, libOV));
 				avRes.add(ovRes);
 				finalRes.setAttribut(Computing.PRTY_INSERTION, Computing.VL_INCORPORATE);
 			}

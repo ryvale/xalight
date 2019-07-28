@@ -15,7 +15,6 @@ import com.exa.lang.expression.XALCalculabeValue;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.ComputingStatement;
 import com.exa.lang.parsing.XALLexingRules;
-import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.CalculableValue;
@@ -23,14 +22,6 @@ import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
 public class STFor implements ComputingStatement {
-	
-	private XALParser parser;
-	
-	
-	public STFor(XALParser parser) {
-		super();
-		this.parser = parser;
-	}
 
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
@@ -161,17 +152,13 @@ public class STFor implements ComputingStatement {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, Computing excetutedComputing, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 		String type = ov.getAttributAsString(Computing.PRTY_TYPE);
 		
 		if("in".equals(type)) {
 			ArrayValue<XPOperand<?>> values = ov.getRequiredAttributAsArrayValue("_values");
 			
 			String var = ov.getRequiredAttributAsString("_var");
-			String varType = ov.getRequiredAttributAsString("_vartype");
-			
-			/*VariableContext vc = new MapVariableContext(ovc);
-			vc.addVariable(var, evaluator.getClassesMan().getType(varType).valueClass(), null);*/
 			
 			ArrayValue<XPOperand<?>> arRes = new ArrayValue<>();
 			
@@ -188,10 +175,10 @@ public class STFor implements ComputingStatement {
 						CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
 						Value<?, XPOperand<?>> item;
 						
-						item = Computing.value(parser, rawItem, evaluator, vc, libOV);
-						if(cl == null) item = Computing.value(parser, rawItem, evaluator, vc, libOV);
+						//item = excetutedComputing.value(rawItem, vc, libOV);
+						if(cl == null) item = excetutedComputing.value(rawItem, vc, libOV);
 						else {
-							item = Computing.computeCalculableValue(cl, evaluator, vc);
+							item = excetutedComputing.computeCalculableValue(cl, vc);
 						}
 						if(item == null) continue;
 						
@@ -212,9 +199,9 @@ public class STFor implements ComputingStatement {
 						CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
 						
 						Value<?, XPOperand<?>> item;
-						if(cl == null) item = Computing.value(parser, rawItem, evaluator, vc, libOV);
+						if(cl == null) item = excetutedComputing.value(rawItem, vc, libOV);
 						else {
-							item = Computing.computeCalculableValue(cl, evaluator, vc);
+							item = excetutedComputing.computeCalculableValue(cl, vc);
 						}
 						
 						if(item == null) continue;
@@ -226,7 +213,7 @@ public class STFor implements ComputingStatement {
 						
 						XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
 						if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
-						xalCL.setEvaluator(evaluator);
+						xalCL.setEvaluator(excetutedComputing.getXPEvaluator());
 						
 						propName = xalCL.asRequiredString();
 						

@@ -11,7 +11,6 @@ import com.exa.lang.expression.XALCalculabeValue;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.ComputingStatement;
 import com.exa.lang.parsing.XALLexingRules;
-import com.exa.lang.parsing.XALParser;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.CalculableValue;
@@ -19,13 +18,6 @@ import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
 public class STName implements ComputingStatement {
-	
-	private XALParser parser;
-	
-	public STName(XALParser parser) {
-		super();
-		this.parser = parser;
-	}
 	
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
@@ -76,9 +68,11 @@ public class STName implements ComputingStatement {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, Computing executedComputing, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 		//
 		Value<?, XPOperand<?>> vlName = ov.getRequiredAttribut(Computing.PRTY_NAME);
+		
+		XPEvaluator evaluator = executedComputing.getXPEvaluator();
 		
 		CalculableValue<?, XPOperand<?>> cl =  vlName.asCalculableValue();
 		String name;

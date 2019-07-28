@@ -7,7 +7,9 @@ import com.exa.buffer.CharReader;
 import com.exa.expression.VariableContext;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.XPEvaluator;
+import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
 import com.exa.lang.expression.XALCalculabeValue;
+import com.exa.lang.expression.XPEvaluatorSetup;
 import com.exa.lang.parsing.Computing;
 import com.exa.lang.parsing.ComputingStatement;
 import com.exa.lang.parsing.XALLexingRules;
@@ -21,18 +23,25 @@ import com.exa.utils.values.StringValue;
 import com.exa.utils.values.Value;
 
 public class STImport implements ComputingStatement {
-	private XALParser parser;
 	
-	public STImport(XALParser parser) {
+	private XPEvaluatorSetup evaluatorSetup;
+	private UnknownIdentifierValidation uiv;
+	
+	
+	public STImport(XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) {
 		super();
-		this.parser = parser;
+		this.evaluatorSetup = evaluatorSetup;
+		this.uiv = uiv;
 	}
+	
+	public STImport() { this(evSetup -> {}, (id, context) -> null ); }
+
+	//private 
 
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
 		final CharReader charReader = computing.getCharReader();
 		final XALLexingRules lexingRules = computing.getParser().getLexingRules();
-		//final Parser xpCompiler = computing.getXpCompiler();
 		
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
 		if(ch == null) throw new ManagedException(String.format("Unexpected end of file in %s. '[' or '{' expected after import statement", context));
@@ -218,13 +227,16 @@ public class STImport implements ComputingStatement {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, XPEvaluator evaluator, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
+	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, Computing executedComputing, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 		String context = ov.getAttributAsString(Computing.PRTY_CONTEXT);
+		
+		XALParser parser = executedComputing.getParser();
 		
 		Value<?, XPOperand<?>> vl = ov.getRequiredAttribut(Computing.PRTY_FILE);
 		CalculableValue<?, XPOperand<?>> cl = vl.asCalculableValue();
 		
-		String fileName;
+		XPEvaluator evaluator = executedComputing.getXPEvaluator();
+		String fileName; 
 		if(cl == null) {
 			fileName = vl.asRequiredString();
 		}
@@ -275,6 +287,8 @@ public class STImport implements ComputingStatement {
 				dest = xalCLStr.asRequiredString();
 			}
 			
+			Computing importComputing = parser.getExecutedComputeObjectFormFile(fileName, evaluatorSetup, uiv);
+			
 			ObjectValue<XPOperand<?>> ovDest;
 			if(source.endsWith("*")) {
 				String parts[] = source.split("[.]");
@@ -282,10 +296,11 @@ public class STImport implements ComputingStatement {
 				
 				if(parts.length > 2) {
 					String entitPath = source.substring(0, source.length() - parts[parts.length-1].length() - 1);
-					ovSrc = parser.object(fileName, entitPath, evaluator, ovc);
+					
+					ovSrc = executedComputing.object(entitPath, ovc);
 				}
 				else {
-					ovSrc = parser.object(fileName, evaluator, ovc);
+					ovSrc = importComputing.object(ovc);
 				}
 				
 				ovDest = new ObjectValue<>();
@@ -304,10 +319,10 @@ public class STImport implements ComputingStatement {
 				ObjectValue<XPOperand<?>> ovDestInt;
 				
 				if(Computing.CS_IMPORT.equals(cmd)) {
-					ObjectValue<XPOperand<?>> rootOV = parser.parseFile(fileName);
+					ObjectValue<XPOperand<?>> rootOV = importComputing.getResult();
 					ovDestInt = rootOV.getPathAttributAsObjecValue(source);
 				}
-				else ovDestInt = parser.object(fileName, source, evaluator, ovc);
+				else ovDestInt = importComputing.object(source, ovc);
 				
 				String parts[] = dest.split("[.]");
 				
@@ -326,6 +341,22 @@ public class STImport implements ComputingStatement {
 		
 		
 		return res;
+	}
+
+	public XPEvaluatorSetup getEvaluatorSetup() {
+		return evaluatorSetup;
+	}
+
+	public void setEvaluatorSetup(XPEvaluatorSetup evaluatorSetup) {
+		this.evaluatorSetup = evaluatorSetup;
+	}
+
+	public UnknownIdentifierValidation getUiv() {
+		return uiv;
+	}
+
+	public void setUiv(UnknownIdentifierValidation uiv) {
+		this.uiv = uiv;
 	}
 
 }
