@@ -413,9 +413,13 @@ public class XalightApplicationTests extends TestCase {
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
 		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity2", entityVC);//parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity2", evaluator, entityVC);
-		assertTrue("2".equals(ovEntity.getPathAttributAsInteger("property1").toString()));
+		assertTrue("ac".equals(ovEntity.getPathAttributAsString("cplx.property3").toString()));
+		
 		
 		ovEntity = computing.object("entities.entity3", entityVC);//parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity3", evaluator, entityVC);
+		assertTrue("bc".equals(ovEntity.getPathAttributAsString("cplx.property3").toString()));
+		
+		ovEntity = computing.object("entities.entity4", entityVC);//parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity3", evaluator, entityVC);
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2").toString()));
 	}
 	

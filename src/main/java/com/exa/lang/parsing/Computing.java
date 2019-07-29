@@ -425,14 +425,20 @@ public class Computing {
 				
 				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
 				
+				if(ovMother == null) throw new ManagedException(String.format("Inexistebt mother for the path '%s'", fqnParts[fqnParts.length - 1]));
+				
+				try {
+					ovMother = ovMother.clone();
+				} catch (CloneNotSupportedException e) {
+					throw new ManagedException(e);
+				}
+				
 				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
 				
 				mergeInheritedObject(ovMother, ovEntity, evaluator, lastVC);
 				
 				computeCalculabe(ovEntity, lastVC, libOV);
-				
-				//computeCalculabe(parser, ovEntity, evaluator, parentVC, libOV);
 				
 				if(res.getAttribut(PRTY_CALL_PARAMS) == null) break;
 			
@@ -637,6 +643,13 @@ public class Computing {
 				ObjectValue<XPOperand<?>> libPartOV = libOV.get(fqnParts.length == 1 ? LIBN_DEFAULT : fqnParts[0]);
 				
 				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
+				if(ovMother == null) throw new ManagedException(String.format("Inexistebt mother for the path '%s'", fqnParts[fqnParts.length - 1]));
+				
+				try {
+					ovMother = ovMother.clone();
+				} catch (CloneNotSupportedException e) {
+					throw new ManagedException(e);
+				}
 				
 				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
