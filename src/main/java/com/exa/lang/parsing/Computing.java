@@ -185,8 +185,10 @@ public class Computing {
 			
 			if(ch == null) return result;
 			
-			if(ch != ',') throw new ParsingException(String.format("',' expected after type value."));
-			lexingRules.nextNonBlankChar(charReader);
+			/*if(ch != ',') throw new ParsingException(String.format("',' expected after type value."));
+			lexingRules.nextNonBlankChar(charReader);*/
+			
+			if(ch == ',') lexingRules.nextNonBlankChar(charReader);
 		}
 		
 		ch = null;
@@ -214,9 +216,9 @@ public class Computing {
 			
 			if(ch == null) break;
 			
-			if(ch != ',') throw new ParsingException(String.format("',' expected after property value."));
-			
-			lexingRules.nextNonBlankChar(charReader);
+			//if(ch != ',') throw new ParsingException(String.format("',' expected after property value."));
+			//lexingRules.nextNonBlankChar(charReader);
+			if(ch == ',') lexingRules.nextNonBlankChar(charReader);
 		}
 		while(true);
 		
@@ -1220,7 +1222,7 @@ public class Computing {
 					if(e.isRealParsingException()) throw e;
 					
 					if(e.getParsingString() == null) {
-						if(ch == null) throw new ParsingException(String.format("Unexpected end of file. Expecting '}' or property"));
+						if(ch == null) throw new ParsingException(String.format("Unexpected end of file in context '%s'. Expecting '}' or property", context));
 						throw e;
 					}
 					if("}".equals(e.getParsingString())) return ov;
@@ -1244,14 +1246,17 @@ public class Computing {
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			
-			if(ch == null) throw new ParsingException(String.format("Unexpected end of file after property %s reading", propertyName));
+			if(ch == null) throw new ParsingException(String.format("Unexpected end of file after property '%s' reading in context '%s'", propertyName, context));
 			
 			if('}' == ch.charValue())  { charReader.nextChar();	break;	}
 			
-			if(ch != ',') 
+			/*if(ch != ',') 
 				throw new ParsingException(String.format("',' expected after property value."));
 			
-			lexingRules.nextNonBlankChar(charReader);
+			lexingRules.nextNonBlankChar(charReader);*/
+			
+			if(ch == ',') lexingRules.nextNonBlankChar(charReader);
+				
 		}
 		while(true);
 		
@@ -1477,11 +1482,11 @@ public class Computing {
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			
-			if(ch == null) throw new ParsingException(String.format("Unexpected end of file reading array item"));
+			if(ch == null) throw new ParsingException(String.format("Unexpected end of file reading array item in context '%s'", context));
 			
 			if(']' == ch.charValue())  { charReader.nextChar();	break;	}
 			
-			if(ch != ',') throw new ParsingException(String.format("',' expected after property value."));
+			if(ch != ',') throw new ParsingException(String.format("',' expected after property value in context '%s'.", context));
 			
 			lexingRules.nextNonBlankChar(charReader);
 			i++;
