@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.exa.lang.XalightApplicationTests" time="0.461" tests="16" errors="0" skipped="0" failures="0">
+<testsuite name="com.exa.lang.XalightApplicationTests" time="0.331" tests="16" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.runtime.name" value="Java(TM) SE Runtime Environment"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk1.8.0_201\jre\bin"/>
@@ -26,7 +26,7 @@
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="user.variant" value=""/>
     <property name="os.name" value="Windows 10"/>
-    <property name="classworlds.conf" value="D:\p-project\exa-xal-light\.metadata\.plugins\org.eclipse.m2e.launching\launches\m2conf8007240140848847846.tmp"/>
+    <property name="classworlds.conf" value="D:\p-project\exa-xal-light\.metadata\.plugins\org.eclipse.m2e.launching\launches\m2conf3384349771512484852.tmp"/>
     <property name="sun.jnu.encoding" value="Cp1252"/>
     <property name="java.library.path" value="C:\Program Files\Java\jdk1.8.0_201\bin;C:\Windows\Sun\Java\bin;C:\Windows\system32;C:\Windows;C:/Program Files/Java/jre1.8.0_221/bin/server;C:/Program Files/Java/jre1.8.0_221/bin;C:/Program Files/Java/jre1.8.0_221/lib/amd64;C:\Program Files (x86)\Python37-32\Scripts\;C:\Program Files (x86)\Python37-32\;C:\app\hp\product\11.2.0\client_1\bin;C:\Program Files (x86)\Common Files\Oracle\Java\javapath;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Program Files\Git\cmd;C:\Program Files\Microsoft SQL Server\Client SDK\ODBC\110\Tools\Binn\;C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft SQL Server\120\Tools\Binn\;C:\Program Files\Microsoft SQL Server\120\DTS\Binn\;C:\Program Files (x86)\Microsoft SQL Server\120\Tools\Binn\ManagementStudio\;C:\Program Files (x86)\Microsoft SQL Server\120\DTS\Binn\;C:\Program Files\nodejs\;C:\Users\leader\AppData\Local\Microsoft\WindowsApps;C:\Users\leader\AppData\Local\Programs\Microsoft VS Code\bin;C:\Users\leader\AppData\Roaming\npm;C:\Outils\dev\java\sts-bundle\sts-3.8.3.RELEASE;;."/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
@@ -60,20 +60,20 @@
     <property name="sun.desktop" value="windows"/>
     <property name="sun.cpu.isalist" value="amd64"/>
   </properties>
-  <testcase name="testStatementName" classname="com.exa.lang.XalightApplicationTests" time="0.295"/>
-  <testcase name="testStatementImport" classname="com.exa.lang.XalightApplicationTests" time="0.016"/>
-  <testcase name="testXalString" classname="com.exa.lang.XalightApplicationTests" time="0.006"/>
-  <testcase name="testXalInheritance2" classname="com.exa.lang.XalightApplicationTests" time="0.006"/>
+  <testcase name="testStatementName" classname="com.exa.lang.XalightApplicationTests" time="0.21"/>
+  <testcase name="testStatementImport" classname="com.exa.lang.XalightApplicationTests" time="0.014"/>
+  <testcase name="testXalString" classname="com.exa.lang.XalightApplicationTests" time="0.003"/>
+  <testcase name="testXalInheritance2" classname="com.exa.lang.XalightApplicationTests" time="0.002"/>
   <testcase name="testXalInheritance5" classname="com.exa.lang.XalightApplicationTests" time="0.006"/>
   <testcase name="testXalInheritance6" classname="com.exa.lang.XalightApplicationTests" time="0.005"/>
-  <testcase name="testXalInheritance7" classname="com.exa.lang.XalightApplicationTests" time="0.005"/>
-  <testcase name="testXalInheritance8" classname="com.exa.lang.XalightApplicationTests" time="0.012"/>
-  <testcase name="testXalInheritance9" classname="com.exa.lang.XalightApplicationTests" time="0.03"/>
-  <testcase name="testStatementFor" classname="com.exa.lang.XalightApplicationTests" time="0.015"/>
-  <testcase name="testStatementIf2" classname="com.exa.lang.XalightApplicationTests" time="0.036"/>
-  <testcase name="testXalInheritance" classname="com.exa.lang.XalightApplicationTests" time="0.007"/>
-  <testcase name="testStatementIf" classname="com.exa.lang.XalightApplicationTests" time="0.01"/>
-  <testcase name="testEscape" classname="com.exa.lang.XalightApplicationTests" time="0.001"/>
-  <testcase name="testDoubleFormuleProperties" classname="com.exa.lang.XalightApplicationTests" time="0.005"/>
-  <testcase name="testXalFile" classname="com.exa.lang.XalightApplicationTests" time="0.006"/>
+  <testcase name="testXalInheritance7" classname="com.exa.lang.XalightApplicationTests" time="0.002"/>
+  <testcase name="testXalInheritance8" classname="com.exa.lang.XalightApplicationTests" time="0.008"/>
+  <testcase name="testXalInheritance9" classname="com.exa.lang.XalightApplicationTests" time="0.032"/>
+  <testcase name="testStatementFor" classname="com.exa.lang.XalightApplicationTests" time="0.002"/>
+  <testcase name="testStatementIf2" classname="com.exa.lang.XalightApplicationTests" time="0.015"/>
+  <testcase name="testXalInheritance" classname="com.exa.lang.XalightApplicationTests" time="0.016"/>
+  <testcase name="testStatementIf" classname="com.exa.lang.XalightApplicationTests" time="0"/>
+  <testcase name="testEscape" classname="com.exa.lang.XalightApplicationTests" time="0"/>
+  <testcase name="testDoubleFormuleProperties" classname="com.exa.lang.XalightApplicationTests" time="0"/>
+  <testcase name="testXalFile" classname="com.exa.lang.XalightApplicationTests" time="0.016"/>
 </testsuite>

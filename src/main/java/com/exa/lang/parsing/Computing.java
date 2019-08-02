@@ -843,10 +843,6 @@ public class Computing {
 		return cl;
 	}
 	
-	
-	
-	
-	@SuppressWarnings("unchecked")
 	public ArrayValue<XPOperand<?>> array(ArrayValue<XPOperand<?>> avSrc, VariableContext arrayVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		ArrayValue<XPOperand<?>> res = avSrc;
 		
@@ -868,7 +864,11 @@ public class Computing {
 					continue;
 				}
 				
-				if(ET_RUNTIME.equals(cl.getEvalTime())) {
+				XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
+				xalCL.setVariableContext(arrayVC);
+				xalCL.setEvaluator(evaluator);
+				
+				/*if(ET_RUNTIME.equals(cl.getEvalTime())) {
 					XALCalculabeValue<?> xalCL = (XALCalculabeValue<?>) cl;
 					xalCL.setVariableContext(arrayVC);
 					xalCL.setEvaluator(evaluator);
@@ -909,17 +909,62 @@ public class Computing {
 					
 					lSrc.set(i, new BooleanValue<>(xalCL.getValue()));
 					continue;
-				}
+				}*/
 
 				continue;
 			}
 			
 			VariableContext vc = new MapVariableContext(arrayVC);
 			
-			lSrc.set(i, object(ov, vc, libOV));
+			try {
+				lSrc.set(i, object(ov.clone(), vc, libOV));
+			} catch (CloneNotSupportedException e) {
+				throw new ManagedException(e);
+			}
 		}
 		
 		return res;
+	}
+	
+	public ArrayValue<XPOperand<?>> array(String path, VariableContext arrayVC) throws ManagedException {
+		ObjectValue<XPOperand<?>> rootOV = getResult();
+		
+		Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
+		
+		XALParser.loadImport(this, mpLib);
+		
+		for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
+			resolveHeirsObject(ovLib);
+		}
+		
+		ArrayValue<XPOperand<?>> av;
+		String[] parts = path.split("[.]");
+		if(parts.length == 1) return array(result.getRequiredAttributAsArrayValue(path), arrayVC, mpLib); //av = result.getRequiredAttributAsArrayValue(path);
+		
+		String parentPath = path.substring(0, path.length() - parts[parts.length - 1].length());
+		ObjectValue<XPOperand<?>> ovBaseEntity =  rootOV.getAttributByPathAsObjectValue(parentPath);
+		
+		int p = -1;
+		if(ovBaseEntity == null) {
+			String ovPath = parentPath;
+
+			do {
+				p = ovPath.lastIndexOf('.');
+				if(p < 0) throw new ManagedException(String.format("Unable to reach the path '%s'", path));
+				ovPath = ovPath.substring(0, p);
+				
+				ovBaseEntity =  rootOV.getAttributByPathAsObjectValue(ovPath);
+			} while(ovBaseEntity == null);
+			
+			try {
+				ovBaseEntity = object(ovBaseEntity.clone(), arrayVC, mpLib);
+			} catch (CloneNotSupportedException e) {
+				throw new ManagedException(e);
+			}
+		}
+		
+		av =  ovBaseEntity.getRequiredAttributAsArrayValue(path.substring(p+1));
+		return array(av, arrayVC, mpLib);
 	}
 	
 	public ArrayValue<XPOperand<?>> array(ObjectValue<XPOperand<?>> rootOV, String path, VariableContext arrayVC) throws ManagedException {
@@ -931,7 +976,7 @@ public class Computing {
 		
 		XPEvaluator evaluator = getXPEvaluator();
 		
-		VariableContext parentVC = evaluator.getCurrentVariableContext();
+		VariableContext parentVC = arrayVC; //evaluator.getCurrentVariableContext();
 		
 		StringBuilder sbVCName = new StringBuilder();
 		for(int i=0; i<parts.length-1; ++i) {
@@ -941,8 +986,6 @@ public class Computing {
 			else sbVCName.append(part);
 			
 			ov = ov.getRequiredAttributAsObjectValue(part);
-			
-			
 			
 			ObjectValue<XPOperand<?>> ovCallParams = ov.getAttributAsObjectValue(PRTY_CALL_PARAMS);
 			if(ovCallParams == null) continue;

@@ -67,7 +67,7 @@ entities {
 			source @nbItSql("m.evt_created", start, end),
 			
 			fields {
-				value => "a",
+				value => "a"
 				
 				items {
 					nb1 {
