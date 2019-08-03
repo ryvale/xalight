@@ -23,6 +23,7 @@ import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
 
 import com.exa.lang.expression.XALCalculabeValue;
 import com.exa.lang.expression.XPEvaluatorSetup;
+import com.exa.lexing.LexingException;
 import com.exa.lexing.ParsingException;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ArrayValue;

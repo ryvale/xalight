@@ -1,0 +1,7 @@
+
+entities {
+	entity1(prm) {
+		p1 = prm.substr(0, 2),
+		p2 = prm.substr(1, 1)
+	}
+}

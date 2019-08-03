@@ -52,6 +52,25 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue(new Integer(2).equals(l.get(1).asObjectValue().getAttributAsInteger("index")));
 	}
 	
+	public void testXalFileWithComments() throws ManagedException {
+		XALParser parser = new XALParser();
+		ObjectValue<XPOperand<?>> ov = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test-with-comments.xal").getResult();
+		
+		assertTrue("xlsx".equals(ov.getAttributAsString(Computing.PRTY_TYPE)));
+		
+		assertTrue("repo:default/equipement-a-renouveler.xls".equals(ov.getPathAttributAsString("model.file")));
+		
+		List<Value<?, XPOperand<?>>> l = ov.getPathAttributAsArray("model.sheets");
+		
+		assertTrue(l.size() > 0);
+		
+		assertFalse("Automates".equals(l.get(0).asObjectValue().getAttributAsString(Computing.PRTY_NAME)));
+		
+		assertTrue("Forages".equals(l.get(0).asObjectValue().getAttributAsString(Computing.PRTY_NAME)));
+		
+		assertTrue(new Integer(2).equals(l.get(0).asObjectValue().getAttributAsInteger("index")));
+	}
+	
 	public void testEscape() {
 		String str = "abc\\\\d";
 		

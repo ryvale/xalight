@@ -1,6 +1,8 @@
 package com.exa.lang.parsing;
 
 import com.exa.buffer.CharReader;
+import com.exa.lexing.CommentWord;
+import com.exa.lexing.LexingException;
 import com.exa.lexing.LexingRules;
 import com.exa.lexing.ParsingException;
 import com.exa.lexing.WordWithOpenCloseDelimiter;
@@ -20,6 +22,15 @@ public class XALLexingRules extends LexingRules {
 		
 		addWordSeparator(new WordWithOpenCloseDelimiter(this, '"','"'));
 		addWordSeparator(new WordWithOpenCloseDelimiter(this, '\'','\''));
+		addWordSeparator(new CommentWord("/*", this, sb -> sb.length() > 2 && "*/".equals(sb.substring(sb.length()-2))));
+		
+		addWordSeparator(new CommentWord("//", this, sb -> {
+			if(sb.length() == 2) return true;
+			char ch = sb.charAt(sb.length()-1);
+			
+			return ch == '\n' || ch == '\r';
+		}));
+		
 		addWordSeparator("[", "]", "{", "}", ",", "(", ")", ":", "=>", "?", ".", "=");
 	}
 	

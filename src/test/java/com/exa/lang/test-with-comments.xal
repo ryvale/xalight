@@ -4,33 +4,33 @@ references {
 	test {
 		propriete 2
 	}
-},
+}
 
 model {
 	file 'repo:default/equipement-a-renouveler.xls'
 
 	sheets [
-		Automates,
+		//Automates,
 		
 		Forages {
 			index 2
-		},
+		}/*,
 		= 4 
-		
+		*/
 	]
 		
-	x = 4
-},
+	/*x = 4 */
+}
 
 data [
 
 	automates {
-		defaultSheet Automates,
+		defaultSheet Automates
 		
 		record [
-			A3 { sheet Automates,  exp code },
+			A3 { sheet Automates/*,  exp code*/ },
 			B8 { exp libelle}
-		],
+		]
 		
 		lists [
 			{ 

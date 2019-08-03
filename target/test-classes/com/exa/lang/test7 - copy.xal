@@ -1,0 +1,27 @@
+:test,
+
+references {
+	*import [entity1, entity3 -> entity2] 'test2.xal',
+	
+	*import [entity1 -> t0_entity1] 'test2.xal',
+	
+	*import [references.entity1 -> t1_entity1] 'test2.xal',
+	
+	*import [references.* -> t2_*] 'test2.xal',
+	
+	*import [* -> t4_*] 'test2.xal',
+	
+	*import {
+		_file 'test2.xal',
+		
+		_entities [ "entity1", { _source "entity3", _destination "t3_entity2" } ]
+	}
+},
+
+entities {
+	entity1 {},
+	
+	entity2 @entity1('a') {},
+	
+	*import [entities.entity2 -> entity3] 'test2.xal'
+}
