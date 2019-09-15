@@ -11,9 +11,9 @@ import com.exa.expression.eval.XPEvaluator;
 import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
 
-public class MethodGetString extends OMMethod.XPOrtMethod<ObjectValue<XPOperand<?>>, String> {
+public class OVMtdGetString extends OMMethod.XPOrtMethod<ObjectValue<XPOperand<?>>, String> {
 
-	public MethodGetString() {
+	public OVMtdGetString() {
 		super("getString", 1);
 	}
 

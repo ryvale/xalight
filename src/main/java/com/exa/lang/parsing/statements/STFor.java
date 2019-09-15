@@ -46,17 +46,16 @@ public class STFor implements ComputingStatement {
 		}
 		if(!lexingRules.isIdentifier(var)) throw new ManagedException(String.format("Identifier expected after for statement in context %s", context));
 		
-		
-		
 		ch = lexingRules.nextForwardNonBlankChar(charReader);
 		
 		if('i' == ch) {
 			String str = lexingRules.nextNonNullString(charReader);
 			if(str == null || !"in".equals(str)) throw new ManagedException(String.format("'in' expected in for statement in context %s", context));
 			
-			ch = lexingRules.nextNonBlankChar(charReader);
+			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			
 			if('[' == ch) {
+				lexingRules.nextNonBlankChar(charReader);
 				ArrayValue<XPOperand<?>> values = computing.readArrayBody(context);
 				
 				List<Value<?, XPOperand<?>>> lstValues = values.getValue();
@@ -144,7 +143,71 @@ public class STFor implements ComputingStatement {
 				return res;
 			}
 			
-			throw new ManagedException("Incorrect syntax in for statement");
+			XALCalculabeValue<?> values = computing.readExpression(context);
+			//values.setEvaluator(evaluator);
+			if(!"ArrayValue".equals(values.typeName())) throw new ManagedException(String.format("The expression in for statement should be an array in context '%s'", context));
+			
+			if("auto".equals(type)) throw new ManagedException(String.format("Unable to infer variable %s type in for statement in context %s", var, context));
+			
+			ch = lexingRules.nextNonBlankChar(charReader);
+			if(ch == null || ')' != ch) throw new ManagedException(String.format("')' expected after for statement in context %s", context));
+			
+			ch = lexingRules.nextForwardNonBlankChar(charReader);
+			if(ch == null) throw new ManagedException(String.format("Unexpected end of file in for statement after ')' in context %s", context));
+			
+			Type<?> tp = evaluator.getClassesMan().getType(type);
+			if(tp == null) throw new ManagedException(String.format("Non managed type % n for statement in context %s", type, context));
+			
+			VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
+			vc.addVariable(var, tp.valueClass(), null);
+			
+			evaluator.pushVariableContext(vc);
+			
+			ObjectValue<XPOperand<?>> res = new ObjectValue<>();
+			
+			if(ch == '_') {
+				str = lexingRules.nextNonNullString(charReader);
+				if(!Computing.PRTY_NAME.equals(str)) throw new ManagedException(String.format("Syntax error in for statement after ')' in context %s. Exepected %s instead of %s", context, Computing.PRTY_NAME, str));
+			
+				ch = lexingRules.nextNonBlankChar(charReader);
+				if(ch == null || ch != '=') throw new ManagedException(String.format("Syntax error in for statement after '%s' in context %s. Exepected '='", Computing.PRTY_NAME, context));
+				
+				XPOperand<?> xpName = xpCompiler.parse(charReader, (lr, cr) -> true, context);
+				
+				res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_INCORPORATE);
+				res.setAttribut(Computing.PRTY_NAME, Computing.calculableFor(xpName, "now"));
+			}
+			else {
+				res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_ARRAY);
+			}
+			
+			ch = lexingRules.nextForwardNonBlankChar(charReader);
+			if(ch == null) throw new ManagedException(String.format("Unexpected end of file in for statement in context %s. The statement doesn't have body;", context));
+			
+			Value<?, XPOperand<?>> vlDo;
+			if(ch == ':') {
+				lexingRules.nextNonBlankChar(charReader);
+				XPOperand<?> xp = xpCompiler.parse(charReader, (lr, cr) -> true, context);
+				vlDo = Computing.calculableFor(xp, "now");
+			}
+			else vlDo = computing.readPropertyValueForObject(context);
+			
+			evaluator.popVariableContext();
+			
+			res.setAttribut(Computing.PRTY_CONTEXT, context);
+			res.setAttribut(Computing.PRTY_STATEMENT, "for");
+			res.setAttribut(Computing.PRTY_TYPE, "in");
+			
+			res.setAttribut("_var", var);
+			
+			res.setAttribut("_vartype", type);
+			
+			res.setAttribut("_values", values);
+			
+			res.setAttribut("_do", vlDo);
+			return res;
+			
+			//throw new ManagedException("Incorrect syntax in for statement");
 		}
 		
 		return null;
@@ -156,7 +219,14 @@ public class STFor implements ComputingStatement {
 		String type = ov.getAttributAsString(Computing.PRTY_TYPE);
 		
 		if("in".equals(type)) {
-			ArrayValue<XPOperand<?>> values = ov.getRequiredAttributAsArrayValue("_values");
+			Value<?, XPOperand<?>> vlValues = ov.getRequiredAttribut("_values");
+		
+			ArrayValue<XPOperand<?>> values = vlValues.asArrayValue();
+			if(values == null) {
+				XALCalculabeValue<?> clValues = (XALCalculabeValue<?>)vlValues.asCalculableValue();
+				excetutedComputing.computeCalculableValue(clValues, ovc);
+				values = (ArrayValue<XPOperand<?>>) clValues.getValue();
+			}
 			
 			String var = ov.getRequiredAttributAsString("_var");
 			

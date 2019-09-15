@@ -5,6 +5,7 @@ import com.exa.expression.OMMethod;
 import com.exa.expression.Type;
 import com.exa.expression.XPOperand;
 import com.exa.expression.types.TObjectClass;
+import com.exa.utils.values.ArrayValue;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
@@ -18,12 +19,16 @@ public class TObjectValue extends TObjectClass<ObjectValue<XPOperand<?>>, Value<
 	@Override
 	public void initialize() {
 		OMMethod<String> omStr = new OMMethod<>("getString", 2, OMOperandType.POST_OPERAND);
-		omStr.addOperator(new MethodGetString());
+		omStr.addOperator(new OVMtdGetString());
 		methods.put("getString", new Method<>("getString", String.class, omStr));
 		
 		OMMethod<ObjectValue> omOV = new OMMethod<>("getObject", 2, OMOperandType.POST_OPERAND);
-		omOV.addOperator(new MethodGetObject());
+		omOV.addOperator(new OVMtdGetObjectValue());
 		methods.put("getObject", new Method<>("getObject", ObjectValue.class, omOV));
+		
+		OMMethod<ArrayValue> omAV = new OMMethod<>("getArray", 2, OMOperandType.POST_OPERAND);
+		omAV.addOperator(new OVMtdGetArrayValue());
+		methods.put("getArray", new Method<>("getArray", ArrayValue.class, omAV));
 	}
 
 	@SuppressWarnings("unchecked")

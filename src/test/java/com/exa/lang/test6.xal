@@ -13,6 +13,8 @@ references {
 	e3(p) {
 		property = p
 	}
+	
+	values ['10', '11']
 },
 
 entities {
@@ -65,6 +67,20 @@ entities {
 		}
 	}
 	
+	*for(string i in rootOv.getArray("references.values")) _name = "entity" + i {
+		property "a"
+	}
 	
+	*for(i in ['12', '13']) _name = "entity" + i {
+		*for(j in ['1', '2']) _name = "cplx" + j {
+			property "a"
+		}
+	}
+	
+	*for(i in ['14', '15']) _name = "entity" + i {
+		*for(j in ['1', '2']) _name = "cplx" + i + j {
+			property "a"
+		}
+	}
 	
 }

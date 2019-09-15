@@ -47,6 +47,8 @@ public class Computing {
 			super(variableContext, unknownIdValidation);
 			
 			classesMan.registerClass(XALParser.T_OBJECT_VALUE);
+			
+			classesMan.registerClass(XALParser.T_ARRAY_VALUE);
 		}
 
 		public XPParser(VariableContext variableContext) {
@@ -1305,6 +1307,12 @@ public class Computing {
 		while(true);
 		
 		return ov;
+	}
+	
+	public XALCalculabeValue<?> readExpression(String context) throws ManagedException {
+		XPOperand<?> xp = xpCompiler.parse(charReader, (lr, charReader) -> true, context);
+		
+		return calculableFor(xp, "now");
 	}
 	
 	private ObjectValue<XPOperand<?>> readFunctionParamsDeclaration(VariableContext vc) throws ManagedException {

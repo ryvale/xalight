@@ -12,11 +12,10 @@ import com.exa.utils.ManagedException;
 import com.exa.utils.values.ObjectValue;
 
 @SuppressWarnings("rawtypes")
-public class MethodGetObject extends OMMethod.XPOrtMethod<ObjectValue<XPOperand<?>>, ObjectValue> {
+public class OVMtdGetObjectValue extends OMMethod.XPOrtMethod<ObjectValue<XPOperand<?>>, ObjectValue> {
 
-	public MethodGetObject() {
+	public OVMtdGetObjectValue() {
 		super("getObject", 1);
-		
 	}
 
 	@Override

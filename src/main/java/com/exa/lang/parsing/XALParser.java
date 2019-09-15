@@ -10,6 +10,7 @@ import com.exa.buffer.CharReader;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.MapVariableContext;
 import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
+import com.exa.lang.expression.TArrayValue;
 import com.exa.lang.expression.TObjectValue;
 import com.exa.lang.expression.XPEvaluatorSetup;
 import com.exa.lang.parsing.statements.STFor;
@@ -24,6 +25,8 @@ import com.exa.utils.values.Value;
 
 public class XALParser {
 	public static final TObjectValue T_OBJECT_VALUE = new TObjectValue();
+	
+	public static final TArrayValue T_ARRAY_VALUE = new TArrayValue();
 	
 	private FilesRepositories filesRepos;
 	
