@@ -33,20 +33,26 @@ public class STFor implements ComputingStatement {
 		Character ch = lexingRules.nextNonBlankChar(charReader);
 		if(ch == null || ch != '(') throw new ManagedException(String.format("'(' expected after for statement in context %s", context));
 		
-		String type = lexingRules.nextString(charReader);
-		if(type == null) throw new ManagedException(String.format("Unexpected end of file in for statement in context %s . type or variable expected", context));
-		
-		String var;
-		if(computing.getTypeSolver().containsType(type)) {
-			var = lexingRules.nextNonNullString(charReader);
-		}
-		else {
-			var = type;
-			type = "auto";
-		}
+		String var = lexingRules.nextString(charReader);
+		if(var == null) throw new ManagedException(String.format("Unexpected end of file in for statement in context %s . type or variable expected", context));
 		if(!lexingRules.isIdentifier(var)) throw new ManagedException(String.format("Identifier expected after for statement in context %s", context));
 		
+		String type;
+		
 		ch = lexingRules.nextForwardNonBlankChar(charReader);
+		if(ch == '@') {
+			lexingRules.nextNonBlankChar(charReader);
+			type = lexingRules.nextNonNullString(charReader);
+			
+			if(!computing.getTypeSolver().containsType(type)) throw new ManagedException(String.format("Invalid type '%s' in for statement in context '%s'", type, context));
+			
+			ch = lexingRules.nextForwardNonBlankChar(charReader);
+		}
+		else type = "auto";
+		
+		Value<?, XPOperand<?>> values;
+		String insertion;
+		XALCalculabeValue<?> xclName = null;
 		
 		if('i' == ch) {
 			String str = lexingRules.nextNonNullString(charReader);
@@ -56,12 +62,13 @@ public class STFor implements ComputingStatement {
 			
 			if('[' == ch) {
 				lexingRules.nextNonBlankChar(charReader);
-				ArrayValue<XPOperand<?>> values = computing.readArrayBody(context);
+				ArrayValue<XPOperand<?>> vvalues = computing.readArrayBody(context);
+				values = vvalues;
 				
-				List<Value<?, XPOperand<?>>> lstValues = values.getValue();
+				List<Value<?, XPOperand<?>>> lstValues = vvalues.getValue();
 				
 				if(lstValues.size() == 0) {
-					if("auto".equals(type)) throw new ManagedException(String.format("Unable to infer variable %s type in for statement in context %s", var, context));
+					if("auto".equals(type)) type = "string"; //throw new ManagedException(String.format("Unable to infer variable %s type in for statement in context %s", var, context));
 				}
 				else {
 					Iterator<Value<?, XPOperand<?>>> it = lstValues.iterator();
@@ -76,78 +83,12 @@ public class STFor implements ComputingStatement {
 					if("auto".equals(type)) type = vlType;
 					else if(!type.equals(vlType)) throw new ManagedException(String.format("The declared variable %s type (%s) in for statement is different from array items type (%s) in context %s.", var, type, vlType, context));
 				}
-				
-				ch = lexingRules.nextNonBlankChar(charReader);
-				if(ch == null || ')' != ch) throw new ManagedException(String.format("')' expected after for statement in context %s", context));
-				
-				ch = lexingRules.nextForwardNonBlankChar(charReader);
-				if(ch == null) throw new ManagedException(String.format("Unexpected end of file in for statement after ')' in context %s", context));
-				
-				Type<?> tp = evaluator.getClassesMan().getType(type);
-				if(tp == null) throw new ManagedException(String.format("Non managed type % n for statement in context %s", type, context));
-				
-				VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
-				vc.addVariable(var, tp.valueClass(), null);
-				
-				evaluator.pushVariableContext(vc);
-				
-				ObjectValue<XPOperand<?>> res = new ObjectValue<>();
-				
-				if(ch == '_') {
-					str = lexingRules.nextNonNullString(charReader);
-					if(!Computing.PRTY_NAME.equals(str)) throw new ManagedException(String.format("Syntax error in for statement after ')' in context %s. Exepected %s instead of %s", context, Computing.PRTY_NAME, str));
-				
-					ch = lexingRules.nextNonBlankChar(charReader);
-					if(ch == null || ch != '=') throw new ManagedException(String.format("Syntax error in for statement after '%s' in context %s. Exepected '='", Computing.PRTY_NAME, context));
-					
-					XPOperand<?> xpName = xpCompiler.parse(charReader, (lr, cr) -> true, context);
-					
-					res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_INCORPORATE);
-					res.setAttribut(Computing.PRTY_NAME, Computing.calculableFor(xpName, "now"));
-				}
-				else {
-					res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_ARRAY);
-				}
-				
-				ch = lexingRules.nextForwardNonBlankChar(charReader);
-				if(ch == null) throw new ManagedException(String.format("Unexpected end of file in for statement in context %s. The statement doesn't have body;", context));
-				
-				Value<?, XPOperand<?>> vlDo;
-				if(ch == ':') {
-					lexingRules.nextNonBlankChar(charReader);
-					XPOperand<?> xp = xpCompiler.parse(charReader, (lr, cr) -> true, context);
-					vlDo = Computing.calculableFor(xp, "now");
-				}
-				else vlDo = computing.readPropertyValueForObject(context);
-				
-				/*VariableContext vc = new MapVariableContext();
-				vc.addVariable(var, computing.getTypeSolver().getTypeValueClass(type), null);
-				evaluator.pushVariableContext(vc);*/
-				
-				
-				
-				evaluator.popVariableContext();
-				
-				
-				res.setAttribut(Computing.PRTY_CONTEXT, context);
-				res.setAttribut(Computing.PRTY_STATEMENT, "for");
-				res.setAttribut(Computing.PRTY_TYPE, "in");
-				
-				res.setAttribut("_var", var);
-				
-				res.setAttribut("_vartype", type);
-				
-				res.setAttribut("_values", values);
-				
-				res.setAttribut("_do", vlDo);
-				return res;
 			}
-			
-			XALCalculabeValue<?> values = computing.readExpression(context);
-			//values.setEvaluator(evaluator);
-			if(!"ArrayValue".equals(values.typeName())) throw new ManagedException(String.format("The expression in for statement should be an array in context '%s'", context));
-			
-			if("auto".equals(type)) throw new ManagedException(String.format("Unable to infer variable %s type in for statement in context %s", var, context));
+			else {
+				values = computing.readExpression(context);
+				if(!"ArrayValue".equals(values.typeName())) throw new ManagedException(String.format("The expression in for statement should be an array in context '%s'", context));
+				if("auto".equals(type)) type = "string";
+			}
 			
 			ch = lexingRules.nextNonBlankChar(charReader);
 			if(ch == null || ')' != ch) throw new ManagedException(String.format("')' expected after for statement in context %s", context));
@@ -165,6 +106,8 @@ public class STFor implements ComputingStatement {
 			
 			ObjectValue<XPOperand<?>> res = new ObjectValue<>();
 			
+			boolean inArray = context.endsWith("]");
+			
 			if(ch == '_') {
 				str = lexingRules.nextNonNullString(charReader);
 				if(!Computing.PRTY_NAME.equals(str)) throw new ManagedException(String.format("Syntax error in for statement after ')' in context %s. Exepected %s instead of %s", context, Computing.PRTY_NAME, str));
@@ -174,37 +117,65 @@ public class STFor implements ComputingStatement {
 				
 				XPOperand<?> xpName = xpCompiler.parse(charReader, (lr, cr) -> true, context);
 				
-				res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_INCORPORATE);
-				res.setAttribut(Computing.PRTY_NAME, Computing.calculableFor(xpName, "now"));
+				xclName = Computing.calculableFor(xpName, "now");
+				
+				insertion = inArray ? Computing.VL_ARRAY : Computing.VL_INCORPORATE;
+				
+				//res.setAttribut(Computing.PRTY_INSERTION, inArray ? Computing.VL_ARRAY : Computing.VL_INCORPORATE);
+				//res.setAttribut(Computing.PRTY_NAME, Computing.calculableFor(xpName, "now"));
 			}
 			else {
-				res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_ARRAY);
+				insertion = Computing.VL_ARRAY;
+				//res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_ARRAY);
 			}
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			if(ch == null) throw new ManagedException(String.format("Unexpected end of file in for statement in context %s. The statement doesn't have body;", context));
 			
-			Value<?, XPOperand<?>> vlDo;
+			Value<?, XPOperand<?>> vlDo = null;
 			if(ch == ':') {
 				lexingRules.nextNonBlankChar(charReader);
 				XPOperand<?> xp = xpCompiler.parse(charReader, (lr, cr) -> true, context);
 				vlDo = Computing.calculableFor(xp, "now");
 			}
-			else vlDo = computing.readPropertyValueForObject(context);
+			else if(ch == '{' || ch == '@' || ch == '[' || ch == '=' || ch == '"' || ch == '\'') {
+				vlDo = computing.readPropertyValueForObject(context);
+			}
+			
+			
+			/*VariableContext vc = new MapVariableContext();
+			vc.addVariable(var, computing.getTypeSolver().getTypeValueClass(type), null);
+			evaluator.pushVariableContext(vc);*/
 			
 			evaluator.popVariableContext();
 			
+			
+			if(xclName != null) {
+				if(Computing.VL_ARRAY.equals(insertion)) {
+					ObjectValue<XPOperand<?>> newVlDo = new ObjectValue<>();
+					newVlDo.setAttribut(Computing.PRTY_NAME, xclName);
+					newVlDo.setAttribut(Computing.PRTY_VALUE, vlDo);
+					vlDo = newVlDo;
+					
+				}
+				else res.setAttribut(Computing.PRTY_NAME, xclName);
+				
+			}
+			else res.setAttribut("_do", vlDo);
 			res.setAttribut(Computing.PRTY_CONTEXT, context);
 			res.setAttribut(Computing.PRTY_STATEMENT, "for");
 			res.setAttribut(Computing.PRTY_TYPE, "in");
+			res.setAttribut(Computing.PRTY_INSERTION, insertion);
 			
 			res.setAttribut("_var", var);
 			
 			res.setAttribut("_vartype", type);
 			
 			res.setAttribut("_values", values);
-			
 			res.setAttribut("_do", vlDo);
+			
+			
+			
 			return res;
 			
 			//throw new ManagedException("Incorrect syntax in for statement");
@@ -234,13 +205,13 @@ public class STFor implements ComputingStatement {
 			
 			List<Value<?, XPOperand<?>>> lstValues = values.getValue();
 			
-			Value<?, XPOperand<?>> vlDo = ov.getRequiredAttribut("_do");
+			Value<?, XPOperand<?>> vlDo = ov.getAttribut("_do");
 			
 			if(ov.getRequiredAttributAsString(Computing.PRTY_INSERTION).equals(Computing.VL_ARRAY))
 				for(Value<?, XPOperand<?>> vl : lstValues) {
 					VariableContext vc = new MapVariableContext(ovc);
 					vc.assignContextVariable(var, vl.getValue());
-					try {
+					//try {
 						Value<?, XPOperand<?>> rawItem = vlDo.clone();
 						CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
 						Value<?, XPOperand<?>> item;
@@ -254,9 +225,9 @@ public class STFor implements ComputingStatement {
 						
 						arRes.add(item);
 						
-					} catch (CloneNotSupportedException e) {
+					/*} catch (CloneNotSupportedException e) {
 						throw new ManagedException(e);
-					}
+					}*/
 				}
 			else {
 				Value<?, XPOperand<?>> vlName = ov.getRequiredAttribut(Computing.PRTY_NAME);
@@ -264,17 +235,23 @@ public class STFor implements ComputingStatement {
 				for(Value<?, XPOperand<?>> vl : lstValues) {
 					VariableContext vc = new MapVariableContext(ovc);
 					vc.assignContextVariable(var, vl.getValue());
-					try {
-						Value<?, XPOperand<?>> rawItem = vlDo.clone();
-						CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
+					//try {
 						
-						Value<?, XPOperand<?>> item;
-						if(cl == null) item = excetutedComputing.value(rawItem, vc, libOV);
-						else {
-							item = excetutedComputing.computeCalculableValue(cl, vc);
+						Value<?, XPOperand<?>> item; CalculableValue<?, XPOperand<?>> cl;
+						if(vlDo == null) {
+							item = null;
 						}
-						
-						if(item == null) continue;
+						else {
+							Value<?, XPOperand<?>> rawItem = vlDo.clone();
+							cl = rawItem.asCalculableValue();
+							
+							if(cl == null) item = excetutedComputing.value(rawItem, vc, libOV);
+							else {
+								item = excetutedComputing.computeCalculableValue(cl, vc);
+							}
+							
+							if(item == null) continue;
+						}
 						
 						Value<?, XPOperand<?>> rawItemName = vlName.clone();
 						
@@ -293,9 +270,9 @@ public class STFor implements ComputingStatement {
 						
 						arRes.add(ovProp);
 						
-					} catch (CloneNotSupportedException e) {
+					/*} catch (CloneNotSupportedException e) {
 						throw new ManagedException(e);
-					}
+					}*/
 				}
 			}
 			ObjectValue<XPOperand<?>> res = new ObjectValue<>();

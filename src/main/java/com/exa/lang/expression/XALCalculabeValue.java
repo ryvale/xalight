@@ -137,7 +137,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	}
 	
 	@Override
-	public XALCalculabeValue<T> clone() throws CloneNotSupportedException {
+	public XALCalculabeValue<T> clone() /*throws CloneNotSupportedException*/ {
 		return new XALCalculabeValue<T>(xp, evalTime);
 	}
 

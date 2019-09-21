@@ -275,9 +275,6 @@ public class XalightApplicationTests extends TestCase {
 		evSetup.addVaraiable("start", String.class, "01/02/2016");
 		evSetup.addVaraiable("end", String.class, "17/08/2018");
 		
-		
-		
-		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/private/stats-sollicitation.ds.xal", evSetup, (id, context) -> {
 			if("rootOv".equals(id)) return "ObjectValue";
 			//String p[] = context.split("[.]");
@@ -292,7 +289,6 @@ public class XalightApplicationTests extends TestCase {
 
 		
 		evaluator.addVariable("rootOv", ObjectValue.class, rootOV);
-		//ObjectValue<XPOperand<?>> ovEntities = rootOV.getAttributAsObjectValue("entities");
 		
 		VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
 		evaluator.pushVariableContext(vc);
@@ -306,6 +302,16 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("sql".equals(ovEntity.getPathAttributAsString("ot.source.type")));
 		
 		System.out.println(ovEntity.getPathAttributAsString("ot.source.criteria"));
+		
+		assertTrue("021".equals(ovEntity.getPathAttributAsString("ot.fields.items.dtEmise021.departement")));
+		
+		assertTrue("022".equals(ovEntity.getPathAttributAsString("ot.fields.items.dtEmise022.departement")));
+		
+		assertTrue("024".equals(ovEntity.getPathAttributAsString("ot.fields.items.dtEmise024.departement")));
+		
+		ovEntity = computing.object("entities.dryop", vc);
+		
+		assertTrue("031".equals(ovEntity.getPathAttributAsString("ot.fields.items.dtEmise031.departement")));
 		
 	}
 
@@ -484,6 +490,32 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx141.property")));
 		
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("cplx142.property")));
+		
+		ovEntity = computing.object("entities.entity16", entityVC);
+		assertTrue(Boolean.TRUE.equals(ovEntity.getAttributAsBoolean("property1")));
+		assertTrue(Boolean.TRUE.equals(ovEntity.getAttributAsBoolean("property2")));
+		
+		ovEntity = computing.object("entities.entity17", entityVC);
+		
+		assertTrue("property1".equals(ovEntity.getPathAttributAsString("array[0]._name")));
+		
+		
+		ovEntity = computing.object("entities.entity18", entityVC);
+		
+		assertTrue("emis1".equals(ovEntity.getPathAttributAsString("array[0].group[0]._name")));
+		
+		ovEntity = computing.object("entities.entity19", entityVC);
+		
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("array[0].property")));
+		
+		
+		ovEntity = computing.object("entities.entity20", entityVC);
+		
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("array[0]")));
+		
+		ovEntity = computing.object("entities.entity21", entityVC);
+		assertTrue("property1".equals(ovEntity.getPathAttributAsString("array[0]._name")));
+		
 	}
 	
 	public void testStatementImport() throws ManagedException {

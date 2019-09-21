@@ -273,11 +273,11 @@ public class Computing {
 		
 		
 		if(ovEntity != null)
-			try {
+			//try {
 				return object(ovEntity.clone(), entityVC, mpLib);
-			} catch (CloneNotSupportedException e) {
+			/*} catch (CloneNotSupportedException e) {
 				throw new ManagedException(e);
-			}
+			}*/
 		
 		
 		String ovPath = path;
@@ -291,11 +291,11 @@ public class Computing {
 			baseOvEntity =  rootOV.getAttributByPathAsObjectValue(ovPath);
 		} while(baseOvEntity == null);
 		
-		try {
-			baseOvEntity = object(baseOvEntity.clone(), entityVC, mpLib);
-		} catch (CloneNotSupportedException e) {
+		//try {
+		baseOvEntity = object(baseOvEntity.clone(), entityVC, mpLib);
+		/*} catch (CloneNotSupportedException e) {
 			throw new ManagedException(e);
-		}
+		}*/
 		
 		return baseOvEntity.getAttributAsObjectValue(path.substring(p+1));
 	}
@@ -315,11 +315,11 @@ public class Computing {
 		ObjectValue<XPOperand<?>> ovEntity =  rootOV;
 		
 		if(ovEntity != null)
-			try {
+			//try {
 				return object(ovEntity.clone(), entityVC, mpLib);
-			} catch (CloneNotSupportedException e) {
+			/*} catch (CloneNotSupportedException e) {
 				throw new ManagedException(e);
-			}
+			}*/
 		
 		/*String ovPath = path;
 		int p;
@@ -432,11 +432,11 @@ public class Computing {
 				
 				if(ovMother == null) throw new ManagedException(String.format("Inexistebt mother for the path '%s'", fqnParts[fqnParts.length - 1]));
 				
-				try {
+				//try {
 					ovMother = ovMother.clone();
-				} catch (CloneNotSupportedException e) {
+				/*} catch (CloneNotSupportedException e) {
 					throw new ManagedException(e);
-				}
+				}*/
 				
 				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
@@ -650,11 +650,11 @@ public class Computing {
 				ObjectValue<XPOperand<?>> ovMother = libPartOV.getPathAttributAsObjecValue(fqnParts[fqnParts.length - 1]);
 				if(ovMother == null) throw new ManagedException(String.format("Inexistebt mother for the path '%s'", fqnParts[fqnParts.length - 1]));
 				
-				try {
+				//try {
 					ovMother = ovMother.clone();
-				} catch (CloneNotSupportedException e) {
+				/*} catch (CloneNotSupportedException e) {
 					throw new ManagedException(e);
-				}
+				}*/
 				
 				Map<String, Value<?, XPOperand<?>>> mpRes = ovEntity.getValue();
 				mpRes.remove(PRTY_CALL_PARAMS);
@@ -689,6 +689,7 @@ public class Computing {
 			
 			if(PRTY_PARAMS.equals(propertyName)) continue;
 			
+			if(vl == null) continue;
 			ObjectValue<XPOperand<?>> vov = vl.asObjectValue();
 			if(vov != null) {
 
@@ -751,6 +752,10 @@ public class Computing {
 					
 					for(String newPropName : mpNewPropValue.keySet()) {
 						Value<?, XPOperand<?>> vlNewPropValue = mpNewPropValue.get(newPropName);
+						if(vlNewPropValue == null) {
+							propertiesToAdd.put(newPropName, vlNewPropValue);
+							continue;
+						}
 						ObjectValue<XPOperand<?>> ovNewPropValue = vlNewPropValue.asObjectValue();
 						
 						if(ovNewPropValue != null) {
@@ -798,26 +803,41 @@ public class Computing {
 					ObjectValue<XPOperand<?>> ovVav = vlVav.asObjectValue();
 					if(ovVav != null) {
 						Value<?, XPOperand<?>> newVlVav = value(ovVav, entityVC, libOV);
+						String insertion = ovVav.getAttributAsString(PRTY_INSERTION);
+						if(VL_ARRAY.equals(insertion)) {
+							lstVav.remove(i);
+							ArrayValue<XPOperand<?>> av = newVlVav.asArrayValue();
+							List<Value<?, XPOperand< ?>>> lst = av.getValue();
+							
+							lstVav.addAll(i, lst);
+							
+							i += lst.size();
+						}
+						else if(VL_INCORPORATE.equals(insertion)) {
+							ObjectValue<XPOperand<?>> newOvItem = newVlVav.asObjectValue();
+							if(newOvItem == null) { lstVav.set(i, newVlVav); continue; }
+							
+							Set<String> pnames = newOvItem.getValue().keySet();
+							lstVav.remove(i);
+							List<Value<?, XPOperand< ?>>> lst = new ArrayList<>();
+							
+							for(String name :  pnames) {
+								ObjectValue<XPOperand<?>> ovI = new ObjectValue<>();
+								ovI.setAttribut(PRTY_NAME, name);
+								ovI.setAttribut(PRTY_VALUE, newOvItem.getAttribut(name));
+								lst.add(ovI);
+							}
+							lstVav.addAll(i, lst);
+						}
+						else {
+							lstVav.set(i, newVlVav);
+						}
 						
-						lstVav.set(i, newVlVav);
 						continue;
 					}
 				}
 				
-				/*for(Value<?, XPOperand<?>> vlVav : lstVav) {
-					CalculableValue<?, XPOperand<?>> clVav = vlVav.asCalculableValue();
-					if(clVav != null) {
-						computeCalculableValue(clVav, evaluator, entityVC);
-						continue;
-					}
-					
-					ObjectValue<XPOperand<?>> ovVav = vlVav.asObjectValue();
-					if(ovVav != null) {
-						continue;
-					}
-				}*/
 				
-				// TODO
 				continue;
 			}
 			
@@ -919,11 +939,11 @@ public class Computing {
 			
 			VariableContext vc = new MapVariableContext(arrayVC);
 			
-			try {
+			//try {
 				lSrc.set(i, object(ov.clone(), vc, libOV));
-			} catch (CloneNotSupportedException e) {
+			/*} catch (CloneNotSupportedException e) {
 				throw new ManagedException(e);
-			}
+			}*/
 		}
 		
 		return res;
@@ -959,11 +979,11 @@ public class Computing {
 				ovBaseEntity =  rootOV.getAttributByPathAsObjectValue(ovPath);
 			} while(ovBaseEntity == null);
 			
-			try {
+			//try {
 				ovBaseEntity = object(ovBaseEntity.clone(), arrayVC, mpLib);
-			} catch (CloneNotSupportedException e) {
+			/*} catch (CloneNotSupportedException e) {
 				throw new ManagedException(e);
-			}
+			}*/
 		}
 		
 		av =  ovBaseEntity.getRequiredAttributAsArrayValue(path.substring(p+1));
@@ -1621,6 +1641,11 @@ public class Computing {
 			return calculableFor(xp, evalTime);
 		}
 		
+		if('*' == ch) {
+			lexingRules.nextNonBlankChar(charReader);
+			return readStatement(context);
+		}
+		
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));
 	}
 	
@@ -1708,13 +1733,13 @@ public class Computing {
 			CalculableValue<?, XPOperand<?>> cl = vlv.asCalculableValue();
 			if(cl != null) {
 				XALCalculabeValue<XPOperand<?>> xalCl;
-				try {
+				//try {
 					xalCl = (XALCalculabeValue<XPOperand<?>>)cl.clone();
 					xalCl.setVariableContext(vc);
 					mpDst.put(v, xalCl);
-				} catch (CloneNotSupportedException e) {
+				/*} catch (CloneNotSupportedException e) {
 					throw new ManagedException(e);
-				}
+				}*/
 			}
 			else mpDst.put(v, vlv);
 			

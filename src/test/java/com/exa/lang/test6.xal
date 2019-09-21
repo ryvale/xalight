@@ -67,7 +67,7 @@ entities {
 		}
 	}
 	
-	*for(string i in rootOv.getArray("references.values")) _name = "entity" + i {
+	*for(i in rootOv.getArray("references.values")) _name = "entity" + i {
 		property "a"
 	}
 	
@@ -81,6 +81,40 @@ entities {
 		*for(j in ['1', '2']) _name = "cplx" + i + j {
 			property "a"
 		}
+	}
+	
+	entity16 {
+		*for(x in ['1', '2']) _name = 'property' + x : true
+	}
+	
+	entity17 {
+		array [
+			*for(y in ['1', '2']) _name = 'property' + y
+		]
+	}
+	
+	entity18 {
+		array [
+			B5 { group [ *for(mrc in ['1', '2']) _name = "emis" + mrc ]},
+			
+			B6 { group [ *for(mrc in rootOv.getArray("references.values")) _name = "enCours" + mrc ]}
+		]
+	}
+	
+	entity19 {
+		array [ *for(mrc in ['1', '2']) { property = mrc } ]
+	}
+	
+	entity20 {
+		array [ *for(mrc in ['1', '2']) : mrc ]
+	}
+	
+	entity21 {
+		array [
+			*for(i in ['1', '2']) {
+				_name = "property" + i
+			}
+		]
 	}
 	
 }

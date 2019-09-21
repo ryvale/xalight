@@ -29,6 +29,10 @@ public class TObjectValue extends TObjectClass<ObjectValue<XPOperand<?>>, Value<
 		OMMethod<ArrayValue> omAV = new OMMethod<>("getArray", 2, OMOperandType.POST_OPERAND);
 		omAV.addOperator(new OVMtdGetArrayValue());
 		methods.put("getArray", new Method<>("getArray", ArrayValue.class, omAV));
+		
+		omAV = new OMMethod<>("fieldNamesAsArray", 1, OMOperandType.POST_OPERAND);
+		omAV.addOperator(new OVMtdFieldNamesAsArray());
+		methods.put("fieldNamesAsArray", new Method<>("fieldNamesAsArray", ArrayValue.class, omAV));
 	}
 
 	@SuppressWarnings("unchecked")
