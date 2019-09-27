@@ -244,7 +244,6 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		if(res == null) throw new ManagedException(String.format("This value should be a non null double"));
 		return res;
 	}
-
 	
 	
 	

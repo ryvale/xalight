@@ -49,6 +49,8 @@ public class Computing {
 			classesMan.registerClass(XALParser.T_OBJECT_VALUE);
 			
 			classesMan.registerClass(XALParser.T_ARRAY_VALUE);
+			
+			classesMan.registerClass(XALParser.T_COMPUTER);
 		}
 
 		public XPParser(VariableContext variableContext) {
@@ -271,14 +273,9 @@ public class Computing {
 		
 		ObjectValue<XPOperand<?>> ovEntity =  rootOV.getAttributByPathAsObjectValue(path);
 		
-		
 		if(ovEntity != null)
-			//try {
-				return object(ovEntity.clone(), entityVC, mpLib);
-			/*} catch (CloneNotSupportedException e) {
-				throw new ManagedException(e);
-			}*/
-		
+			return object(ovEntity.clone(), entityVC, mpLib);
+			
 		
 		String ovPath = path;
 		int p;
@@ -315,24 +312,8 @@ public class Computing {
 		ObjectValue<XPOperand<?>> ovEntity =  rootOV;
 		
 		if(ovEntity != null)
-			//try {
-				return object(ovEntity.clone(), entityVC, mpLib);
-			/*} catch (CloneNotSupportedException e) {
-				throw new ManagedException(e);
-			}*/
-		
-		/*String ovPath = path;
-		int p;
-		ObjectValue<XPOperand<?>> baseOvEntity;
-		do {
-			p = ovPath.lastIndexOf('.');
-			if(p < 0) throw new ManagedException(String.format("Unable to reach the path '%s'", path));
-			ovPath = ovPath.substring(0, p);
+			return object(ovEntity.clone(), entityVC, mpLib);
 			
-			baseOvEntity =  rootOV.getAttributByPathAsObjectValue(ovPath);
-		} while(baseOvEntity == null);*/
-		
-		//baseOvEntity = object(baseOvEntity, entityVC, mpLib);
 		
 		return object(ovEntity, entityVC, mpLib);
 	}
@@ -340,6 +321,11 @@ public class Computing {
 	public ObjectValue<XPOperand<?>> object(ObjectValue<XPOperand<?>> relativeOV, String path, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		return object(relativeOV.getRequiredAttributAsObjectValue(path), entityVC, libOV);
 	}
+	
+	/*public Value<?, XPOperand<?>> value(ObjectValue<XPOperand<?>> ovParent, String path, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> mpLib) throws ManagedException {
+		
+		
+	}*/
 	
 	public Value<?, XPOperand<?>> value(Value<?, XPOperand<?>> vlEntity, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
 		ObjectValue<XPOperand<?>> ovEntity = vlEntity.asObjectValue();	
@@ -456,6 +442,50 @@ public class Computing {
 		
 		
 		return res;
+	}
+	
+	public Value<?, XPOperand<?>> value(String path, VariableContext entityVC) throws ManagedException {
+		ObjectValue<XPOperand<?>> rootOV = getResult();
+		
+		Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
+		
+		XALParser.loadImport(this, mpLib);
+		
+		for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
+			resolveHeirsObject(ovLib);
+		}
+		
+		return value(rootOV, path, entityVC, mpLib);
+	}
+	
+	public Value<?, XPOperand<?>> value(ObjectValue<XPOperand<?>> baseOvEntity, String path, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {
+		String ovPath = path;
+		int p = -2;
+		ObjectValue<XPOperand<?>> boe = baseOvEntity;
+		while(!boe.containsAttribut(Computing.PRTY_CALL_PARAMS)) {
+			p = ovPath.indexOf(".");
+			if(p < 0) break;
+			
+			Value<?, XPOperand<?>> vl = boe.getAttributEx(ovPath.substring(0, p));
+			
+			if(vl == null) return null;
+			
+			ObjectValue<XPOperand<?>> ov = vl.asObjectValue();
+			
+			if(ov == null) 	if(ovPath.contains(".")) throw new ManagedException(String.format("Unable to reach the path '%s' (remain '%s' is not object)", path, ovPath));
+			
+			boe = ov;
+			
+			ovPath = ovPath.substring(p+1);
+		}
+		
+		
+		boe = object(boe.clone(), entityVC);
+		
+		return boe.getPathAttribut(ovPath);
+		
+		
+		
 	}
 	
 	/*public Value<?, XPOperand<?>> value(Value<?, XPOperand<?>> vlEntity, VariableContext entityVC, Map<String, ObjectValue<XPOperand<?>>> libOV) throws ManagedException {

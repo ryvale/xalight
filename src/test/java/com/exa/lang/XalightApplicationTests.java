@@ -269,6 +269,32 @@ public class XalightApplicationTests extends TestCase {
 		System.out.println(ovEntity.getPathAttributAsString("dt.source.criteria"));
 		
 	}
+	
+	public void testXalInheritance10() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test11.xal");
+		
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		Value<?, XPOperand<?>> vl = computing.value("entities.e2.sb1", vc);
+		assertTrue("a".equals(vl.asObjectValue().getPathAttributAsString("p1")));
+		assertTrue("b".equals(vl.asObjectValue().getPathAttributAsString("p2")));
+		
+		vl = computing.value("entities.e2.sb2", vc);
+		assertTrue("b".equals(vl.asObjectValue().getPathAttributAsString("p")));
+		
+		vl = computing.value("entities.e2.sb1.p1", vc);
+		assertTrue("a".equals(vl.getValue()));
+		
+		vl = computing.value("entities.e3", vc);
+		assertTrue("a1".equals(vl.asObjectValue().getPathAttributAsString("cplx1")));
+		assertTrue("a2".equals(vl.asObjectValue().getPathAttributAsString("cplx2")));
+		
+		
+	}
 
 	public void testXalRealCase() throws ManagedException {
 		XALParser parser = new XALParser();

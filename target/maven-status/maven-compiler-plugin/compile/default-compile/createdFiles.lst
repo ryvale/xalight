@@ -1,0 +1,8 @@
+com\exa\lang\expression\XPEvaluatorSetup.class
+com\exa\lang\parsing\XALParser.class
+com\exa\lang\parsing\Computing$XPParser.class
+com\exa\lang\parsing\statements\STName.class
+com\exa\lang\parsing\XPEvalautorFactory.class
+com\exa\lang\parsing\ComputingStatement.class
+com\exa\lang\parsing\TypeSolver.class
+com\exa\lang\parsing\Computing.class

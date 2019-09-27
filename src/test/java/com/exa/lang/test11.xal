@@ -1,0 +1,38 @@
+
+references {
+	b1 { 
+		p1 "a"
+	}
+	
+	b2 { 
+		sb1 {
+			p1 "a"
+		}
+	}
+	
+	b3(pr1) {
+		p1 "a"
+		
+		p2 = pr1
+	}
+}
+
+entities {
+ 
+	e1 @b1
+	
+	e2 @b2 {
+	
+		sb1 {
+			p2 "b"
+		}
+		
+		sb2 {
+			p "b"
+		}
+	}
+	
+	e3 {
+		*for(i in ['1', '2']) _name = "cplx" + i : "a" + i
+	}
+}

@@ -13,6 +13,7 @@ import com.exa.expression.parsing.Parser.UnknownIdentifierValidation;
 import com.exa.lang.expression.TArrayValue;
 import com.exa.lang.expression.TObjectValue;
 import com.exa.lang.expression.XPEvaluatorSetup;
+import com.exa.lang.expression.computer.TComputer;
 import com.exa.lang.parsing.statements.STFor;
 import com.exa.lang.parsing.statements.STIf;
 import com.exa.lang.parsing.statements.STImport;
@@ -28,6 +29,8 @@ public class XALParser {
 	public static final TObjectValue T_OBJECT_VALUE = new TObjectValue();
 	
 	public static final TArrayValue T_ARRAY_VALUE = new TArrayValue();
+	
+	public static final TComputer T_COMPUTER = new TComputer();
 	
 	public static final NullValue<XPOperand<?>> NULL_VALUE = new NullValue<>();
 	
