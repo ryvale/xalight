@@ -3,7 +3,7 @@
 references {
 
 	entity1(prm2) {
-		property1 = 2,
+		property1 = 2
 		
 		cplx {
 			property0 10,
@@ -29,5 +29,7 @@ entities {
 		cplx {
 			property2 'b'
 		}
+		
+		nullValue null
 	}
 }

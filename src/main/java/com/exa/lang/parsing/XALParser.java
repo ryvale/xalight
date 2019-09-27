@@ -20,6 +20,7 @@ import com.exa.lang.parsing.statements.STName;
 import com.exa.utils.ManagedException;
 import com.exa.utils.io.FilesRepositories;
 import com.exa.utils.values.ArrayValue;
+import com.exa.utils.values.NullValue;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
@@ -27,6 +28,8 @@ public class XALParser {
 	public static final TObjectValue T_OBJECT_VALUE = new TObjectValue();
 	
 	public static final TArrayValue T_ARRAY_VALUE = new TArrayValue();
+	
+	public static final NullValue<XPOperand<?>> NULL_VALUE = new NullValue<>();
 	
 	private FilesRepositories filesRepos;
 	

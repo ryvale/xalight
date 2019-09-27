@@ -116,6 +116,8 @@ public class XalightApplicationTests extends TestCase {
 		
 		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity2", entityVC); //parser.object("./src/test/java/com/exa/lang/test2.xal", "entities.entity2", evaluator, entityVC); //ov.getPathAttributAsObjecValue("entities.entity2");
 		
+		assertTrue( null == ovEntity.getPathAttributAsString("nullValue"));
+		
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2")));
 		
 		assertTrue("afb".equals(ovEntity.getPathAttributAsString("cplx.property1")));

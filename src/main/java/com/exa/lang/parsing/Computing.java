@@ -1416,6 +1416,8 @@ public class Computing {
 			
 			if("false".equals(str)) return new BooleanValue<>(Boolean.FALSE);
 			
+			if("null".equals(str)) return XALParser.NULL_VALUE;
+			
 			if(!lexingRules.isIdentifier(str)) throw new ParsingException(String.format("Error near %s . May be identifier expected.", str));
 			
 			ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
