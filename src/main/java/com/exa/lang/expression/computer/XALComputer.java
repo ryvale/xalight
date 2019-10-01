@@ -58,9 +58,10 @@ public class XALComputer {
 		return computing;
 	}
 	
-	/*public void store(String ref, String name) {
-		Value<?, XPOperand<?>> vl = 
-		Value<?, XPOperand<?>> svl = computing.value(vlEntity, entityVC, libOV);
-	}*/
+	public void store(String ref, String name, VariableContext vc) throws ManagedException {
+		Value<?, XPOperand<?>> svl = computing.value(ref, vc);
+		
+		store.put(name, svl);
+	}
 	
 }

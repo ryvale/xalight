@@ -19,6 +19,12 @@ references {
 
 init {
 	array ['a', 'b']
+	
+	obj {
+		_varType "ObjectValue"
+		_value @b2
+	}
+	
 }
 
 entities {
@@ -37,10 +43,6 @@ entities {
 	}
 	
 	e3 {
-		*for(i in ['1', '2']) _name = "cplx" + i : "a" + i
-	}
-	
-	e4 {
-		*for(i in ['a', 'b']) _name = "cplx" + i : true 
+		*for(i in array) _name = "cplx" + i : "a" + i
 	}
 }

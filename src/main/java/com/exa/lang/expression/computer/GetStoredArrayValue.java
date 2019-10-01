@@ -28,7 +28,7 @@ public class GetStoredArrayValue extends OMMethod.XPOrtMethod<XALComputer, Array
 
 	@Override
 	public Type<?> type() {
-		return XALParser.T_COMPUTER;
+		return XALParser.T_ARRAY_VALUE;
 	}
 
 	@Override

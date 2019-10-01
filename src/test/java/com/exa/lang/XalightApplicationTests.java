@@ -167,9 +167,6 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("b".equals(ovEntity.getPathAttributAsString("property2")));
 		
 		assertTrue("okc".equals(ovEntity.getPathAttributAsString("property")));
-	
-		
-		
 	}
 	
 	public void testXalInheritance6() throws ManagedException {
@@ -231,9 +228,6 @@ public class XalightApplicationTests extends TestCase {
 		evSetup.addVaraiable("start", String.class, "01/02/2016");
 		evSetup.addVaraiable("end", String.class, "17/08/2018");
 		
-		
-		
-		
 		Computing computing = parser.getComputeObjectFormFile("./src/test/java/com/exa/lang/private/stats-intervention.ds.xal", evSetup, (id, context) -> {
 			if("rootOv".equals(id)) return "ObjectValue";
 			//String p[] = context.split("[.]");
@@ -292,7 +286,22 @@ public class XalightApplicationTests extends TestCase {
 		vl = computing.value("entities.e3", vc);
 		assertTrue("a1".equals(vl.asObjectValue().getPathAttributAsString("cplx1")));
 		assertTrue("a2".equals(vl.asObjectValue().getPathAttributAsString("cplx2")));
+	}
+	
+	public void testComputer() throws ManagedException {
+		XALParser parser = new XALParser();
 		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test-computer.xal");
+		
+		computing.calculateInit();
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.e3", vc); 
+		
+		assertTrue("aa".equals(ovEntity.getPathAttributAsString("cplxa")));
+		assertTrue("ab".equals(ovEntity.getPathAttributAsString("cplxb")));
 		
 	}
 
@@ -305,7 +314,6 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/private/stats-sollicitation.ds.xal", evSetup, (id, context) -> {
 			if("rootOv".equals(id)) return "ObjectValue";
-			//String p[] = context.split("[.]");
 			
 			return null;
 		});

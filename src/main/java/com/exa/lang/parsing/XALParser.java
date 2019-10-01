@@ -263,6 +263,7 @@ public class XALParser {
 				res.resolveHeirsObject(ovLib);
 			}
 			
+//			res.calculateInit(mpLib);
 			
 			return res;
 		} catch (Exception e) {
@@ -288,6 +289,8 @@ public class XALParser {
 			for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
 				res.resolveHeirsObject(ovLib);
 			}
+			
+			//res.calculateInit(mpLib);
 			
 			return res;
 		} catch (Exception e) {

@@ -48,6 +48,8 @@ public class OVMtdFieldNamesAsArray extends OMMethod.XPOrtMethod<ObjectValue<XPO
 				Set<String> keys = object.getValue().keySet();
 				
 				keys.forEach(v -> {
+					if(v.startsWith("_")) return;
+					
 					values.add(new StringValue<>(v));
 				});
 				
