@@ -5,7 +5,7 @@
 
 	<groupId>com.exa.lang</groupId>
 	<artifactId>xalight</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.9</version>
 	<packaging>jar</packaging>
 
 	<name>xalight</name>
@@ -38,12 +38,12 @@
 		<dependency>
 			<groupId>com.exa.buffer</groupId>
 			<artifactId>exa-char-buffer</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
+			<version>1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.exa.eva</groupId>
 			<artifactId>eva</artifactId>
-			<version>0.0.3-SNAPSHOT</version>
+			<version>0.9</version>
 		</dependency>
 	</dependencies>
 
