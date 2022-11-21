@@ -51,4 +51,6 @@ entities(p) {
 	
 	*name "entity8" @base3("a")
 	
+	*name "entity9" @base3(p)
+	
 }

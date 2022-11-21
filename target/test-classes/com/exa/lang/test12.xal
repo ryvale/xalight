@@ -1,0 +1,48 @@
+
+references {}
+
+init {
+
+	props {
+		DDMA {
+			fields [
+				code, dateDeclaration { type 'date' }, description, status, numSollicitation, pere, exploitation
+				, nomDemandeur, prenomsDemandeur, contactDemandeur, localisation, equipe, responsable
+				, nouveauResponsable, org, dateCreation { type "date" }, ordonanceur
+				, dateTransmission { type 'date' }, delaiTransmission { type 'float' }
+				, dateContact { type "date" }, delaiContact { type "float" }
+				, dateDebut { type "date" }, dateFin { type "date" }, delaiExecution { type "float" }
+				, delaiDepannage { type "float" }, debutSuspension { type "date" }
+				, finSuspension { type "date" }, delaiSuspension { type "float" }, posteCIE, grandSiegePanne
+				, libGrandSiegePanne, siegePanne, libSiegePanne, sousSiegePanne, libSousSiegePanne
+				, typePanne, libTypePanne, latitude { type "float" }, longitude { type "float" }, agentCRC
+				, datePriseEnCharge { type "date" }, delaiPriseEnCharge { type "float" }
+				, delaiRecativite { type "float" }, statutClient, statutFinTravaux, commentairesSARA
+			]
+		}
+		
+		GMAOEP {
+			fields [
+				code, dateDeclaration { type 'date' }, description, status, numSollicitation, pere, exploitation
+				, nomDemandeur, prenomsDemandeur, contactDemandeur, localisation, equipe, responsable
+				, nouveauResponsable, org, dateCreation { type "date" }, ordonanceur
+				, dateTransmission { type 'date' }, delaiTransmission { type 'float' }
+				, dateContact { type "date" }, delaiContact { type "float" }
+				, dateDebut { type "date" }, dateFin { type "date" }, delaiExecution { type "float" }
+				, delaiDepannage { type "float" }, debutSuspension { type "date" }
+				, finSuspension { type "date" }, delaiSuspension { type "float" }, posteCIE, grandSiegePanne
+				, libGrandSiegePanne, siegePanne, libSiegePanne, sousSiegePanne, libSousSiegePanne
+				, organeDefaut, libOrganeDefaut, typePanne, libTypePanne, latitude { type "float" }
+				, longitude { type "float" }, agentCRC, datePriseEnCharge { type "date" }, delaiPriseEnCharge { type "float" }
+				, delaiRecativite { type "float" }, statutClient, statutFinTravaux, commentairesSARA
+			]
+		}
+	}
+}
+
+entities {
+	e1 {
+		a = props.getArray("DDMA.fields")
+	}
+	
+}

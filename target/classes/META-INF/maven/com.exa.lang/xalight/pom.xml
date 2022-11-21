@@ -5,7 +5,7 @@
 
 	<groupId>com.exa.lang</groupId>
 	<artifactId>xalight</artifactId>
-	<version>0.9</version>
+	<version>1.0</version>
 	<packaging>jar</packaging>
 
 	<name>xalight</name>
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>com.exa.eva</groupId>
 			<artifactId>eva</artifactId>
-			<version>0.9</version>
+			<version>0.9.1</version>
 		</dependency>
 	</dependencies>
 

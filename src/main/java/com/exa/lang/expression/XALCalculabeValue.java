@@ -1,6 +1,7 @@
 package com.exa.lang.expression;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.exa.expression.Type;
@@ -16,6 +17,7 @@ import com.exa.utils.values.DecimalValue;
 import com.exa.utils.values.IntegerValue;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.StringValue;
+import com.exa.utils.values.Value;
 
 public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	/**
@@ -100,11 +102,6 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 	public CalculableValue<T, XPOperand<?>> asCalculableValue() {
 		return this;
 	}
-
-	
-	
-	
-	
 
 	@Override
 	public ObjectValue<XPOperand<?>> asRequiredObjectValue() throws ManagedException {
@@ -243,6 +240,34 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		Double res = asDouble();
 		if(res == null) throw new ManagedException(String.format("This value should be a non null double"));
 		return res;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Value<?, XPOperand<?>>> asArray() throws ManagedException {
+		evaluator.pushVariableContext(variableContext);
+		T res = xp.value(evaluator);
+		evaluator.popVariableContext();
+		
+		if(res == null) return null;
+		
+		if(res instanceof ArrayValue) return ((ArrayValue< XPOperand<?>>) res).getValue();
+		
+		throw new ManagedException(String.format("This value should be an array"));
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public Map<String, Value<?, XPOperand<?>>> asObject() throws ManagedException {
+		evaluator.pushVariableContext(variableContext);
+		T res = xp.value(evaluator);
+		evaluator.popVariableContext();
+		
+		if(res == null) return null;
+		
+		if(res instanceof ObjectValue) return ((ObjectValue<XPOperand<?>>) res).getValue();
+		
+		throw new ManagedException(String.format("This value should be an array"));
 	}
 	
 	

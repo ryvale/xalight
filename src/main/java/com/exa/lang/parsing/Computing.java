@@ -99,6 +99,9 @@ public class Computing {
 	
 	public static final String ET_RUNTIME = "runtime";
 	
+	
+	public static final String VN_ROOT_OV = "rootOv";
+	
 	private ObjectValue<XPOperand<?>> result;
 	private Parser xpCompiler;
 	
@@ -114,11 +117,11 @@ public class Computing {
 	
 	private Map<String, ObjectValue<XPOperand<?>>> toBeCalculated = new HashMap<>();
 	
-	public Computing(XALParser parser, CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
+	/*public Computing(XALParser parser, CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
 		super();
 		this.parser = parser;
 		this.result = rootObject;
-		this.xpCompiler = new XPParser(rootVariableContext/*, contextResolver*/);
+		this.xpCompiler = new XPParser();
 		
 		typeSolver = new TypeSolver();
 		
@@ -133,17 +136,21 @@ public class Computing {
 		
 		computer = new XALComputer(this);
 		this.charReader = charReader;
-	}
+	}*/
 		
 	public Computing(XALParser parser, CharReader charReader, XPEvaluatorSetup evSteup, UnknownIdentifierValidation uiv) throws ManagedException {
 		this.parser = parser;
 		
-		this.xpCompiler = new XPParser(new MapVariableContext()/*, contextResolver*/, uiv);
+		
+		VariableContext rootVC = new MapVariableContext();
+		this.xpCompiler = new XPParser(rootVC, uiv);
 		typeSolver = new TypeSolver();
 		
 		XPEvaluator compEvaluator = xpCompiler.evaluator();
 		evSteup.setup(compEvaluator);
 		
+		rootVC.addVariable(VN_ROOT_OV, ObjectValue.class, null);
+
 		compEvaluator.getClassesMan().forAllTypeDo((typeName, valueClass) -> {
 			if(typeSolver.containsType(typeName)) return;
 			
@@ -160,7 +167,7 @@ public class Computing {
 		this(pareser, charReader, (evaluator) -> {}, (id, context) -> null); 
 	}
 	
-	public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
+	/*public Computing(CharReader charReader, VariableContext vc, XPEvalautorFactory cclEvaluatorFacory) {
 		this.xpCompiler = new XPParser(vc);
 		this.result = new ObjectValue<>();
 		this.charReader = charReader;
@@ -178,7 +185,7 @@ public class Computing {
 		computer = new XALComputer(this);
 		
 		
-	}
+	}*/
 	
 	public void closeCharReader() throws IOException {
 		this.charReader.close();
@@ -315,22 +322,7 @@ public class Computing {
 			getObjectInheritance(ov, references, cyclicRefs, entity);
 		}
 		
-		/*ObjectValue<XPOperand<?>> ovComputerInit = result.getAttributAsObjectValue("init");
-		if(ovComputerInit == null) return result;
-		
-		Map<String, Value<?, XPOperand<?>>> mpInit = ovComputerInit.getValue();
-		
-		VariableContext vc =  new MapVariableContext(getXPEvaluator().getCurrentVariableContext());
-		
-		for(String var : mpInit.keySet()) {
-			Value<?, XPOperand<?>> vl = mpInit.get(var);
-			ObjectValue<XPOperand<?>> ov = vl.asObjectValue();
-			if(ov == null) continue;
-			
-			ov = object(ov, entityVC, libOV);
-			
-			//computer.store("init." + var, var, vc);
-		}*/
+		rootVC.assignContextVariable(VN_ROOT_OV, result);
 		return result;
 	}
 	

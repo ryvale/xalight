@@ -208,35 +208,7 @@ public class XALParser {
 			}
 		}
 	}
-	
-	/*public ObjectValue<XPOperand<?>> objectFromFile(String scriptFile, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) throws ManagedException {
-		Computing executedComputing = getExecutedComputeObjectFormFile(scriptFile, evaluatorSetup, uiv);
-		
-		ObjectValue<XPOperand<?>> ovRoot = executedComputing.getResult();
-		
-		Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(ovRoot);
-		
-		loadImport(executedComputing, mpLib);
-		
-		for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
-			executedComputing.resolveHeirsObject(ovLib);
-		}
-		
-		return ovRoot;
-	}*/
-	
-	/*public ObjectValue<XPOperand<?>> object(String scriptFile, VariableContext entityVC) throws ManagedException {
-		Computing executedComputing = getExecutedComputeObjectFormFile(scriptFile);
-		
-		Map<String, Value<?, XPOperand<?>>> mpRoot = executedComputing.getResult().getValue();
-		
-		for(String entityName : mpRoot.keySet()) {
-			mpRoot.put(entityName, Computing.object(executedComputing, entityName, entityVC));
-		}
-		return executedComputing.getResult(); 
-	}*/
 
-	
 	public Computing getComputeObjectFormFile(String script, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) throws ManagedException {
 		CharReader cr = null;
 		try {
