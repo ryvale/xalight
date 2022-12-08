@@ -550,10 +550,22 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = computing.object("entities.entity21", entityVC);
 		assertTrue("property1".equals(ovEntity.getPathAttributAsString("array[0]._name")));
 		
-		ovEntity = computing.object("entities.entity22", entityVC);
-		//assertTrue("x".equals(ovEntity.getPathAttributAsString("na1.property1")));
+		ovEntity = computing.object("entities.entity23", entityVC);
+		assertTrue("x1".equals(ovEntity.getPathAttributAsString("na1.property1")));
+		assertTrue("x2".equals(ovEntity.getPathAttributAsString("na2.property1")));
+		assertTrue("x1".equals(ovEntity.getPathAttributAsString("nb1.property1")));
+		assertTrue("x2".equals(ovEntity.getPathAttributAsString("nb2.property1")));
+
 		
-		System.out.println(ovEntity.getAttribut("na1"));
+		ovEntity = computing.object("entities.entity22", entityVC);
+		assertTrue("x1".equals(ovEntity.getPathAttributAsString("na1.property1")));
+		assertTrue("x2".equals(ovEntity.getPathAttributAsString("na2.property1")));
+		
+		assertTrue("x1".equals(ovEntity.getPathAttributAsString("nb1.property1")));
+		
+		assertTrue("yb".equals(ovEntity.getPathAttributAsString("nb1.property2")));
+		
+		//assertTrue("xy2b".equals(ovEntity.getPathAttributAsString("nb2.property3")));
 		
 	}
 	

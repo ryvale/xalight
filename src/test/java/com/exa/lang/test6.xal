@@ -122,7 +122,24 @@ entities {
 		
 		*for(i in ['1', '2'])
 			*for(j in ['a', 'b']) _name = "n" + j + i {
-				property1 "x"
+				property1 = "x" + i
+				
+				property2 = "y" + j
+				
+				property3 = "xy" + i + j
+			}
+	
+	}
+	
+	entity23 {
+		
+		*for(i in ['1', '2'])
+			*for(j in ['a', 'b', 'c']) _name = "n" + j + i {
+				property1 = "x" + i
+				
+				property2 = "y" + j
+				
+				property3 = "xy" + i + j
 			}
 	
 	}

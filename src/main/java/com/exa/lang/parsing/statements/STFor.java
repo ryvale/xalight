@@ -43,9 +43,14 @@ public class STFor implements ComputingStatement {
 		}
 		
 		boolean next(boolean reinit) {
-			if(values.size() <= 0 || position >= values.size() - 1) {
+			if(values.size() <= 0) return false;
+			
+			if(position >= values.size() - 1) {
 				
-				if(reinit) vc.assignContextVariable(varName, values.get(0).getValue());
+				if(reinit) {
+					this.position = -1;
+					vc.assignContextVariable(varName, values.get(0).getValue());
+				}
 				return false;
 			}
 			
@@ -99,6 +104,30 @@ public class STFor implements ComputingStatement {
 				
 			}
 			return false;
+		}
+		
+		VariableContext cloneVC() {
+			
+			Iterator<LoopVariables> it = loopVarList.iterator();
+			if(!it.hasNext()) return null;
+			
+			
+			LoopVariables lv = it.next();
+			
+			VariableContext vc = STFor.this.cloneVC(lv.vc);
+			
+			
+			VariableContext parentVC = vc;
+			while(it.hasNext()) {
+				lv = it.next();
+				
+				vc = STFor.this.cloneVC(lv.vc);
+				vc.setParent(parentVC);
+				
+				parentVC = vc;
+			}
+			
+			return vc;
 		}
 	}
 
@@ -353,7 +382,7 @@ public class STFor implements ComputingStatement {
 		if(ov.getRequiredAttributAsString(Computing.PRTY_INSERTION).equals(Computing.VL_ARRAY))
 		
 			while(nlm.next()) {
-				VariableContext iVC = cloneVC(vc);
+				VariableContext iVC = nlm.cloneVC();
 				Value<?, XPOperand<?>> rawItem = vlDo.clone();
 				CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
 				Value<?, XPOperand<?>> item;
@@ -372,7 +401,7 @@ public class STFor implements ComputingStatement {
 			Value<?, XPOperand<?>> vlName = ov.getRequiredAttribut(Computing.PRTY_NAME);
 			
 			while(nlm.next()) {
-				VariableContext iVC = cloneVC(vc);
+				VariableContext iVC = nlm.cloneVC();
 				
 				Value<?, XPOperand<?>> item; CalculableValue<?, XPOperand<?>> cl;
 				
