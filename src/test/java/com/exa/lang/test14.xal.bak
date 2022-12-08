@@ -1,0 +1,14 @@
+
+references {
+
+}
+
+entities {
+
+	entity4 {
+		cplx *for(i in ['1', '2', '3']) {
+			property = i
+		}
+	}
+
+}

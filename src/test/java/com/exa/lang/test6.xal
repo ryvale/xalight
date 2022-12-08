@@ -34,7 +34,7 @@ entities {
 	
 	
 	entity4 {
-		cplx *for(i in ['1', '2']) {
+		cplx *for(i in ['1', '2', '3']) {
 			property = i
 		}
 	},
@@ -83,6 +83,7 @@ entities {
 		}
 	}
 	
+	
 	entity16 {
 		*for(x in ['1', '2']) _name = 'property' + x : true
 	}
@@ -115,6 +116,15 @@ entities {
 				_name = "property" + i
 			}
 		]
+	}
+	
+	entity22 {
+		
+		*for(i in ['1', '2'])
+			*for(j in ['a', 'b']) _name = "n" + j + i {
+				property1 "x"
+			}
+	
 	}
 	
 }

@@ -1,5 +1,6 @@
 package com.exa.lang.parsing.statements;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,84 @@ import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
 public class STFor implements ComputingStatement {
+	
+	class LoopVariables {
+		public final List<Value<?, XPOperand<?>>> values;
+		public final String varName;
+		private int position;
+		
+		public final VariableContext vc;
+		
+		public LoopVariables(List<Value<?, XPOperand<?>>> values, String varName, VariableContext vc) {
+			super();
+			this.values = values;
+			this.varName = varName;
+			this.position = -1;
+			this.vc = vc;
+			
+			if(this.position+1 < values.size())
+			vc.assignContextVariable(varName, values.get(this.position+1).getValue());
+		}
+		
+		boolean next(boolean reinit) {
+			if(values.size() <= 0 || position >= values.size() - 1) {
+				
+				if(reinit) vc.assignContextVariable(varName, values.get(0).getValue());
+				return false;
+			}
+			
+			Value<?, XPOperand<?>> vl = values.get(++this.position);
+			vc.assignContextVariable(varName, vl.getValue());
+			return true;
+		}
+		
+		boolean next() { return this.next(true); }
+		
+	}
+	
+	class NestedLoopMan {
+		List<LoopVariables> loopVarList = new ArrayList<>();
+		
+		@SuppressWarnings("unchecked")
+		void initialize(ObjectValue<XPOperand<?>> stDesc, VariableContext ovc, Computing excetutedComputing) throws ManagedException {
+			ArrayValue<XPOperand<?>> loopVars = stDesc.getRequiredAttributAsArrayValue("_loop_vars").clone();
+			
+			VariableContext parentVC = ovc;
+			
+			for(Value<?, XPOperand<?>> vlLV : loopVars.getValue()) {
+				ObjectValue<XPOperand<?>> ovLoopVars = vlLV.asRequiredObjectValue();
+				
+				Value<?, XPOperand<?>> vlValues = ovLoopVars.getRequiredAttribut("_values");
+				ArrayValue<XPOperand<?>> values = vlValues.asArrayValue();
+				if(values == null) {
+					XALCalculabeValue<?> clValues = (XALCalculabeValue<?>)vlValues.asCalculableValue();
+					excetutedComputing.computeCalculableValue(clValues, ovc);
+					values = (ArrayValue<XPOperand<?>>) clValues.getValue();
+				}
+				
+				String varName = ovLoopVars.getRequiredAttributAsString("_var");
+				VariableContext vc = new MapVariableContext(parentVC);
+				LoopVariables loopV = new LoopVariables(values.getValue(), varName, vc);
+				
+				loopVarList.add(loopV);
+				
+				parentVC = vc;
+			}
+		}
+		
+		VariableContext getVariableContext() { return loopVarList.size() > 0 ? loopVarList.get(loopVarList.size() - 1 ).vc : null; }
+		
+		
+		boolean next() {
+			for(int i=loopVarList.size() - 1; i>=0; i--) {
+				LoopVariables lv = loopVarList.get(i);
+				
+				if(lv.next()) return true;
+				
+			}
+			return false;
+		}
+	}
 
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
@@ -36,6 +115,10 @@ public class STFor implements ComputingStatement {
 		String var = lexingRules.nextString(charReader);
 		if(var == null) throw new ManagedException(String.format("Unexpected end of file in for statement in context %s . type or variable expected", context));
 		if(!lexingRules.isIdentifier(var)) throw new ManagedException(String.format("Identifier expected after for statement in context %s", context));
+		
+		ObjectValue<XPOperand<?>> loopVars = new ObjectValue<>();
+		loopVars.setAttribut(Computing.PRTY_STATEMENT, "for");
+		loopVars.setAttribut("_var", var);
 		
 		String type;
 		
@@ -53,6 +136,12 @@ public class STFor implements ComputingStatement {
 		Value<?, XPOperand<?>> values;
 		String insertion;
 		XALCalculabeValue<?> xclName = null;
+		
+		//String nestedStatement = null;
+		ArrayValue<XPOperand<?>> nestedloopVars = new ArrayValue<>();
+		
+		nestedloopVars.add(loopVars);
+		
 		
 		if('i' == ch) {
 			String str = lexingRules.nextNonNullString(charReader);
@@ -99,6 +188,13 @@ public class STFor implements ComputingStatement {
 			Type<?> tp = evaluator.getClassesMan().getType(type);
 			if(tp == null) throw new ManagedException(String.format("Non managed type % n for statement in context %s", type, context));
 			
+			
+			loopVars.setAttribut("_vartype", type);
+			loopVars.setAttribut("_values", values);
+			loopVars.setAttribut(Computing.PRTY_TYPE, "in");
+			
+			
+			
 			VariableContext vc = new MapVariableContext(evaluator.getCurrentVariableContext());
 			vc.addVariable(var, tp.valueClass(), null);
 			
@@ -121,12 +217,10 @@ public class STFor implements ComputingStatement {
 				
 				insertion = inArray ? Computing.VL_ARRAY : Computing.VL_INCORPORATE;
 				
-				//res.setAttribut(Computing.PRTY_INSERTION, inArray ? Computing.VL_ARRAY : Computing.VL_INCORPORATE);
-				//res.setAttribut(Computing.PRTY_NAME, Computing.calculableFor(xpName, "now"));
 			}
 			else {
 				insertion = Computing.VL_ARRAY;
-				//res.setAttribut(Computing.PRTY_INSERTION, Computing.VL_ARRAY);
+
 			}
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
@@ -137,11 +231,40 @@ public class STFor implements ComputingStatement {
 				lexingRules.nextNonBlankChar(charReader);
 				XPOperand<?> xp = xpCompiler.parse(charReader, (lr, cr) -> true, context);
 				vlDo = Computing.calculableFor(xp, "now");
+				res.setAttribut("_do", vlDo);
 			}
 			else if(ch == '{' || ch == '@' || ch == '[' || ch == '=' || ch == '"' || ch == '\'') {
 				vlDo = computing.readPropertyValueForObject(context);
+				res.setAttribut("_do", vlDo);
 			}
-			
+			else if(ch == '*') {
+				lexingRules.nextNonBlankChar(charReader);
+				ObjectValue<XPOperand<?>> ovDo = computing.readStatement(context);
+				
+				vlDo = ovDo;
+				
+				if(xclName == null) xclName = (XALCalculabeValue<?>) ovDo.getAttribut(Computing.PRTY_NAME);
+				
+				if("for".equals(ovDo.getRequiredAttributAsString(Computing.PRTY_STATEMENT))) {
+					insertion = ovDo.getRequiredAttributAsString(Computing.PRTY_INSERTION);
+					
+					ArrayValue<XPOperand<?>> innerNestedloopVars = ovDo.getAttributAsArrayValue("_loop_vars");
+					if(innerNestedloopVars == null)
+						throw new ManagedException(String.format("Missing '_loop_vars' property in inner for loop (Context : %s).", context));
+					
+					for(Value<?, XPOperand<?>> vllv : innerNestedloopVars.getValue()) {
+						nestedloopVars.add(vllv);
+					}
+					
+					res.setAttribut("_do", ovDo.getAttribut("_do"));
+					
+				}
+				else {
+					res.setAttribut("_do", vlDo);
+				}
+				
+				
+			}
 			
 			/*VariableContext vc = new MapVariableContext();
 			vc.addVariable(var, computing.getTypeSolver().getTypeValueClass(type), null);
@@ -161,18 +284,28 @@ public class STFor implements ComputingStatement {
 				else res.setAttribut(Computing.PRTY_NAME, xclName);
 				
 			}
-			else res.setAttribut("_do", vlDo);
-			res.setAttribut(Computing.PRTY_CONTEXT, context);
+			//else res.setAttribut("_do", vlDo);
+			loopVars.setAttribut(Computing.PRTY_CONTEXT, context);
 			res.setAttribut(Computing.PRTY_STATEMENT, "for");
-			res.setAttribut(Computing.PRTY_TYPE, "in");
-			res.setAttribut(Computing.PRTY_INSERTION, insertion);
+			/*res.setAttribut(Computing.PRTY_STATEMENT, "for");
+			res.setAttribut(Computing.PRTY_TYPE, "in");*/
 			
-			res.setAttribut("_var", var);
+			
+			
+			res.setAttribut(Computing.PRTY_INSERTION, insertion);
+			res.setAttribut("_loop_vars", nestedloopVars);
+			
+			/*if(nestedStatement != null)
+				res.setAttribut("_nested_statement", nestedStatement);*/
+			
+			
+			
+			/*res.setAttribut("_var", var);
 			
 			res.setAttribut("_vartype", type);
 			
 			res.setAttribut("_values", values);
-			res.setAttribut("_do", vlDo);
+			res.setAttribut("_do", vlDo);*/
 			
 			
 			
@@ -183,107 +316,109 @@ public class STFor implements ComputingStatement {
 		
 		return null;
 	}
+	
+	private VariableContext cloneVC(VariableContext vc) {
+		
+		VariableContext res = new MapVariableContext(vc.getParent());
+		
+		vc.visitAll( 
+			(n, v) -> {
+				try {
+					res.addVariable(n, v.valueClass(), v.value());
+				} catch (ManagedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		);
+		
+		return res;
+	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, Computing excetutedComputing, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
-		String type = ov.getAttributAsString(Computing.PRTY_TYPE);
+
 		
-		if("in".equals(type)) {
-			Value<?, XPOperand<?>> vlValues = ov.getRequiredAttribut("_values");
+		NestedLoopMan nlm = new NestedLoopMan();
 		
-			ArrayValue<XPOperand<?>> values = vlValues.asArrayValue();
-			if(values == null) {
-				XALCalculabeValue<?> clValues = (XALCalculabeValue<?>)vlValues.asCalculableValue();
-				excetutedComputing.computeCalculableValue(clValues, ovc);
-				values = (ArrayValue<XPOperand<?>>) clValues.getValue();
-			}
-			
-			String var = ov.getRequiredAttributAsString("_var");
-			
-			ArrayValue<XPOperand<?>> arRes = new ArrayValue<>();
-			
-			List<Value<?, XPOperand<?>>> lstValues = values.getValue();
-			
-			Value<?, XPOperand<?>> vlDo = ov.getAttribut("_do");
-			
-			if(ov.getRequiredAttributAsString(Computing.PRTY_INSERTION).equals(Computing.VL_ARRAY))
-				for(Value<?, XPOperand<?>> vl : lstValues) {
-					VariableContext vc = new MapVariableContext(ovc);
-					vc.assignContextVariable(var, vl.getValue());
-					//try {
-						Value<?, XPOperand<?>> rawItem = vlDo.clone();
-						CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
-						Value<?, XPOperand<?>> item;
-						
-						//item = excetutedComputing.value(rawItem, vc, libOV);
-						if(cl == null) item = excetutedComputing.value(rawItem, vc, libOV);
-						else {
-							item = excetutedComputing.computeCalculableValue(cl, vc);
-						}
-						if(item == null) continue;
-						
-						arRes.add(item);
-						
-					/*} catch (CloneNotSupportedException e) {
-						throw new ManagedException(e);
-					}*/
-				}
-			else {
-				Value<?, XPOperand<?>> vlName = ov.getRequiredAttribut(Computing.PRTY_NAME);
+		nlm.initialize(ov, ovc, excetutedComputing);
+		
+		Value<?, XPOperand<?>> vlDo = ov.getAttribut("_do");
+		
+		ArrayValue<XPOperand<?>> arRes = new ArrayValue<>();
+		
+		VariableContext vc = nlm.getVariableContext();
+		
+		if(ov.getRequiredAttributAsString(Computing.PRTY_INSERTION).equals(Computing.VL_ARRAY))
+		
+			while(nlm.next()) {
+				VariableContext iVC = cloneVC(vc);
+				Value<?, XPOperand<?>> rawItem = vlDo.clone();
+				CalculableValue<?, XPOperand<?>> cl = rawItem.asCalculableValue();
+				Value<?, XPOperand<?>> item;
 				
-				for(Value<?, XPOperand<?>> vl : lstValues) {
-					VariableContext vc = new MapVariableContext(ovc);
-					vc.assignContextVariable(var, vl.getValue());
-					//try {
-						
-						Value<?, XPOperand<?>> item; CalculableValue<?, XPOperand<?>> cl;
-						if(vlDo == null) {
-							item = null;
-						}
-						else {
-							Value<?, XPOperand<?>> rawItem = vlDo.clone();
-							cl = rawItem.asCalculableValue();
-							
-							if(cl == null) item = excetutedComputing.value(rawItem, vc, libOV);
-							else {
-								item = excetutedComputing.computeCalculableValue(cl, vc);
-							}
-							
-							if(item == null) continue;
-						}
-						
-						Value<?, XPOperand<?>> rawItemName = vlName.clone();
-						
-						String propName;
-						cl = rawItemName.asCalculableValue();
-						
-						XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
-						if(xalCL.getVariableContext() == null) xalCL.setVariableContext(vc);
-						xalCL.setEvaluator(excetutedComputing.getXPEvaluator());
-						
-						propName = xalCL.asRequiredString();
-						
-						ObjectValue<XPOperand<?>> ovProp = new ObjectValue<>();
-						
-						ovProp.setAttribut(propName, item);
-						
-						arRes.add(ovProp);
-						
-					/*} catch (CloneNotSupportedException e) {
-						throw new ManagedException(e);
-					}*/
+				//item = excetutedComputing.value(rawItem, vc, libOV);
+				if(cl == null) item = excetutedComputing.value(rawItem, iVC, libOV);
+				else {
+					item = excetutedComputing.computeCalculableValue(cl, iVC);
 				}
+				
+				arRes.add(item);
 			}
-			ObjectValue<XPOperand<?>> res = new ObjectValue<>();
-			res.setAttribut(Computing.PRTY_INSERTION, ov.getAttribut(Computing.PRTY_INSERTION));
-			res.setAttribut(Computing.PRTY_CONTEXT, ov.getAttribut(Computing.PRTY_CONTEXT));
+		
+		else {
 			
-			res.setAttribut(Computing.PRTY_VALUE, arRes);
+			Value<?, XPOperand<?>> vlName = ov.getRequiredAttribut(Computing.PRTY_NAME);
 			
-			return res;
+			while(nlm.next()) {
+				VariableContext iVC = cloneVC(vc);
+				
+				Value<?, XPOperand<?>> item; CalculableValue<?, XPOperand<?>> cl;
+				
+				
+				if(vlDo == null) {
+					item = null;
+				}
+				else {
+					Value<?, XPOperand<?>> rawItem = vlDo.clone();
+					cl = rawItem.asCalculableValue();
+					
+					if(cl == null) item = excetutedComputing.value(rawItem, iVC, libOV);
+					else {
+						item = excetutedComputing.computeCalculableValue(cl, iVC);
+					}
+					
+					if(item == null) continue;
+				}
+					
+				Value<?, XPOperand<?>> rawItemName = vlName.clone();
+				
+				String propName;
+				cl = rawItemName.asCalculableValue();
+				
+				XALCalculabeValue<String> xalCL = (XALCalculabeValue<String>) cl;
+				if(xalCL.getVariableContext() == null) xalCL.setVariableContext(iVC);
+				xalCL.setEvaluator(excetutedComputing.getXPEvaluator());
+				
+				propName = xalCL.asRequiredString();
+				
+				ObjectValue<XPOperand<?>> ovProp = new ObjectValue<>();
+				
+				ovProp.setAttribut(propName, item);
+				
+				arRes.add(ovProp);
+			}
 		}
-		return null;
+		
+		ObjectValue<XPOperand<?>> res = new ObjectValue<>();
+		res.setAttribut(Computing.PRTY_INSERTION, ov.getAttribut(Computing.PRTY_INSERTION));
+		res.setAttribut(Computing.PRTY_CONTEXT, ov.getAttribut(Computing.PRTY_CONTEXT));
+		
+		res.setAttribut(Computing.PRTY_VALUE, arRes);
+		
+		return res;
+		
 	}
 
 }

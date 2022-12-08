@@ -86,8 +86,10 @@ public class Computing {
 	public static final String PRTY_VAR_TYPE = "_varType";
 	
 	public static final String VL_INCORPORATE = "incorporate";
+	
 	public static final String VL_ARRAY = "array";
 	public static final String VL_VALUE = "value";
+	public static final String VL_STATEMENT = "statement";
 	public static final String VL_ALL = "all";
 	
 	public static final String CS_VALUE = "get-value";
@@ -1492,7 +1494,7 @@ public class Computing {
 		return null;
 	}
 	
-	private ObjectValue<XPOperand<?>> readStatement(String context) throws ManagedException {
+	public ObjectValue<XPOperand<?>> readStatement(String context) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		String str = lexingRules.nextNonNullString(charReader);

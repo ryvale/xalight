@@ -7,6 +7,8 @@ references {
 	b2 { 
 		sb1 {
 			p1 "a"
+			
+			p10 "x"
 		}
 	}
 	
@@ -23,6 +25,11 @@ init {
 	obj {
 		_varType "ObjectValue"
 		_value @b2
+	}
+	
+	obj2 {
+		_varType "int"
+		_value 	1
 	}
 	
 }
@@ -45,4 +52,6 @@ entities {
 	e3 {
 		*for(i in array) _name = "cplx" + i : "a" + i
 	}
+	
+	e4 { property = obj.getString("sb1.p10") property2 = obj2 }
 }

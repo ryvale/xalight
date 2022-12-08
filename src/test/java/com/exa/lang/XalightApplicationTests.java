@@ -304,6 +304,12 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("aa".equals(ovEntity.getPathAttributAsString("cplxa")));
 		assertTrue("ab".equals(ovEntity.getPathAttributAsString("cplxb")));
 		
+		ovEntity = computing.object("entities.e4", vc);
+		
+		assertTrue("x".equals(ovEntity.getPathAttributAsString("property")));
+		
+		assertTrue(new Integer(1).equals(ovEntity.getPathAttributAsInteger("property2")));
+		
 	}
 
 	public void testXalRealCase() throws ManagedException {
@@ -472,7 +478,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
-		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC); //parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity1", evaluator, entityVC);
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC); 
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property1")));
 		
 		ovEntity = computing.object("entities.entity2", entityVC); //parser.object("./src/test/java/com/exa/lang/test6.xal", "entities.entity2", evaluator, entityVC);
@@ -543,6 +549,52 @@ public class XalightApplicationTests extends TestCase {
 		
 		ovEntity = computing.object("entities.entity21", entityVC);
 		assertTrue("property1".equals(ovEntity.getPathAttributAsString("array[0]._name")));
+		
+		ovEntity = computing.object("entities.entity22", entityVC);
+		//assertTrue("x".equals(ovEntity.getPathAttributAsString("na1.property1")));
+		
+		System.out.println(ovEntity.getAttribut("na1"));
+		
+	}
+	
+	public void testStatementFor2() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test14.xal");
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC);
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("cplx[0].property")));
+		System.out.println(ovEntity.getPathAttributAsString("cplx[2].property"));
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("cplx[1].property")));
+	}
+	
+	public void testStatementRealCase() throws ManagedException {
+		
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test13.xal");
+		
+		computing.calculateInit();
+		
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		entityVC.assignContextVariable("structure", Boolean.TRUE);
+		
+		
+		ObjectValue<XPOperand<?>>  ovEntity = computing.object("entities.stats", entityVC);
+		
+		
+		assertTrue("row-to-field".equals(ovEntity.getPathAttributAsString("type").toString()));
+		
+		assertTrue("fuitesBranchement".equals(ovEntity.getPathAttributAsString("fields.items.fuitesBranchement_nb01.if").toString()));
+		
 		
 	}
 	
