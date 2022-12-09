@@ -22,6 +22,10 @@ public class TObjectValue extends TObjectClass<ObjectValue<XPOperand<?>>, Value<
 		omStr.addOperator(new OVMtdGetString());
 		methods.put("getString", new Method<>("getString", String.class, omStr));
 		
+		OMMethod<Integer> omInt = new OMMethod<>("getInteger", 2, OMOperandType.POST_OPERAND);
+		omInt.addOperator(new OVMtdGetInteger());
+		methods.put("getInteger", new Method<>("getInteger", Integer.class, omInt));
+		
 		OMMethod<ObjectValue> omOV = new OMMethod<>("getObject", 2, OMOperandType.POST_OPERAND);
 		omOV.addOperator(new OVMtdGetObjectValue());
 		methods.put("getObject", new Method<>("getObject", ObjectValue.class, omOV));

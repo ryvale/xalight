@@ -565,7 +565,10 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue("yb".equals(ovEntity.getPathAttributAsString("nb1.property2")));
 		
-		//assertTrue("xy2b".equals(ovEntity.getPathAttributAsString("nb2.property3")));
+		assertTrue("xy2b".equals(ovEntity.getPathAttributAsString("nb2.property3")));
+		
+		ovEntity = computing.object("entities.entity24", entityVC);
+		assertTrue("x1".equals(ovEntity.getPathAttributAsString("na1x.property1")));
 		
 	}
 	
@@ -610,6 +613,33 @@ public class XalightApplicationTests extends TestCase {
 		
 	}
 	
+	public void testStatementRealCase1() throws ManagedException {
+		
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/private/tp.ds.xal");
+		
+		computing.calculateInit();
+		
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		entityVC.assignContextVariable("structure", "DRABO");
+		
+		
+		ObjectValue<XPOperand<?>>  ovEntity = computing.object("entities.stats", entityVC);
+		
+		
+		assertTrue("row-to-field".equals(ovEntity.getPathAttributAsString("type").toString()));
+		
+		assertTrue(Boolean.TRUE.equals(ovEntity.getPathAttributAsBoolean("fields.items.fuitesBranchement_nb01.if")));
+		assertTrue(Boolean.TRUE.equals(ovEntity.getPathAttributAsBoolean("fields.items.fuitesRobinet_nb12.if")));
+		
+		
+	}
+	
 	public void testStatementImport() throws ManagedException {
 		
 		FilesRepositories fr = new FilesRepositories();
@@ -620,7 +650,9 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test7.xal");
 		
-		XPEvaluator evaluator = new XPEvaluator();
+		computing.calculateInit();
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
 		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
@@ -633,6 +665,13 @@ public class XalightApplicationTests extends TestCase {
 		
 		ovEntity = computing.object("entities.entity4", entityVC);//parser.object("./src/test/java/com/exa/lang/test7.xal", "entities.entity3", evaluator, entityVC);
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("property2").toString()));
+		
+		ovEntity = computing.object("entities.entity5", entityVC);
+		
+		
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("b.propriete").toString()));
+		
+		
 	}
 	
 	public void testStatementName() throws ManagedException {

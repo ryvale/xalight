@@ -144,4 +144,18 @@ entities {
 	
 	}
 	
+	entity24 {
+		
+		*for(i in ['1', '2'])
+			*for(j in ['a', 'b', 'c'])
+				*for(k in ['x', 'y', 'z']) _name = "n" + j + i + k {
+				property1 = "x" + i
+				
+				property2 = "y" + j
+				
+				property3 = "xy" + i + j
+			}
+	
+	}
+	
 }

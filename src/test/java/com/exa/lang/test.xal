@@ -4,6 +4,10 @@ references {
 	test {
 		propriete 2
 	}
+	
+	test2 {
+		propriete '2'
+	}
 },
 
 model {

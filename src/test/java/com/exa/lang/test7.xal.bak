@@ -22,7 +22,7 @@ entities {
 	
 	entity5 {
 		a "x"
-		b = rootOv.getObject("references.test2")
+		b = rootOv.getString("references.test2")
 	}
 	
 	*import [entities.entity2 -> entity4] 'default:///test2.xal'

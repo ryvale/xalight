@@ -75,7 +75,21 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 
 	@Override
 	public ObjectValue<XPOperand<?>> asObjectValue() {
-		return null;
+		if(variableContext == null || evaluator == null) return null;
+		evaluator.pushVariableContext(variableContext);
+		Object res = null;
+		try {
+			res = xp.value(evaluator);
+		} catch (ManagedException e) {
+			evaluator.popVariableContext();
+			return null;
+		}
+		evaluator.popVariableContext();
+		
+		if(!(res instanceof ObjectValue)) return null;
+		
+		return (ObjectValue<XPOperand<?>>) res;
+		//return null;
 	}
 
 	@Override
