@@ -846,13 +846,43 @@ public class Computing {
 							lstVav.remove(i);
 							List<Value<?, XPOperand< ?>>> lst = new ArrayList<>();
 							
+							boolean allIsObject = true;
+							
 							for(String name :  pnames) {
 								ObjectValue<XPOperand<?>> ovI = new ObjectValue<>();
+								
+								Value<?, XPOperand<?>> vlArrayValue = newOvItem.getAttribut(name);
+								
+								if(vlArrayValue != null) {
+									allIsObject &= (vlArrayValue.asObjectValue() != null);
+								}
+								
 								ovI.setAttribut(PRTY_NAME, name);
-								ovI.setAttribut(PRTY_VALUE, newOvItem.getAttribut(name));
+								ovI.setAttribut(PRTY_VALUE, vlArrayValue);
+								
+								
 								lst.add(ovI);
 							}
-							lstVav.addAll(i, lst);
+							
+							if(allIsObject) {
+								for(Value<?, XPOperand< ?>> aio : lst) {
+									ObjectValue<XPOperand<?>> ovAioR = aio.asObjectValue();
+									
+									ObjectValue<XPOperand<?>> ovAioV = ovAioR.getAttributAsObjectValue(PRTY_VALUE);
+									if(ovAioV == null) 
+										ovAioV = new ObjectValue<>();
+										
+									
+									String pname = ovAioR.getAttributAsString(PRTY_NAME);
+									
+									if(!ovAioV.containsAttribut(pname)) 
+										ovAioV.asObject().put(PRTY_NAME, new StringValue<>(pname));
+									
+									
+									lstVav.add(ovAioV);
+								}
+							}
+							else lstVav.addAll(i, lst);
 						}
 						else {
 							lstVav.set(i, newVlVav);
@@ -1670,7 +1700,7 @@ public class Computing {
 		
 		if('*' == ch) {
 			lexingRules.nextNonBlankChar(charReader);
-			return readStatement(context);
+			return readStatement(context + "[");
 		}
 		
 		throw new ParsingException(String.format("Unexpected error near %s", ch.toString()));

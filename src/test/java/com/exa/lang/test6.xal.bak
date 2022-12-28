@@ -144,7 +144,7 @@ entities {
 	
 	}
 	
-	entity23 {
+	entity24 {
 		
 		*for(i in ['1', '2'])
 			*for(j in ['a', 'b', 'c'])
@@ -156,6 +156,15 @@ entities {
 				property3 = "xy" + i + j
 			}
 	
+	}
+	
+	entity25 {
+		parray [
+			*for(i in ['1', '2'])
+				*for(j in ['a', 'b', 'c']) 
+					_name = "n" + i + j
+			
+		]
 	}
 	
 }
