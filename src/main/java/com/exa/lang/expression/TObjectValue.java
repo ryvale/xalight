@@ -34,9 +34,21 @@ public class TObjectValue extends TObjectClass<ObjectValue<XPOperand<?>>, Value<
 		omAV.addOperator(new OVMtdGetArrayValue());
 		methods.put("getArray", new Method<>("getArray", ArrayValue.class, omAV));
 		
-		omAV = new OMMethod<>("fieldNamesAsArray", 1, OMOperandType.POST_OPERAND);
+		omAV = new OMMethod<>("fieldNamesAsArray", 2, OMOperandType.POST_OPERAND);
 		omAV.addOperator(new OVMtdFieldNamesAsArray());
 		methods.put("fieldNamesAsArray", new Method<>("fieldNamesAsArray", ArrayValue.class, omAV));
+		
+		omAV = new OMMethod<>("fieldValuesAsArray", 3, OMOperandType.POST_OPERAND);
+		omAV.addOperator(new OVMtdFieldValuesAsArray());
+		methods.put("fieldValuesAsArray", new Method<>("fieldValuesAsArray", ArrayValue.class, omAV));
+		
+		omStr = new OMMethod<>("fieldNamesAsComaSeparated", 2, OMOperandType.POST_OPERAND);
+		omStr.addOperator(new OVMtdFieldNamesAsComaSeparated());
+		methods.put("fieldNamesAsComaSeparated", new Method<>("fieldNamesAsComaSeparated", String.class, omStr));
+		
+		omStr = new OMMethod<>("fieldValuesAsComaSeparated", 3, OMOperandType.POST_OPERAND);
+		omStr.addOperator(new OVMtdFieldValuesAsComaSeparated());
+		methods.put("fieldValuesAsComaSeparated", new Method<>("fieldValuesAsComaSeparated", String.class, omStr));	
 	}
 
 	@SuppressWarnings("unchecked")

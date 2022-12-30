@@ -738,47 +738,41 @@ public class XalightApplicationTests extends TestCase {
 		
 		XALParser parser = new XALParser(fr);
 		
-		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/private/sdc/tb/dras.xlsx.xal");
+		VIEvaluatorSetup evSetup = new VIEvaluatorSetup();
+		evSetup.addVaraiable("structure", String.class, "DRAS");
 		
-		computing.calculateInit();
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/private/sdc/tb/dex-deploye.xlsx.xal", evSetup, (id, context) -> {
+				if("rootOv".equals(id)) return "ObjectValue";
+			//String p[] = context.split("[.]");
+			
+				return null;
+			}
+		);
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
-		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		entityVC.assignContextVariable("structure", "DRABO");
+		
+		computing.calculateInit();
 		
 		ArrayValue<XPOperand<?>> av = computing.array("data", entityVC);
 		
 		ObjectValue<XPOperand<?>> ov = av.get(0).asObjectValue();
 		
-		assertTrue("smart@data-config:/tb/tb".equals(ov.getAttributAsString("_name")));
+		assertTrue("data-config:/tb/main".equals(ov.getAttributAsString("_name")));
 		
 		assertTrue("C2".equals(ov.getPathAttributAsString("record[0]._name")));
-		
-		assertTrue("fuitesBranchement_nb1".equals(ov.getPathAttributAsString("record[0].group[0]._name")));
-		
-		assertTrue("float".equals(ov.getPathAttributAsString("record[0].group[0].type")));
-		
-		assertTrue("fuitesBranchement_nbTraites1".equals(ov.getPathAttributAsString("record[0].group[1]._name")));
-		
-		ov = av.get(1).asObjectValue();
-		
-		System.out.println(ov.getPathAttributAsString("record[0].sheet"));
-		
-		assertTrue("C2".equals(ov.getPathAttributAsString("record[0]._name")));
-		
-		assertTrue("C3".equals(ov.getPathAttributAsString("record[1]._name")));
 		
 		assertTrue("KOUMASSI_fuitesBranchement_nb1".equals(ov.getPathAttributAsString("record[0].group[0]._name")));
 		
-		assertTrue("KOUMASSI_fuitesRobinet_nb1".equals(ov.getPathAttributAsString("record[1].group[0]._name")));
+		assertTrue("float".equals(ov.getPathAttributAsString("record[0].group[0].type")));
 		
-		assertTrue("C10".equals(ov.getPathAttributAsString("record[6]._name")));
+		assertTrue("KOUMASSI_fuitesBranchement_nbTraites1".equals(ov.getPathAttributAsString("record[0].group[1]._name")));
 		
-		assertTrue("KOUMASSI_fuitesBranchement_nb2".equals(ov.getPathAttributAsString("record[6].group[0]._name")));
 		
-		System.out.println(ov.getPathAttributAsString("record[71].sheet"));
-		
-		assertTrue("MARCORY_fuitesBranchement_nb1".equals(ov.getPathAttributAsString("record[72].group[0]._name")));
+		System.out.println(ov.getPathAttributAsString("record[5].group[0]._name"));
+		assertTrue("KOUMASSI_autre_nb1".equals(ov.getPathAttributAsString("record[5].group[0]._name")));
 		
 	}
 	
@@ -873,7 +867,33 @@ public class XalightApplicationTests extends TestCase {
 		
 		Object v = res.asArray();
 		
+		assertNotNull(v);
 		
+		
+		
+		
+	}
+	
+	public void testArray() throws ManagedException {
+			
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/array.xal");
+		
+		computing.calculateInit();
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>>  ovEntities = computing.object("entities", entityVC);
+		
+		Value<?, XPOperand<?>> vlAv = ovEntities.getAttribut("addItem");
+		
+		ArrayValue<XPOperand<?>> av = vlAv.asArrayValue();
+		
+		assertTrue(av.getString(0).equals("a"));
+		assertTrue(av.getString(2).equals("c"));
 		
 		
 	}

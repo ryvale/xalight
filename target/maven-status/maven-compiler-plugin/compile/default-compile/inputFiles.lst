@@ -5,9 +5,12 @@ C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\TArrayV
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\XALLexingRules.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdGetString.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdGetInteger.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\AVMtdAddItem.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\ComputingStatement.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdFieldNamesAsComaSeparated.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\TObjectValue.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\Computing.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdFieldValuesAsComaSeparated.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\statements\STIf.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\statements\STName.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\computer\GetStoredArrayValue.java
@@ -20,6 +23,7 @@ C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdGe
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\TypeSolver.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\computer\GetStoredComputedArrayValue.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\params\GPGetString.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdFieldValuesAsArray.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdGetObjectValue.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\XALCalculabeValue.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\XPEvaluatorSetup.java

@@ -2,7 +2,6 @@ package com.exa.lang.parsing;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -13,6 +12,7 @@ import java.util.Set;
 import com.exa.buffer.CharReader;
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.Type;
+import com.exa.expression.Variable;
 import com.exa.expression.VariableContext;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.ClassesMan;
@@ -117,28 +117,8 @@ public class Computing {
 	
 	private XALComputer computer;
 	
-	private Map<String, ObjectValue<XPOperand<?>>> toBeCalculated = new HashMap<>();
+	private Map<String, ObjectValue<XPOperand<?>>> toBeCalculated = new LinkedHashMap<>();
 	
-	/*public Computing(XALParser parser, CharReader charReader, ObjectValue<XPOperand<?>> rootObject, VariableContext rootVariableContext, XPEvalautorFactory cclEvaluatorFacory) {
-		super();
-		this.parser = parser;
-		this.result = rootObject;
-		this.xpCompiler = new XPParser();
-		
-		typeSolver = new TypeSolver();
-		
-		XPEvaluator compEvaluator = xpCompiler.evaluator();
-		compEvaluator.getClassesMan().forAllTypeDo((typeName, valueClass) -> {
-			if(typeSolver.containsType(typeName)) return;
-			
-			typeSolver.registerType(typeName, valueClass);
-			
-		});
-		
-		
-		computer = new XALComputer(this);
-		this.charReader = charReader;
-	}*/
 		
 	public Computing(XALParser parser, CharReader charReader, XPEvaluatorSetup evSteup, UnknownIdentifierValidation uiv) throws ManagedException {
 		this.parser = parser;
@@ -239,60 +219,13 @@ public class Computing {
 				throw e;
 			}
 			
-			Value<?, XPOperand<?>> propertyValue = readPropertyValueForObject(propertyName);
+			Value<?, XPOperand<?>> propertyValue; //= readPropertyValueForObject(propertyName);
 			
 			if("init".equals(propertyName)) {
-				ObjectValue<XPOperand<?>> ovInit = propertyValue.asObjectValue();
-				if(ovInit != null) {
-					Map<String, Value<?, XPOperand<?>>> mpInit = ovInit.getValue();
-					
-					for(String var : mpInit.keySet()) {
-						Value<?, XPOperand<?>> vl = mpInit.get(var);
-						
-						if(vl.asStringValue() != null) {
-							rootVC.addVariable(var, String.class, vl.getValue());
-							continue;
-						}
-						
-						if(vl.asIntegerValue() != null) {
-							rootVC.addVariable(var, Integer.class, vl.getValue());
-							continue;
-						}
-						
-						if(vl.asBooleanValue() != null) {
-							rootVC.addVariable(var, Boolean.class, vl.getValue());
-							continue;
-						}
-						
-						if(vl.asDecimalValue() != null) {
-							rootVC.addVariable(var, Double.class, vl.getValue());
-							continue;
-						}
-						
-						if("object".equals(vl.typeName())) {
-							ObjectValue<XPOperand<?>> ov = vl.asObjectValue();
-							if(ov != null) {
-								Value<?, XPOperand<?>> vlVarType = ov.getAttribut(PRTY_VAR_TYPE);
-								if(vlVarType != null) {
-									
-									toBeCalculated.put(var, ov);
-									Type<?> tp = evaluator.getClassesMan().getType(vlVarType.asRequiredString());
-									
-									rootVC.addVariable(var, tp.valueClass(), null);
-									continue;
-								}
-								
-							}
-							rootVC.addVariable(var, ObjectValue.class, vl);
-							continue;
-						}
-						
-						if("array".equals(vl.typeName())) {
-							rootVC.addVariable(var, ArrayValue.class, vl);
-							continue;
-						}
-					}
-				}
+				propertyValue = readPropertyValueForObject(propertyName, true);
+			}
+			else {
+				propertyValue = readPropertyValueForObject(propertyName, false);
 			}
 			
 			result.setAttribut(propertyName, propertyValue);
@@ -570,6 +503,35 @@ public class Computing {
 		return boe.getPathAttribut(ovPath);
 	}
 		
+	/*public void calculateInit() throws ManagedException {
+
+		ObjectValue<XPOperand<?>> rootOV = getResult();
+		
+		Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
+		
+		XALParser.loadImport(this, mpLib);
+		
+		for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
+			resolveHeirsObject(ovLib);
+		}
+		
+		VariableContext rootVC =  xpCompiler.evaluator().getRootVC();
+		
+		for(String var : toBeCalculated.keySet()) {
+			Value<?, XPOperand<?>> vl0 = toBeCalculated.get(var).getAttribut(PRTY_VALUE);
+			
+			Value<?, XPOperand<?>> vl = value(vl0, new MapVariableContext(rootVC), mpLib);
+			
+			if("object".equals(vl.typeName()) || "array".equals(vl.typeName())) {
+				rootVC.assignContextVariable(var, vl.getValue());
+				continue;
+			}
+			
+			rootVC.assignContextVariable(var, vl.getValue());
+		}
+		toBeCalculated.clear();
+	}*/
+	
 	public void calculateInit() throws ManagedException {
 
 		ObjectValue<XPOperand<?>> rootOV = getResult();
@@ -594,7 +556,18 @@ public class Computing {
 				continue;
 			}
 			
+			@SuppressWarnings({ "rawtypes", "unchecked" })
+			XALCalculabeValue<XPOperand<?>>cl = (XALCalculabeValue)vl.asCalculableValue();
+			
+			if(cl != null)	{
+				cl.setEvaluator(xpCompiler.evaluator());
+				cl.setVariableContext(rootVC);
+			}
+			
+			
+			
 			rootVC.assignContextVariable(var, vl.getValue());
+			
 		}
 		toBeCalculated.clear();
 	}
@@ -1176,9 +1149,13 @@ public class Computing {
 	}
 	
 	public Value<?, XPOperand<?>> readPropertyValueForObject(String context) throws ManagedException {
+		return readPropertyValueForObject(context, false);
+	}
+	
+	public Value<?, XPOperand<?>> readPropertyValueForObject(String context, boolean propertNameAsVariable) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		//variableContextAnyWay(context);
-		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithoutDec(context);
+		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithoutDec(context, propertNameAsVariable);
 		if(res != null) return res;
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
 		
@@ -1311,10 +1288,19 @@ public class Computing {
 	}
 	
 	public Value<?, XPOperand<?>> readObjectBody(String context) throws ManagedException {
-		return readObjectBody(new ObjectValue<>(), context);
+		return readObjectBody(context, false);
+	}
+	
+	public Value<?, XPOperand<?>> readObjectBody(String context, boolean proprtyNameAsVariable) throws ManagedException {
+		return readObjectBody(new ObjectValue<>(), context, proprtyNameAsVariable);
 	}
 	
 	public ObjectValue<XPOperand<?>> readObjectBody(ObjectValue<XPOperand<?>> ov, String context) throws ManagedException {
+		return readObjectBody(ov, context, false);
+	}
+	
+	//right place
+	public ObjectValue<XPOperand<?>> readObjectBody(ObjectValue<XPOperand<?>> ov, String context, boolean proprtyNameAsVariable) throws ManagedException {
 		Integer unnamedAttributIndex = 1;
 		
 		XALLexingRules lexingRules = parser.getLexingRules();
@@ -1354,6 +1340,16 @@ public class Computing {
 				
 				propertyValue = readPropertyValueForObject(newContext);
 				
+				if(proprtyNameAsVariable && propertyValue != null) {
+					
+					assignPropertyVariavle(propertyValue, propertyName);
+					/*if("ArrayValue".equals(propertyValue.typeName())) {
+						xpCompiler.evaluator().assignOrDeclareVariable(propertyName, ArrayValue.class, null);
+					}*/
+				}
+				
+				
+				
 				String parts[] = context.split("[.]");
 				if(parts.length == 1) {
 					ObjectValue<XPOperand<?>> ovEntity = propertyValue.asObjectValue();
@@ -1382,6 +1378,105 @@ public class Computing {
 		while(true);
 		
 		return ov;
+	}
+	
+	private void assignPropertyVariavle(Value<?, XPOperand<?>> vl, String var) throws ManagedException {
+		if(vl.asStringValue() != null) {
+			xpCompiler.evaluator().assignOrDeclareVariable(var, String.class, vl.getValue());
+			return;
+		}
+		
+		if(vl.asIntegerValue() != null) {
+			xpCompiler.evaluator().assignOrDeclareVariable(var, Integer.class, vl.getValue());
+			return;
+		}
+		
+		if(vl.asBooleanValue() != null) {
+			xpCompiler.evaluator().assignOrDeclareVariable(var, Boolean.class, vl.getValue());
+			return;
+		}
+		
+		if(vl.asDecimalValue() != null) {
+			xpCompiler.evaluator().assignOrDeclareVariable(var, Double.class, vl.getValue());
+			return;
+		}
+		
+		if("array".equals(vl.typeName())) {
+			xpCompiler.evaluator().assignOrDeclareVariable(var, ArrayValue.class, vl);
+			return;
+		}
+		
+		if("object".equals(vl.typeName())) {
+			ObjectValue<XPOperand<?>> ov = vl.asObjectValue();
+			if(ov != null) {
+				Value<?, XPOperand<?>> vlVarType = ov.getAttribut(PRTY_VAR_TYPE);
+				if(vlVarType != null) {
+					
+					toBeCalculated.put(var, ov);
+					Type<?> tp = xpCompiler.evaluator().getClassesMan().getType(vlVarType.asRequiredString());
+					
+					xpCompiler.evaluator().assignOrDeclareVariable(var, tp.valueClass(), null);
+					return;
+				}
+				
+			}
+			xpCompiler.evaluator().assignOrDeclareVariable(var, ObjectValue.class, vl);
+			return;
+		}
+		
+		@SuppressWarnings({ "unchecked", "rawtypes" })
+		XALCalculabeValue<XPOperand<?>>cl = (XALCalculabeValue)vl. asCalculableValue();
+		if(cl != null) {
+			String type = cl.typeName();
+			
+			if(type == null) return;
+			
+			if("string".equals(type)) {
+				xpCompiler.evaluator().assignOrDeclareVariable(var, String.class, null);
+				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				ov.setAttribut(PRTY_VAR_TYPE, type);
+				ov.setAttribut(PRTY_VALUE, vl);
+				toBeCalculated.put(var, ov);
+			}
+			else if("int".equals(type)) {
+				xpCompiler.evaluator().assignOrDeclareVariable(var, Integer.class, null);
+				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				ov.setAttribut(PRTY_VAR_TYPE, type);
+				ov.setAttribut(PRTY_VALUE, vl);
+				toBeCalculated.put(var, ov);
+			}
+			else if("boolean".equals(type)) {
+				xpCompiler.evaluator().assignOrDeclareVariable(var, Boolean.class, null);
+				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				ov.setAttribut(PRTY_VAR_TYPE, type);
+				ov.setAttribut(PRTY_VALUE, vl);
+				toBeCalculated.put(var, ov);
+			}
+			else if("float".equals(type)) {
+				xpCompiler.evaluator().assignOrDeclareVariable(var, Double.class, null);
+				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				ov.setAttribut(PRTY_VAR_TYPE, type);
+				ov.setAttribut(PRTY_VALUE, vl);
+				toBeCalculated.put(var, ov);
+			}
+			else if("ArrayValue".equals(type)) {
+				xpCompiler.evaluator().assignOrDeclareVariable(var, ArrayValue.class, null);
+				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				ov.setAttribut(PRTY_VAR_TYPE, type);
+				ov.setAttribut(PRTY_VALUE, vl);
+				toBeCalculated.put(var, ov);
+				
+				
+			}
+			else if("ObjectValue".equals(type)) {
+				xpCompiler.evaluator().assignOrDeclareVariable(var, ObjectValue.class, null);
+				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				ov.setAttribut(PRTY_VAR_TYPE, type);
+				ov.setAttribut(PRTY_VALUE, vl);
+				toBeCalculated.put(var, ov);
+			}
+		}
+			
 	}
 	
 	public XALCalculabeValue<?> readExpression(String context) throws ManagedException {
@@ -1442,6 +1537,10 @@ public class Computing {
 	}
 	
 	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithoutDec(String context) throws ManagedException {
+		return _readPropertyValueForObjectWithoutDec(context, false);
+	}
+	
+	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithoutDec(String context, boolean proprtyNameAsVariable) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
@@ -1450,7 +1549,7 @@ public class Computing {
 		
 		if(ch == '{') {
 			lexingRules.nextNonBlankChar(charReader);
-			return readObjectBody(context);
+			return readObjectBody(context, proprtyNameAsVariable);
 		}
 		
 		if(ch == '[') {

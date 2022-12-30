@@ -20,11 +20,16 @@ public class TArrayValue extends TObjectClass<ArrayValue<XPOperand<?>>, Value<?,
 		return this;
 	}
 
+	@SuppressWarnings("rawtypes")
 	@Override
 	public void initialize() {
 		OMMethod<String> omStr = new OMMethod<>("getString", 2, OMOperandType.POST_OPERAND);
 		omStr.addOperator(new AVMtdGetString());
 		methods.put("getString", new Method<>("getString", String.class, omStr));
+		
+		OMMethod<ArrayValue> omAV = new OMMethod<>("addItem", 2, OMOperandType.POST_OPERAND);
+		omAV.addOperator(new AVMtdAddItem());
+		methods.put("addItem", new Method<>("v", ArrayValue.class, omAV));
 	}
 	
 }

@@ -73,6 +73,7 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public ObjectValue<XPOperand<?>> asObjectValue() {
 		if(variableContext == null || evaluator == null) return null;
@@ -92,9 +93,23 @@ public class XALCalculabeValue<T> extends CalculableValue<T,  XPOperand<?>> {
 		//return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public ArrayValue<XPOperand<?>> asArrayValue() {
-		return null;
+		if(variableContext == null || evaluator == null) return null;
+		evaluator.pushVariableContext(variableContext);
+		Object res = null;
+		try {
+			res = xp.value(evaluator);
+		} catch (ManagedException e) {
+			evaluator.popVariableContext();
+			return null;
+		}
+		evaluator.popVariableContext();
+		
+		if(!(res instanceof ArrayValue)) return null;
+		
+		return (ArrayValue<XPOperand<?>>) res;
 	}
 
 	@Override

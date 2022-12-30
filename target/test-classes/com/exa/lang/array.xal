@@ -1,0 +1,10 @@
+
+init {
+	testArray ['a', 'b']
+}
+
+entities {
+	
+	addItem = testArray.addItem('c')
+	
+}

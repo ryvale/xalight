@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.Vector;
+import java.util.function.Consumer;
 
 import com.exa.expression.OMMethod;
 import com.exa.expression.OMMethod.XPOrtMethod;
@@ -21,7 +22,7 @@ import com.exa.utils.values.Value;
 public class OVMtdFieldNamesAsArray extends OMMethod.XPOrtMethod<ObjectValue<XPOperand<?>>, ArrayValue> {
 
 	public OVMtdFieldNamesAsArray() {
-		super("fieldNamesAsArray", 0);
+		super("fieldNamesAsArray", 1);
 	}
 
 	public boolean canManage(XPEvaluator eval, int order, int nbOperands) throws ManagedException {
@@ -41,17 +42,23 @@ public class OVMtdFieldNamesAsArray extends OMMethod.XPOrtMethod<ObjectValue<XPO
 			public ArrayValue<XPOperand<?>> value(XPEvaluator eval) throws ManagedException {
 				ObjectValue<XPOperand<?>> object = xpObject.value(eval);
 				
+				Boolean all = params.get(0).asOPBoolean().value(eval);
+				
 				List<Value<?, XPOperand<?>>> values = new ArrayList<>();
 				
 				ArrayValue<XPOperand<?>> res = new ArrayValue<>(values);
 				
 				Set<String> keys = object.getValue().keySet();
 				
-				keys.forEach(v -> {
-					if(v.startsWith("_")) return;
-					
-					values.add(new StringValue<>(v));
-				});
+				
+				Consumer<String> csm = 
+					Boolean.TRUE.equals(all) ? 
+						v -> values.add(new StringValue<>(v))
+						: 
+						v -> {if(v.startsWith("_")) return; values.add(new StringValue<>(v));  } ;
+				
+				keys.forEach(csm);
+				
 				
 				return res;
 			}
