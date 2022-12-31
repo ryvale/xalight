@@ -760,19 +760,30 @@ public class XalightApplicationTests extends TestCase {
 		
 		ObjectValue<XPOperand<?>> ov = av.get(0).asObjectValue();
 		
+		System.out.println(ov.getPathAttributAsArray("record"));
+		
 		assertTrue("data-config:/tb/main".equals(ov.getAttributAsString("_name")));
 		
 		assertTrue("C2".equals(ov.getPathAttributAsString("record[0]._name")));
 		
+		assertTrue("G2".equals(ov.getPathAttributAsString("record[1]._name")));
+		
+		
 		assertTrue("KOUMASSI_fuitesBranchement_nb1".equals(ov.getPathAttributAsString("record[0].group[0]._name")));
+		
+		assertTrue("KOUMASSI_fuitesBranchement_tme1".equals(ov.getPathAttributAsString("record[1].group[0]._name")));
 		
 		assertTrue("float".equals(ov.getPathAttributAsString("record[0].group[0].type")));
 		
 		assertTrue("KOUMASSI_fuitesBranchement_nbTraites1".equals(ov.getPathAttributAsString("record[0].group[1]._name")));
 		
 		
-		System.out.println(ov.getPathAttributAsString("record[5].group[0]._name"));
-		assertTrue("KOUMASSI_autre_nb1".equals(ov.getPathAttributAsString("record[5].group[0]._name")));
+		assertTrue("KOUMASSI_autre_nb1".equals(ov.getPathAttributAsString("record[10].group[0]._name")));
+		
+		assertTrue("KOUMASSI_autre_tme1".equals(ov.getPathAttributAsString("record[11].group[0]._name")));
+		assertTrue("KOUMASSI_autre_tmt1".equals(ov.getPathAttributAsString("record[11].group[1]._name")));
+		
+		
 		
 	}
 	

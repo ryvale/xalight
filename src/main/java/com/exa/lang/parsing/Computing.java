@@ -12,7 +12,6 @@ import java.util.Set;
 import com.exa.buffer.CharReader;
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.Type;
-import com.exa.expression.Variable;
 import com.exa.expression.VariableContext;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.ClassesMan;
