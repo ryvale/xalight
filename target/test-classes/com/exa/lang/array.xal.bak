@@ -15,8 +15,4 @@ entities {
 		addItem = testArray.addAllItem(testArray2, false)
 	}
 	
-	entity3 {
-		indexArray = testArray.indexArray()
-	}
-	
 }

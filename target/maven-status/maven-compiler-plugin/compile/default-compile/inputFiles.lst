@@ -16,9 +16,11 @@ C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\statements
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\computer\GetStoredArrayValue.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\computer\XALComputer.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\statements\STImport.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\AVMtdGetInteger.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdFieldNamesAsArray.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\AVMtdGetString.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\params\TGlobalParams.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\AVMtdIndexArray.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\OVMtdGetArrayValue.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\TypeSolver.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\computer\GetStoredComputedArrayValue.java
@@ -29,5 +31,6 @@ C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\XALCalc
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\XPEvaluatorSetup.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\parsing\XPEvalautorFactory.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\XalightApplication.java
+C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\AVMtdAddAllItem.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\VIEvaluatorSetup.java
 C:\p-project\exa-xal-light\xalight\src\main\java\com\exa\lang\expression\params\GlobalParams.java

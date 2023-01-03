@@ -1,10 +1,22 @@
 
 init {
 	testArray ['a', 'b']
+	
+	testArray2 ['d']
 }
 
 entities {
+
+	entity1 {
+		addItem = testArray.addItem('c', false)
+	}
 	
-	addItem = testArray.addItem('c')
+	entity2 {
+		addItem = testArray.addAllItem(testArray2, false)
+	}
+	
+	entity3 {
+		indexArray = testArray.indexArray()
+	}
 	
 }

@@ -27,9 +27,21 @@ public class TArrayValue extends TObjectClass<ArrayValue<XPOperand<?>>, Value<?,
 		omStr.addOperator(new AVMtdGetString());
 		methods.put("getString", new Method<>("getString", String.class, omStr));
 		
-		OMMethod<ArrayValue> omAV = new OMMethod<>("addItem", 2, OMOperandType.POST_OPERAND);
+		OMMethod<Integer> omInt = new OMMethod<>("getInteger", 2, OMOperandType.POST_OPERAND);
+		omInt.addOperator(new AVMtdGetInteger());
+		methods.put("getInteger", new Method<>("getInteger", Integer.class, omInt));
+		
+		OMMethod<ArrayValue> omAV = new OMMethod<>("addItem", 3, OMOperandType.POST_OPERAND);
 		omAV.addOperator(new AVMtdAddItem());
-		methods.put("addItem", new Method<>("v", ArrayValue.class, omAV));
+		methods.put("addItem", new Method<>("addItem", ArrayValue.class, omAV));
+		
+		omAV = new OMMethod<>("addAllItem", 3, OMOperandType.POST_OPERAND);
+		omAV.addOperator(new AVMtdAddAllItem());
+		methods.put("addAllItem", new Method<>("addAllItem", ArrayValue.class, omAV));
+		
+		omAV = new OMMethod<>("indexArray", 1, OMOperandType.POST_OPERAND);
+		omAV.addOperator(new AVMtdIndexArray());
+		methods.put("indexArray", new Method<>("indexArray", ArrayValue.class, omAV));
 	}
 	
 }

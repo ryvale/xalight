@@ -4,6 +4,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.exa.expression.OMMethod;
 import com.exa.expression.Type;
 import com.exa.expression.XPOperand;
@@ -18,11 +21,12 @@ import com.exa.utils.values.IntegerValue;
 import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
+
 @SuppressWarnings("rawtypes")
-public class AVMtdAddItem extends OMMethod.XPOrtMethod<ArrayValue<XPOperand<?>>, ArrayValue> {
+public class AVMtdAddAllItem extends OMMethod.XPOrtMethod<ArrayValue<XPOperand<?>>, ArrayValue> {
 	
-	public AVMtdAddItem() {
-		super("addItem", 2);
+	public AVMtdAddAllItem() {
+		super("addAllItem", 2);
 	}
 	
 	@Override
@@ -34,7 +38,6 @@ public class AVMtdAddItem extends OMMethod.XPOrtMethod<ArrayValue<XPOperand<?>>,
 	public Type<?> type() {
 		return XALParser.T_ARRAY_VALUE;
 	}
-	
 	
 	@Override
 	protected XPOrtMethod<ArrayValue<XPOperand<?>>, ArrayValue>.XPMethodResult createResultOperand(XPOperand<ArrayValue<XPOperand<?>>> xpObject, Vector<XPOperand<?>> xpParams) {
@@ -52,19 +55,36 @@ public class AVMtdAddItem extends OMMethod.XPOrtMethod<ArrayValue<XPOperand<?>>,
 				
 				Object objValue = params.get(0).value(eval);
 				
-				if(objValue instanceof String) object.add((String) objValue);
-				else if(objValue instanceof Integer) object.add( new IntegerValue<>((Integer)objValue));
-				else if(objValue instanceof Boolean) object.add( new BooleanValue<>((Boolean)objValue));
-				else if(objValue instanceof Double) object.add( new DecimalValue<>((Double)objValue));
-				else if(objValue instanceof List) object.add( new ArrayValue<>((List<Value<?, XPOperand<?>>>)objValue));
-				else if(objValue instanceof Map) object.add( new ObjectValue<>(((Map<String, Value<?, XPOperand<?>>>)objValue)));
 				
 				
+				if(objValue == null) {
+					
+					Logger log = LoggerFactory.getLogger(AVMtdAddAllItem.class);
+					
+					log.warn("An agurment in 'addAllItem' is null");
+					return object;
+				}
+				
+				ArrayValue<XPOperand<?>> arg = (ArrayValue)objValue;
+				
+				List<Value<?, XPOperand<?>>> lst = arg.getValue();
+				
+				for(Value<?, XPOperand<?>> vl : lst) {
+					
+					Object obj = vl.getValue();
+					
+					if(obj instanceof String) object.add((String) obj);
+					else if(obj instanceof Integer) object.add( new IntegerValue<>((Integer)obj));
+					else if(obj instanceof Boolean) object.add( new BooleanValue<>((Boolean)obj));
+					else if(obj instanceof Double) object.add( new DecimalValue<>((Double)obj));
+					else if(obj instanceof List) object.add( new ArrayValue<>((List<Value<?, XPOperand<?>>>)obj));
+					else if(obj instanceof Map) object.add( new ObjectValue<>(((Map<String, Value<?, XPOperand<?>>>)obj)));
+					
+				}
 				
 				return object;
 			}
 		};
 	}
-
 
 }

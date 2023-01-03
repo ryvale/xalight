@@ -897,14 +897,64 @@ public class XalightApplicationTests extends TestCase {
 		
 		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
 		
-		ObjectValue<XPOperand<?>>  ovEntities = computing.object("entities", entityVC);
+		ObjectValue<XPOperand<?>>  ovEntity = computing.object("entities.entity1", entityVC);
 		
-		Value<?, XPOperand<?>> vlAv = ovEntities.getAttribut("addItem");
+		Value<?, XPOperand<?>> vlAv = ovEntity.getAttribut("addItem");
 		
 		ArrayValue<XPOperand<?>> av = vlAv.asArrayValue();
 		
 		assertTrue(av.getString(0).equals("a"));
+		
 		assertTrue(av.getString(2).equals("c"));
+		
+		ovEntity = computing.object("entities.entity2", entityVC);
+		
+		vlAv = ovEntity.getAttribut("addItem");
+		
+		av = vlAv.asArrayValue();
+		
+		//System.out.println(av);
+		assertTrue(av.getString(2).equals("d"));
+		
+		
+		ovEntity = computing.object("entities.entity3", entityVC);
+		
+		vlAv = ovEntity.getAttribut("indexArray");
+		
+		av = vlAv.asArrayValue();
+		
+		System.out.println(av);
+		assertTrue(av.getValue().get(0).asInteger().equals(0));
+		assertTrue(av.getValue().get(1).asInteger().equals(1));
+		
+		
+	}
+	
+	
+	public void testForArray() throws ManagedException {
+		
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/for-array.xal");
+		
+		computing.calculateInit();
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC);
+		
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("rows[0].code")));
+		assertTrue("b".equals(ovEntity.getPathAttributAsString("rows[1].code")));
+		
+		
+		ovEntity = computing.object("entities.entity2", entityVC);
+		
+		
+		//System.out.println(ovEntity.getPathAttributAsString("rows[0].a"));
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("rows[0].a")));
+		assertTrue("b".equals(ovEntity.getPathAttributAsString("rows[0].b")));
 		
 		
 	}

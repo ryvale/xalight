@@ -11,7 +11,7 @@ entities {
 	}
 	
 	entity2 {
-		rows [
+		row [
 			{
 				*for(i in ['a', 'b']) _name = i : i
 			}
