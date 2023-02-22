@@ -928,6 +928,9 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue(av.getValue().get(1).asInteger().equals(1));
 		
 		
+		ovEntity = computing.object("entities.entity4", entityVC);
+		assertTrue(new Integer(2).equals(ovEntity.getAttribut("length").getValue()));
+		
 	}
 	
 	
@@ -997,6 +1000,11 @@ public class XalightApplicationTests extends TestCase {
 		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC);
 		
 		assertTrue("2".equals(ovEntity.getPathAttributAsString("p2")));
+		
+		System.out.println(ovEntity.getAttribut("p3").getValue());
+		
+		
+		assertTrue("NIANGON_138".equals(ovEntity.getPathAttributAsString("p3")));
 		
 		//System.out.println(ovEntity.getAttribut("p2").getValue());
 		

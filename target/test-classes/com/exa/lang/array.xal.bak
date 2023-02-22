@@ -19,7 +19,7 @@ entities {
 		indexArray = testArray.indexArray()
 	}
 	
-	entity4 {
+	entity3 {
 		length = testArray.length
 	}
 	

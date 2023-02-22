@@ -5,8 +5,31 @@ references {
 }
 
 init {
+
+	structures {
+		DRYOP {
+			
+			secteurs {
+				NIANGON_138  "NIANGON (138)"
+			}
+		}
+		
+		DRANE {
+			
+			secteurs {
+				ANGRE_141  "ANGRE (141)"
+			}
+
+		}
+	}
+	
 	secteurs {
 		*for(n in ['1', '2']) _name = "s" + n : n
+	}
+	
+	secteurs2 {
+		*for(dr in structures.fieldNamesAsArray(false)) 
+			_name = dr : structures.getObject(dr + ".secteurs").fieldNamesAsArray(false)
 	}
 }
 
@@ -19,6 +42,9 @@ entities {
 		p1 = "5"
 		
 		p2 = secteurs.getString("s2")
+		
+		p3 = secteurs2.getArray("DRYOP").getString(0)
 	
 	}
+	
 }
