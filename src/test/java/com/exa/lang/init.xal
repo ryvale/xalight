@@ -1,0 +1,24 @@
+references {
+	secteurs {
+		*for(n in ['1', '2']) _name = "s" + n : n
+	}
+}
+
+init {
+	secteurs {
+		*for(n in ['1', '2']) _name = "s" + n : n
+	}
+}
+
+entities {
+	entity0 {
+		*for(n in ['1', '2']) _name = "s" + n : n
+	}
+	
+	entity1 {
+		p1 = "5"
+		
+		p2 = secteurs.getString("s2")
+	
+	}
+}

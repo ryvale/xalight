@@ -222,6 +222,22 @@ public class Computing {
 			
 			if("init".equals(propertyName)) {
 				propertyValue = readPropertyValueForObject(propertyName, true);
+				
+				
+				
+				ObjectValue<XPOperand<?>> ov = propertyValue.asObjectValue();
+				if(ov != null) {
+					ObjectValue<XPOperand<?>> rootOV = getResult();
+					
+					Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
+					
+					XALParser.loadImport(this, mpLib);
+					
+					for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
+						resolveHeirsObject(ovLib);
+					}
+					propertyValue = object(ov, rootVC, mpLib);
+				}
 			}
 			else {
 				propertyValue = readPropertyValueForObject(propertyName, false);

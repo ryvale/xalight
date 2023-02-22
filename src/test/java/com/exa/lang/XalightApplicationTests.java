@@ -958,4 +958,48 @@ public class XalightApplicationTests extends TestCase {
 		
 		
 	}
+	
+	public void testMisc() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test16.xal");
+		
+		computing.calculateInit();
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC);
+		//System.out.println(ovEntity.getAttribut("v").getValue());
+	
+		
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("v1")));
+		
+		ovEntity = computing.object("entities.entity2", entityVC);
+		System.out.println(ovEntity.getAttribut("v1").getValue());
+		
+		
+		assertTrue("1".equals(ovEntity.getPathAttributAsString("v1")));
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("v2")));
+		assertTrue("5".equals(ovEntity.getPathAttributAsString("v3")));
+	}
+	
+	public void testInit() throws ManagedException {
+		XALParser parser = new XALParser();
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/init.xal");
+		
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC);
+		
+		assertTrue("2".equals(ovEntity.getPathAttributAsString("p2")));
+		
+		//System.out.println(ovEntity.getAttribut("p2").getValue());
+		
+		
+	}
 }
