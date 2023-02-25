@@ -1,0 +1,30 @@
+:test,
+
+references {
+	
+},
+
+entities {
+
+	entity1 {
+		
+		property => "2"
+		
+	},
+	
+	entity2(prm) {
+		
+		property1 = "2",
+		
+		property2 => prm
+		
+	},
+	
+	entity3(prm) {
+		
+		property1 = "2",
+		
+		property2 => prm
+		
+	}
+}

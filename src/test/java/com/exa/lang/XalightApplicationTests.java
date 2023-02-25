@@ -684,7 +684,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test13.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
@@ -710,7 +710,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/private/tp.ds.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
@@ -789,15 +789,19 @@ public class XalightApplicationTests extends TestCase {
 	
 	public void testStatementImport() throws ManagedException {
 		
+		//Computing.debugOn = true;
+		
 		FilesRepositories fr = new FilesRepositories();
 		
 		fr.addRepoPart("default", new OSFileRepoPart("./src/test/java/com/exa/lang"));
+		
+		
 		
 		XALParser parser = new XALParser(fr);
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test7.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
 		
@@ -866,7 +870,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test12.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
 		
@@ -891,7 +895,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/array.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
 		
@@ -940,7 +944,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/for-array.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
 		
@@ -967,7 +971,7 @@ public class XalightApplicationTests extends TestCase {
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/test16.xal");
 		
-		computing.calculateInit();
+		//computing.calculateInit();
 		
 		XPEvaluator evaluator = computing.getXPEvaluator();
 		
@@ -1006,6 +1010,40 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue("NIANGON_138".equals(ovEntity.getPathAttributAsString("p3")));
 		
+		//System.out.println(ovEntity.getAttribut("p2").getValue());
+		
+		
+	}
+	
+	public void testInit2() throws ManagedException {
+		
+		Computing.debugOn =true;
+		
+		FilesRepositories fr = new FilesRepositories();
+		
+		fr.addRepoPart("data-config", new OSFileRepoPart("./src/test/java/com/exa/lang"));
+		
+		XALParser parser = new XALParser(fr);
+		
+		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/init2.xal");
+		XPEvaluator evaluator = computing.getXPEvaluator();
+		
+		VariableContext entityVC = new MapVariableContext(evaluator.getCurrentVariableContext());
+		
+		ObjectValue<XPOperand<?>> ovEntity = computing.object("entities.entity1", entityVC);
+		
+		assertTrue("DEXA".equals(ovEntity.getPathAttributAsString("p.DRYOP.parent")));
+		
+		ovEntity = computing.object("entities.entity2", entityVC);
+		
+		assertTrue(new Integer(0).equals(ovEntity.getPathAttributAsInteger("p.C[0]")));
+		
+		ovEntity = computing.object("data[0]", entityVC);
+		
+		assertTrue("dex".equals(ovEntity.getPathAttributAsString("entity")));
+		
+		
+		assertTrue("ABIDJAN".equals(ovEntity.getPathAttributAsString("record[0].sheet")));
 		//System.out.println(ovEntity.getAttribut("p2").getValue());
 		
 		

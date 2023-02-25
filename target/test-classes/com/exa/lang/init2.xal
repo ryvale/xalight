@@ -1,0 +1,69 @@
+
+references { 
+	*import [references.config, references.structures] 'data-config:///rfq/shared.xal'
+
+}
+
+init {
+
+	structureConfigKey "references.structures"
+	
+	reportPartConfigKey "references.config.rfqReport.parts"
+	
+	structures = rootOv.getObject(structureConfigKey)
+	
+	reportParts = rootOv.getObject(reportPartConfigKey)
+	
+	reportPartNames = reportParts.fieldNamesAsArray(false)
+	
+	champs = rootOv.getArray("references.config.champs0")
+		.addAllItem(rootOv.getArray("references.config.champs1"), false)
+		.addAllItem(rootOv.getArray("references.config.champs2"), false)
+		
+	secteurs {
+		*for(idr @int in structures.fieldNamesAsArray(false).indexArray()) 
+			_name = ("k" + idr) : structures
+					.getObject(structures.fieldNamesAsArray(false).getString(idr) + ".secteurs")
+					.fieldNamesAsArray(false)
+	}
+	
+	partColConfigs {
+		*for(part in reportPartNames) 
+			_name = part : reportParts.getObject(part + ".colConfig")
+	}
+	
+}
+
+entities {
+	entity1 {
+		p = structures
+	}
+	
+	entity2 {
+		p = partColConfigs.getObject("ABIDJAN")
+	}
+}
+
+data [
+	{
+		_name "data-config:/rfq/main"
+		
+		entity "dex"
+		
+		defaultType "float"
+		 
+		record [ 
+		
+			*for(idr @int in reportParts.getArray("ABIDJAN.drs").indexArray())
+			_name = "ABIDJAN" + idr {
+				sheet "ABIDJAN"
+			},
+			
+			
+			*for(idr @int in reportParts.getArray("INTERIEUR.drs").indexArray())
+			_name = "INTERIEUR"+ idr {
+				sheet "INTERIEUR"
+			}
+		]
+	}
+]

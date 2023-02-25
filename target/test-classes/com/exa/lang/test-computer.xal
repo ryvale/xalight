@@ -1,0 +1,57 @@
+
+references {
+	b1 { 
+		p1 "a"
+	}
+	
+	b2 { 
+		sb1 {
+			p1 "a"
+			
+			p10 "x"
+		}
+	}
+	
+	b3(pr1) {
+		p1 "a"
+		
+		p2 = pr1
+	}
+}
+
+init {
+	array ['a', 'b']
+	
+	obj {
+		_varType "ObjectValue"
+		_value @b2
+	}
+	
+	obj2 {
+		_varType "int"
+		_value 	1
+	}
+	
+}
+
+entities {
+ 
+	e1 @b1
+	
+	e2 @b2 {
+	
+		sb1 {
+			p2 "b"
+		}
+		
+		sb2 {
+			p "b"
+		}
+	}
+	
+	e3 {
+		*for(i in array) _name = "cplx" + i : "a" + i
+	}
+	
+	e4 { property = obj.getString("sb1.p10") property2 = obj2 }
+}

@@ -9,6 +9,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.exa.buffer.CharReader;
 import com.exa.chars.EscapeCharMan;
 import com.exa.expression.Type;
@@ -36,6 +39,12 @@ import com.exa.utils.values.StringValue;
 import com.exa.utils.values.Value;
 
 public class Computing {
+	
+	private interface PropertyValueReader { Value<?, XPOperand<?>> read(Value<?, XPOperand<?>> rawValue) throws ManagedException; }
+	
+	public static boolean debugOn = false;
+	
+	private static Logger LOG = LoggerFactory.getLogger(Computing.class);
 		
 	class XPParser extends Parser {
 
@@ -199,10 +208,16 @@ public class Computing {
 			if(ch == ',') lexingRules.nextNonBlankChar(charReader);
 		}
 		
+		//ObjectValue<XPOperand<?>> rootOV = getResult();
+		
+		Map<String, ObjectValue<XPOperand<?>>> mpLib = null;
+		
 		ch = null;
 		
 		XPEvaluator evaluator = xpCompiler.evaluator();
 		VariableContext rootVC = evaluator.getRootVC();
+		
+		rootVC.assignContextVariable(VN_ROOT_OV, result);
 		do {
 			String propertyName;
 			
@@ -221,29 +236,68 @@ public class Computing {
 			Value<?, XPOperand<?>> propertyValue; //= readPropertyValueForObject(propertyName);
 			
 			if("init".equals(propertyName)) {
-				propertyValue = readPropertyValueForObject(propertyName, true);
+				if(debugOn) LOG.info(String.format("[DEBUG] : Executing init"));
 				
 				
-				
-				ObjectValue<XPOperand<?>> ov = propertyValue.asObjectValue();
-				if(ov != null) {
-					ObjectValue<XPOperand<?>> rootOV = getResult();
+				if(mpLib == null) {
+					mpLib = XALParser.getDefaultObjectLib(result);
 					
-					Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
+					XALParser.loadImport(this, mpLib);
+				}
+				
+				
+				final Map<String, ObjectValue<XPOperand<?>>> fmpl = mpLib;
+				propertyValue = readPropertyValueForObject(propertyName, (iv) -> {
+					
+					ObjectValue<XPOperand<?>> ov = iv.asObjectValue();
+					if(ov != null) {
+						
+						return ov.containsAttribut(PRTY_VAR_TYPE) ? ov : object(ov, rootVC, fmpl);
+					}
+					
+					@SuppressWarnings({ "rawtypes", "unchecked" })
+					XALCalculabeValue<XPOperand<?>>cl = (XALCalculabeValue)iv.asCalculableValue();
+					
+					if(cl != null)	{
+						cl.setEvaluator(xpCompiler.evaluator());
+						cl.setVariableContext(rootVC);
+					}
+					
+					return iv;
+				});
+				
+				/*ObjectValue<XPOperand<?>> ov = propertyValue.asObjectValue();
+				if(ov != null) {
+					
+					propertyValue = object(ov, rootVC, mpLib);
+					
+				
+				}*/
+				
+				
+				
+				result.setAttribut(propertyName, propertyValue);
+				
+				if(debugOn) LOG.info("[DEBUG] : Init done");
+			}
+			else {
+				if(debugOn) LOG.info(String.format("[DEBUG] : Getting '%s' para-property value", propertyName));
+				propertyValue = readPropertyValueForObject(propertyName, null);
+		
+				result.setAttribut(propertyName, propertyValue);
+				
+				if(LIBN_DEFAULT.equals(propertyName)) {
+					
+					mpLib = XALParser.getDefaultObjectLib(result);
 					
 					XALParser.loadImport(this, mpLib);
 					
-					for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
-						resolveHeirsObject(ovLib);
-					}
-					propertyValue = object(ov, rootVC, mpLib);
-				}
-			}
-			else {
-				propertyValue = readPropertyValueForObject(propertyName, false);
+				} 
+				
+				if(debugOn) LOG.info(String.format("[DEBUG] :  Para-property value '%s' reading done", propertyName));
 			}
 			
-			result.setAttribut(propertyName, propertyValue);
+			
 			
 			ch = lexingRules.nextForwardNonBlankChar(charReader);
 			
@@ -272,7 +326,10 @@ public class Computing {
 			getObjectInheritance(ov, references, cyclicRefs, entity);
 		}
 		
-		rootVC.assignContextVariable(VN_ROOT_OV, result);
+		
+		
+		//calculateInit(mpLib);
+		
 		return result;
 	}
 	
@@ -427,15 +484,20 @@ public class Computing {
 				Iterator<String> strIt = mpCallParams.keySet().iterator();
 				String motherClass = strIt.next();
 				
-				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
-				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+				VariableContext pVC;
 				
-				VariableContext pVC =  new MapVariableContext(parentVC);
-				
-				addParamsValueInContext(evaluator, pVC, lastVC, mpParams);
-				
-				evaluator.registerVariableContext(VCC_CALLS, lastVC);
-				evaluator.registerVariableContext(VCC_CALLS, pVC);
+				if(strIt.hasNext()) {
+					ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+					Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+					
+					pVC =  new MapVariableContext(parentVC);
+					
+					addParamsValueInContext(evaluator, pVC, lastVC, mpParams);
+					
+					evaluator.registerVariableContext(VCC_CALLS, lastVC);
+					evaluator.registerVariableContext(VCC_CALLS, pVC);
+				}
+				else pVC = parentVC;
 				
 				String fqnParts[] = motherClass.split("[.]");
 		
@@ -548,12 +610,21 @@ public class Computing {
 	}*/
 	
 	public void calculateInit() throws ManagedException {
+		calculateInit(null);
+	}
+	public void calculateInit(Map<String, ObjectValue<XPOperand<?>>> mpLib) throws ManagedException {
 
-		ObjectValue<XPOperand<?>> rootOV = getResult();
+		//ObjectValue<XPOperand<?>> rootOV = getResult();
 		
-		Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
+		/*Map<String, ObjectValue<XPOperand<?>>> mpLib = XALParser.getDefaultObjectLib(rootOV);
 		
-		XALParser.loadImport(this, mpLib);
+		XALParser.loadImport(this, mpLib);*/
+		
+		if(mpLib == null) {
+			mpLib = XALParser.getDefaultObjectLib(result);
+			
+			XALParser.loadImport(this, mpLib);
+		}
 		
 		for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
 			resolveHeirsObject(ovLib);
@@ -643,14 +714,29 @@ public class Computing {
 				Map<String, Value<?, XPOperand<?>>> mpCallParams = ovCallParams.getValue();
 				
 				Iterator<String> strIt = mpCallParams.keySet().iterator();
-				String motherClass = strIt.next();
+				String motherClass = strIt.next();/*
 				
 				ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
 				Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
 				
 				VariableContext pVC =  new MapVariableContext(parentVC);
 				
-				addParamsValueInContext(evaluator, pVC, lastVC, mpParams);
+				addParamsValueInContext(evaluator, pVC, lastVC, mpParams);*/
+				
+				VariableContext pVC;
+				
+				if(strIt.hasNext()) {
+					ObjectValue<XPOperand<?>> ovParams = ovCallParams.getRequiredAttributAsObjectValue(strIt.next());
+					Map<String, Value<?, XPOperand<?>>> mpParams = ovParams.getValue();
+					
+					pVC =  new MapVariableContext(parentVC);
+					
+					addParamsValueInContext(evaluator, pVC, lastVC, mpParams);
+					
+					evaluator.registerVariableContext(VCC_CALLS, lastVC);
+					evaluator.registerVariableContext(VCC_CALLS, pVC);
+				}
+				else pVC = parentVC;
 				
 				evaluator.registerVariableContext(VCC_CALLS, lastVC);
 				evaluator.registerVariableContext(VCC_CALLS, pVC);
@@ -1164,13 +1250,13 @@ public class Computing {
 	}
 	
 	public Value<?, XPOperand<?>> readPropertyValueForObject(String context) throws ManagedException {
-		return readPropertyValueForObject(context, false);
+		return readPropertyValueForObject(context, null);
 	}
 	
-	public Value<?, XPOperand<?>> readPropertyValueForObject(String context, boolean propertNameAsVariable) throws ManagedException {
+	public Value<?, XPOperand<?>> readPropertyValueForObject(String context, PropertyValueReader propertNameAsVariableReader) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		//variableContextAnyWay(context);
-		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithoutDec(context, propertNameAsVariable);
+		Value<?, XPOperand<?>> res = _readPropertyValueForObjectWithoutDec(context, propertNameAsVariableReader);
 		if(res != null) return res;
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
 		
@@ -1303,19 +1389,19 @@ public class Computing {
 	}
 	
 	public Value<?, XPOperand<?>> readObjectBody(String context) throws ManagedException {
-		return readObjectBody(context, false);
+		return readObjectBody(context, null);
 	}
 	
-	public Value<?, XPOperand<?>> readObjectBody(String context, boolean proprtyNameAsVariable) throws ManagedException {
-		return readObjectBody(new ObjectValue<>(), context, proprtyNameAsVariable);
+	public Value<?, XPOperand<?>> readObjectBody(String context, PropertyValueReader proprtyNameAsVariableReader) throws ManagedException {
+		return readObjectBody(new ObjectValue<>(), context, proprtyNameAsVariableReader);
 	}
 	
 	public ObjectValue<XPOperand<?>> readObjectBody(ObjectValue<XPOperand<?>> ov, String context) throws ManagedException {
-		return readObjectBody(ov, context, false);
+		return readObjectBody(ov, context, null);
 	}
 	
 	//right place
-	public ObjectValue<XPOperand<?>> readObjectBody(ObjectValue<XPOperand<?>> ov, String context, boolean proprtyNameAsVariable) throws ManagedException {
+	public ObjectValue<XPOperand<?>> readObjectBody(ObjectValue<XPOperand<?>> ov, String context, PropertyValueReader proprtyNameAsVariableReader) throws ManagedException {
 		Integer unnamedAttributIndex = 1;
 		
 		XALLexingRules lexingRules = parser.getLexingRules();
@@ -1353,11 +1439,17 @@ public class Computing {
 				
 				String newContext = context + "." + propertyName;
 				
+				if(debugOn) LOG.info(String.format("[DEBUG] : Getting '%s' para-property value in context '%s'", propertyName, context));
 				propertyValue = readPropertyValueForObject(newContext);
 				
-				if(proprtyNameAsVariable && propertyValue != null) {
+				
+				
+				if(debugOn) LOG.info(String.format("[DEBUG] : Para-property value '%s' reading in context '%s' done", propertyName, context));
+				
+				if(proprtyNameAsVariableReader != null && propertyValue != null) {
 					
-					assignPropertyVariavle(propertyValue, propertyName);
+					
+					assignPropertyVariable(proprtyNameAsVariableReader.read(propertyValue), propertyName);
 					/*if("ArrayValue".equals(propertyValue.typeName())) {
 						xpCompiler.evaluator().assignOrDeclareVariable(propertyName, ArrayValue.class, null);
 					}*/
@@ -1395,7 +1487,7 @@ public class Computing {
 		return ov;
 	}
 	
-	private void assignPropertyVariavle(Value<?, XPOperand<?>> vl, String var) throws ManagedException {
+	private void assignPropertyVariable(Value<?, XPOperand<?>> vl, String var) throws ManagedException {
 		if(vl.asStringValue() != null) {
 			xpCompiler.evaluator().assignOrDeclareVariable(var, String.class, vl.getValue());
 			return;
@@ -1447,48 +1539,49 @@ public class Computing {
 			if(type == null) return;
 			
 			if("string".equals(type)) {
-				xpCompiler.evaluator().assignOrDeclareVariable(var, String.class, null);
-				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				xpCompiler.evaluator().assignOrDeclareVariable(var, String.class, vl.getValue());
+				/*ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 				ov.setAttribut(PRTY_VAR_TYPE, type);
 				ov.setAttribut(PRTY_VALUE, vl);
-				toBeCalculated.put(var, ov);
+				toBeCalculated.put(var, ov);*/
 			}
 			else if("int".equals(type)) {
-				xpCompiler.evaluator().assignOrDeclareVariable(var, Integer.class, null);
-				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				xpCompiler.evaluator().assignOrDeclareVariable(var, Integer.class, vl.getValue());
+				/*ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 				ov.setAttribut(PRTY_VAR_TYPE, type);
 				ov.setAttribut(PRTY_VALUE, vl);
-				toBeCalculated.put(var, ov);
+				toBeCalculated.put(var, ov);*/
 			}
 			else if("boolean".equals(type)) {
-				xpCompiler.evaluator().assignOrDeclareVariable(var, Boolean.class, null);
-				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				xpCompiler.evaluator().assignOrDeclareVariable(var, Boolean.class, vl.getValue());
+				/*ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 				ov.setAttribut(PRTY_VAR_TYPE, type);
 				ov.setAttribut(PRTY_VALUE, vl);
-				toBeCalculated.put(var, ov);
+				toBeCalculated.put(var, ov);*/
 			}
 			else if("float".equals(type)) {
-				xpCompiler.evaluator().assignOrDeclareVariable(var, Double.class, null);
-				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				xpCompiler.evaluator().assignOrDeclareVariable(var, Double.class, vl.getValue());
+				/*ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 				ov.setAttribut(PRTY_VAR_TYPE, type);
 				ov.setAttribut(PRTY_VALUE, vl);
-				toBeCalculated.put(var, ov);
+				toBeCalculated.put(var, ov);*/
 			}
 			else if("ArrayValue".equals(type)) {
-				xpCompiler.evaluator().assignOrDeclareVariable(var, ArrayValue.class, null);
-				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				xpCompiler.evaluator().assignOrDeclareVariable(var, ArrayValue.class, cl.asArrayValue());
+				//xpCompiler.evaluator(). .assignContextVariable(var, vl);
+				/*ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 				ov.setAttribut(PRTY_VAR_TYPE, type);
 				ov.setAttribut(PRTY_VALUE, vl);
-				toBeCalculated.put(var, ov);
+				toBeCalculated.put(var, ov);*/
 				
 				
 			}
 			else if("ObjectValue".equals(type)) {
-				xpCompiler.evaluator().assignOrDeclareVariable(var, ObjectValue.class, null);
-				ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
+				xpCompiler.evaluator().assignOrDeclareVariable(var, ObjectValue.class, cl.asObjectValue());
+				/*ObjectValue<XPOperand<?>> ov = new ObjectValue<>();
 				ov.setAttribut(PRTY_VAR_TYPE, type);
 				ov.setAttribut(PRTY_VALUE, vl);
-				toBeCalculated.put(var, ov);
+				toBeCalculated.put(var, ov);*/
 			}
 		}
 			
@@ -1552,10 +1645,10 @@ public class Computing {
 	}
 	
 	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithoutDec(String context) throws ManagedException {
-		return _readPropertyValueForObjectWithoutDec(context, false);
+		return _readPropertyValueForObjectWithoutDec(context, null);
 	}
 	
-	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithoutDec(String context, boolean proprtyNameAsVariable) throws ManagedException {
+	private Value<?, XPOperand<?>> _readPropertyValueForObjectWithoutDec(String context, PropertyValueReader proprtyNameAsVariableReder) throws ManagedException {
 		XALLexingRules lexingRules = parser.getLexingRules();
 		
 		Character ch = lexingRules.nextForwardNonBlankChar(charReader);
@@ -1564,7 +1657,7 @@ public class Computing {
 		
 		if(ch == '{') {
 			lexingRules.nextNonBlankChar(charReader);
-			return readObjectBody(context, proprtyNameAsVariable);
+			return readObjectBody(context, proprtyNameAsVariableReder);
 		}
 		
 		if(ch == '[') {

@@ -1,0 +1,33 @@
+:sql
+
+references {
+	inventaireEquipement(cls @int) {
+		
+		type "sql-server"
+		
+		from "r5Objects e"
+		
+		fields {
+			manager exa { prefix 'e.obj_' },
+			
+			items [
+				code,
+				
+				libelle { exp 'e.obj_desc' },
+				
+				mesSysteme mes { exp 'e.OBJ_COMMISS', type 'date' }
+			]
+		}
+		
+		criteria #0"e.obj_class=[$(classeActif)] and e.obj_org='ONEP'"
+	}
+	
+}
+
+entities {
+	compresseur @inventaireEquipement(# cls '') { 
+		
+		
+		
+	}
+}

@@ -1,0 +1,50 @@
+:xlsx
+
+references {
+	test {
+		propriete 2
+	}
+}
+
+model {
+	file 'repo:default/equipement-a-renouveler.xls'
+
+	sheets [
+		//Automates,
+		
+		Forages {
+			index 2
+		}/*,
+		= 4 
+		*/
+	]
+		
+	/*x = 4 */
+}
+
+data [
+
+	automates {
+		defaultSheet Automates
+		
+		record [
+			A3 { sheet Automates/*,  exp code*/ },
+			B8 { exp libelle}
+		]
+		
+		lists [
+			{ 
+				sheet Forages
+				row 5
+				record [ 
+					A { exp debut }
+				]
+			}
+		]
+	}
+	
+]
+
+
+
+

@@ -1,0 +1,99 @@
+
+
+references { 
+
+	config {
+	
+		champs0 ["recu", "planifie" ]
+		
+		champs1 ["traite"]
+		
+		champs2 ["traiteDelai"]
+		
+		rfqReport {
+		
+			parts {
+				ABIDJAN {
+					drs ["DRYOP", "DRANE", "DRABO", "DRAS"]
+					
+					startRow 17
+					
+					sep 2
+					
+					colConfig {
+						C [0, 1]
+						F [2]
+						H [3]
+					}
+				}
+				
+				INTERIEUR {
+					drs ["DRSE"]
+					
+					startRow 18
+					
+					sep 1
+					
+					colConfig {
+						D [0, 1]
+						G [2]
+						I [3]
+					}
+				}
+			}
+
+			
+			
+		}
+		
+	}
+	
+	structures {
+		DRYOP {
+		
+			parent "DEXA"
+			
+			secteurs {
+				NIANGON_138  "NIANGON (138)"
+			}
+		}
+		
+		DRANE {
+			parent "DEXA"
+			
+			secteurs {
+				ANGRE_141  "ANGRE (141)"
+			}
+
+		}
+		
+		
+		DRABO {
+			parent "DEXA"
+			
+			secteurs {
+				ABOBO_SUD_176  "ABOBO SUD (176)"
+			}
+		}
+		
+		
+		
+		DRAS {
+			parent "DEXA"
+			
+			secteurs {
+				MARCORY_133  "MARCORY (133)"
+			}
+		}
+		
+		DRSE {
+			parent "DEXI"
+			
+			secteurs {
+				BINGERVILLE  "BINGERVILLE"
+			}
+		}
+		
+		
+	}
+}

@@ -1,0 +1,21 @@
+references {
+	
+	e1 {
+		property 1
+	}
+}
+
+entities {
+
+	entity1 {
+		parray [
+			*for(i in ['1', '2'])
+				*for(j in ['a', 'b', 'c']) 
+					_name = "n" + i + j {
+						type 'float'
+					}
+			
+		]
+	}
+
+}

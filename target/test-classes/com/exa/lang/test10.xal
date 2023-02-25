@@ -1,0 +1,12 @@
+
+refereneces {
+	base(p1 @boolean) {
+		cplx { property = p1 ? "a" : "b"}
+	}
+}
+
+entities {
+	entity1(p1) @base(p1) {
+		cplx { property = p1 ? "a" : "b" }
+	}
+}

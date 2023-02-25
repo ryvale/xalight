@@ -6,6 +6,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.exa.buffer.CharReader;
 import com.exa.expression.XPOperand;
 import com.exa.expression.eval.MapVariableContext;
@@ -26,6 +29,9 @@ import com.exa.utils.values.ObjectValue;
 import com.exa.utils.values.Value;
 
 public class XALParser {
+	
+	private static final Logger LOG  = LoggerFactory.getLogger(XALParser.class);
+	
 	public static final TObjectValue T_OBJECT_VALUE = new TObjectValue();
 	
 	public static final TArrayValue T_ARRAY_VALUE = new TArrayValue();
@@ -224,16 +230,19 @@ public class XALParser {
 	public Computing getExecutedComputeObjectFormFile(String script, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv, Map<String, ObjectValue<XPOperand<?>>> mpLib) throws ManagedException {
 		CharReader cr = null;
 		try {
+			if(Computing.debugOn) LOG.info(String.format("[DEBUG] : Parsing file '%s'",script));
 			cr = CharReader.forFile(script, false);
 			Computing res = new Computing(this, cr, evaluatorSetup, uiv);
 			
 			res.execute();
 			
-			loadImport(res, mpLib);
+			/*loadImport(res, mpLib);
 			
 			for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
 				res.resolveHeirsObject(ovLib);
-			}
+			}*/
+			
+			if(Computing.debugOn) LOG.info(String.format("[DEBUG] :  File '%s' parsing done",script));
 			
 //			res.calculateInit(mpLib);
 			
@@ -249,18 +258,21 @@ public class XALParser {
 	public Computing getExecutedComputeObjectFormFile(String script, XPEvaluatorSetup evaluatorSetup, UnknownIdentifierValidation uiv) throws ManagedException {
 		CharReader cr = null;
 		try {
+			if(Computing.debugOn) LOG.info(String.format("[DEBUG] : Parsing file '%s'",script));
 			cr = CharReader.forFile(script, false);
 			Computing res = new Computing(this, cr, evaluatorSetup, uiv);
 			
-			ObjectValue<XPOperand<?>> ovRoot = res.execute();
+			/*ObjectValue<XPOperand<?>> ovRoot = */res.execute();
 			
-			Map<String, ObjectValue<XPOperand<?>>> mpLib = getDefaultObjectLib(ovRoot);
+			/*Map<String, ObjectValue<XPOperand<?>>> mpLib = getDefaultObjectLib(ovRoot);
 			
 			loadImport(res, mpLib);
 
 			for(ObjectValue<XPOperand<?>> ovLib : mpLib.values()) {
 				res.resolveHeirsObject(ovLib);
-			}
+			}*/
+			
+			if(Computing.debugOn) LOG.info(String.format("[DEBUG] :  File '%s' parsing done",script));
 			
 			//res.calculateInit(mpLib);
 			

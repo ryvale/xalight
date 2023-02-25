@@ -1,0 +1,81 @@
+:smart,
+
+references {
+
+	nbItOracle(dateField, start, end) {
+		type "oracle"
+		
+		from "r5events m"
+		
+		fields {
+			manager exa { prefix 'm.evt_' }
+			
+			items {
+				equipe "m.evt_mrc"
+				
+				nb { exp "count(*)", type "decimal" }
+			}
+		}
+		
+		criteria => dateField + " >= TO_DATE('" + start + "', 'YYYY-MM-DD HH24:MI:SS') and " + dateField + " <= TO_DATE('" + end + "', 'YYYY-MM-DD HH24:MI:SS')"
+	},
+	
+	nbItSql(dateField, start, end) {
+		type "sql"
+		
+		from "r5events m"
+		
+		fields {
+			manager exa { prefix 'm.evt_' }
+			
+			items {
+				equipe "m.evt_mrc"
+				
+				nb { exp "count(*)", type "decimal" }
+			}
+		},
+		
+		criteria =>  dateField + " >= convert(datetime, '" + start + "', 103) and " + dateField + " <= convert(datetime, '" + end + "', 103)"
+	}
+},
+
+entities {
+	entity1 {
+			
+		main {
+			type "libre",
+			
+			eof => true
+		}
+		
+	}
+	
+	entity2(dateField, start, end) {
+		type "smart",
+			
+		main {
+			type "libre",
+			
+			eof => true
+		},
+		
+		nb {
+			type "row-to-field",
+				
+			flow "after-main-next",
+			
+			source @nbItSql("m.evt_created", start, end),
+			
+			fields {
+				value => "a"
+				
+				items {
+					nb1 {
+						if => true
+					}
+				}
+			}
+		}
+		
+	}
+}
