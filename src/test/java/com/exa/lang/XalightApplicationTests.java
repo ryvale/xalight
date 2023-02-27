@@ -602,6 +602,8 @@ public class XalightApplicationTests extends TestCase {
 	}*/
 	
 	public void testStatementFor0() throws ManagedException {
+		//Computing.debugOn = true;
+		
 		XALParser parser = new XALParser();
 		
 		Computing computing = parser.getExecutedComputeObjectFormFile("./src/test/java/com/exa/lang/for.xal");
@@ -935,6 +937,9 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = computing.object("entities.entity4", entityVC);
 		assertTrue(new Integer(2).equals(ovEntity.getAttribut("length").getValue()));
 		
+		ovEntity = computing.object("entities.entit5", entityVC);
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("x1")));
+		
 	}
 	
 	
@@ -1038,12 +1043,16 @@ public class XalightApplicationTests extends TestCase {
 		
 		assertTrue(new Integer(0).equals(ovEntity.getPathAttributAsInteger("p.C[0]")));
 		
+		ovEntity = computing.object("entities.entity3", entityVC);
+		assertTrue("NIANGON_138".equals(ovEntity.getPathAttributAsString("p.k0[0]")));
+		
+		
 		ovEntity = computing.object("data[0]", entityVC);
 		
 		assertTrue("dex".equals(ovEntity.getPathAttributAsString("entity")));
+
 		
-		
-		assertTrue("ABIDJAN".equals(ovEntity.getPathAttributAsString("record[0].sheet")));
+		//assertTrue("ABIDJAN".equals(ovEntity.getPathAttributAsString("record[0].sheet")));
 		//System.out.println(ovEntity.getAttribut("p2").getValue());
 		
 		

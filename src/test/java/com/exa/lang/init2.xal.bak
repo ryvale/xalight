@@ -21,9 +21,10 @@ init {
 		.addAllItem(rootOv.getArray("references.config.champs2"), false)
 		
 	secteurs {
-		*for(idr @int in structures.fieldNamesAsArray(false).indexArray()) 
-			_name = ("k" + idr) : structures
-					.getObject(structures.fieldNamesAsArray(false).getString(idr) + ".secteurs")
+		*for(part in reportPartNames)
+			*for(dr @ObjectValue in reportParts.getArray(part + ".drs") ) 
+			_name = dr.getString("name") : structures
+					.getObject( dr.getString("name") + ".secteurs")
 					.fieldNamesAsArray(false)
 	}
 	
@@ -31,8 +32,8 @@ init {
 		*for(part in reportPartNames) 
 			_name = part : reportParts.getObject(part + ".colConfig")
 	}
-	
 }
+
 
 entities {
 	entity1 {
@@ -41,6 +42,10 @@ entities {
 	
 	entity2 {
 		p = partColConfigs.getObject("ABIDJAN")
+	}
+	
+	entity3 {
+		p = secteurs
 	}
 }
 
@@ -54,15 +59,20 @@ data [
 		 
 		record [ 
 		
-			*for(idr @int in reportParts.getArray("ABIDJAN.drs").indexArray())
-			_name = "ABIDJAN" + idr {
-				sheet "ABIDJAN"
-			},
-			
-			
-			*for(idr @int in reportParts.getArray("INTERIEUR.drs").indexArray())
-			_name = "INTERIEUR"+ idr {
-				sheet "INTERIEUR"
+			*for(part in reportPartNames)
+				*for(dr @ObjectValue in reportParts.getArray(part + ".drs"))
+					*for(is @int in secteurs.getArray(dr.getString("name")).indexArray())
+						*for(c in partColConfigs.getObject(part).fieldNamesAsArray(false))
+						
+			_name = c + (dr.getInteger("startRow") + is
+			{
+				sheet = part
+				
+				group [
+					*for(ich @int in reportParts.getObject(part + ".colConfig").getArray(c)) 
+						_name = secteurs.getArray(dr.getString("name")).getString(is) + "_" + champs.getString(ich)
+						{ type 'float'   } 
+				]
 			}
 		]
 	}

@@ -3,6 +3,8 @@ init {
 	testArray ['a', 'b']
 	
 	testArray2 ['d']
+	
+	testArray3 [ { name "x1" }, { name "x2" }]
 }
 
 entities {
@@ -19,8 +21,13 @@ entities {
 		indexArray = testArray.indexArray()
 	}
 	
-	entity3 {
+	entity4 {
 		length = testArray.length
+	}
+	
+	entity5 {
+		*for(o @ObjectValue in testArray3)
+			_name = o.getString("name") : "a"
 	}
 	
 }

@@ -42,6 +42,10 @@ entities {
 	entity2 {
 		p = partColConfigs.getObject("ABIDJAN")
 	}
+	
+	entity3 {
+		p = secteurs
+	}
 }
 
 data [
@@ -54,15 +58,22 @@ data [
 		 
 		record [ 
 		
-			*for(idr @int in reportParts.getArray("ABIDJAN.drs").indexArray())
-			_name = "ABIDJAN" + idr {
-				sheet "ABIDJAN"
-			},
-			
-			
-			*for(idr @int in reportParts.getArray("INTERIEUR.drs").indexArray())
-			_name = "INTERIEUR"+ idr {
-				sheet "INTERIEUR"
+			*for(part in reportPartNames)
+				*for(idr @int in reportParts.getArray(part + ".drs").indexArray())
+					*for(is @int in secteurs.getArray("k" + idr).indexArray())
+						*for(c in partColConfigs.getObject(part).fieldNamesAsArray(false))
+						
+			_name = c + (reportParts.getInteger(part + ".startRow") + idr * reportParts.getInteger(part + ".sep")
+				+ (idr == 0 ? 0 : secteurs.getArray("k" + (idr-1)).length)
+				+ is)
+			{
+				sheet = part
+				
+				group [
+					*for(ich @int in reportParts.getObject(part + ".colConfig").getArray(c)) 
+						_name = secteurs.getArray("k" + idr).getString(is) + "_" + champs.getString(ich)
+						{ type 'float'   } 
+				]
 			}
 		]
 	}

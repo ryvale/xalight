@@ -24,13 +24,73 @@ import com.exa.utils.values.Value;
 
 public class STFor implements ComputingStatement {
 	
+	interface Iter {
+		
+		VariableContext vc();
+		
+		boolean next();
+	}
+	
+	class ArrayIter implements Iter {
+		
+		private Value<?, XPOperand<?>> xpIterations;
+		
+		private ArrayValue<XPOperand<?>> iterations = null;
+		
+		private int index = 0;
+		
+		public final String varName;
+		public final VariableContext vc;
+		
+		private Computing excetutedComputing;
+		
+		public ArrayIter(Value<?, XPOperand<?>> xpIterations, String varName, VariableContext vc, Computing excetutedComputing) {
+			super();
+			this.varName = varName;
+			this.vc = vc;
+			this.xpIterations = xpIterations;
+			this.excetutedComputing = excetutedComputing;
+		}
+
+		@SuppressWarnings("unchecked")
+		@Override
+		public boolean next() {
+			if(iterations == null) {
+				iterations = xpIterations.asArrayValue();
+				
+				if(iterations == null) {
+					XALCalculabeValue<?> clValues = (XALCalculabeValue<?>)xpIterations.asCalculableValue();
+					excetutedComputing.computeCalculableValue(clValues, this.vc);
+					iterations = (ArrayValue<XPOperand<?>>) clValues.getValue();
+				}
+			}
+			if(index >= iterations.length()) {
+				iterations = null;
+				index = 0;
+				return false;
+			}
+			
+			vc.assignContextVariable(varName, iterations.get(index).getValue());
+			++index;
+			return true;
+		}
+
+		
+		@Override
+		public VariableContext vc() {
+			return vc;
+		}
+		
+		
+	
+	}
+	
 	class LoopVariables {
 		public final List<Value<?, XPOperand<?>>> values;
 		public final String varName;
 		private int position;
 		
 		public final VariableContext vc;
-		
 		
 		
 		public LoopVariables(List<Value<?, XPOperand<?>>> values, String varName, VariableContext vc) {
@@ -151,6 +211,95 @@ public class STFor implements ComputingStatement {
 		}
 	}
 
+	class NestedLoopIter {
+		List<Iter> loopVarList = new ArrayList<>();
+		
+		boolean neveUsed = true;
+		
+		void initialize(ObjectValue<XPOperand<?>> stDesc, VariableContext ovc, Computing excetutedComputing) throws ManagedException {
+			ArrayValue<XPOperand<?>> loopVars = stDesc.getRequiredAttributAsArrayValue("_loop_vars").clone();
+			
+			VariableContext parentVC = ovc;
+			
+			for(Value<?, XPOperand<?>> vlLV : loopVars.getValue()) {
+				ObjectValue<XPOperand<?>> ovLoopVars = vlLV.asRequiredObjectValue();
+				
+				Value<?, XPOperand<?>> vlValues = ovLoopVars.getRequiredAttribut("_values");
+				
+				String varName = ovLoopVars.getRequiredAttributAsString("_var");
+				VariableContext vc = new MapVariableContext(parentVC);
+				
+				ArrayIter loopV = new ArrayIter(vlValues, varName, vc, excetutedComputing);
+				
+				loopVarList.add(loopV);
+				
+				parentVC = vc;
+			}
+		}
+	
+		boolean next() {
+			
+			if(neveUsed) {
+				if(loopVarList.size() == 0) return false;
+				
+				//boolean res = loopVarList.get(loopVarList.size() - 1).next();
+				
+				boolean res = false;
+				
+				for(int i=0; i<loopVarList.size(); i++) {
+					Iter lv = loopVarList.get(i);
+					res = lv.next();
+					
+					if(!res) return false;
+				}
+				
+				neveUsed = false;
+				
+				return res;
+			}
+			
+			for(int i=loopVarList.size() - 1; i>=0; i--) {
+				Iter lv = loopVarList.get(i);
+				
+				if(lv.next()) {
+					for(int j=i + 1; j<loopVarList.size(); j++) {
+						Iter lv2 = loopVarList.get(j);
+						if(!lv2.next()) return false;
+					}
+					return true;
+				}
+				
+			}
+			return false;
+		}
+		
+		VariableContext cloneVC() {
+			
+			Iterator<Iter> it = loopVarList.iterator();
+			if(!it.hasNext()) return null;
+			
+			
+			Iter lv = it.next();
+			
+			VariableContext vc = STFor.this.cloneVC(lv.vc(), lv.vc().getParent());
+			
+			
+			VariableContext parentVC = vc;
+			while(it.hasNext()) {
+				lv = it.next();
+				
+				vc = STFor.this.cloneVC(lv.vc(), parentVC);
+				//vc.setParent(parentVC);
+				
+				parentVC = vc;
+			}
+			
+			return vc;
+		}
+	
+	}
+	
+	
 	@Override
 	public ObjectValue<XPOperand<?>> compileObject(Computing computing, String context) throws ManagedException {
 		final CharReader charReader = computing.getCharReader();
@@ -374,7 +523,7 @@ public class STFor implements ComputingStatement {
 	public Value<?, XPOperand<?>> translate(ObjectValue<XPOperand<?>> ov, Computing excetutedComputing, VariableContext ovc, Map<String, ObjectValue<XPOperand<?>>> libOV, String cmd) throws ManagedException {
 
 		
-		NestedLoopMan nlm = new NestedLoopMan();
+		NestedLoopIter nlm = new NestedLoopIter();
 		
 		nlm.initialize(ov, ovc, excetutedComputing);
 		
