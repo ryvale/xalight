@@ -17,4 +17,16 @@ entities {
 			}
 		]
 	}
+	
+	entity3 {
+		rows [
+			{
+				z0 "0"
+			},
+			
+			{
+				*for(i in ['a', 'b']) _name = i : i
+			}
+		]
+	}
 }

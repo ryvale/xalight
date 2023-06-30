@@ -34,6 +34,10 @@ public class TArrayValue extends TObjectClass<ArrayValue<XPOperand<?>>, Value<?,
 		omInt.addOperator(new AVMtdGetInteger());
 		methods.put("getInteger", new Method<>("getInteger", Integer.class, omInt));
 		
+		omInt = new OMMethod<>("indexOf", 2, OMOperandType.POST_OPERAND);
+		omInt.addOperator(new AVMtdIndexOf());
+		methods.put("indexOf", new Method<>("indexOf", Integer.class, omInt));
+		
 		OMMethod<ArrayValue> omAV = new OMMethod<>("addItem", 3, OMOperandType.POST_OPERAND);
 		omAV.addOperator(new AVMtdAddItem());
 		methods.put("addItem", new Method<>("addItem", ArrayValue.class, omAV));

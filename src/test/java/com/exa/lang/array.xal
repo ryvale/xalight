@@ -25,4 +25,8 @@ entities {
 		length = testArray.length
 	}
 	
+	entity5 {
+		index = testArray.indexOf("a")
+	}
+	
 }

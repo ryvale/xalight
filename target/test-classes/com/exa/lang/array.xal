@@ -26,8 +26,7 @@ entities {
 	}
 	
 	entity5 {
-		*for(o @ObjectValue in testArray3)
-			_name = o.getString("name") : "a"
+		index = testArray.indexOf("a")
 	}
 	
 }

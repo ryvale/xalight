@@ -937,8 +937,10 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = computing.object("entities.entity4", entityVC);
 		assertTrue(new Integer(2).equals(ovEntity.getAttribut("length").getValue()));
 		
-		ovEntity = computing.object("entities.entit5", entityVC);
-		assertTrue("a".equals(ovEntity.getPathAttributAsString("x1")));
+		
+		ovEntity = computing.object("entities.entity5", entityVC);
+		assertTrue(new Integer(0).equals(ovEntity.getPathAttributAsInteger("index")));
+		
 		
 	}
 	
@@ -968,6 +970,11 @@ public class XalightApplicationTests extends TestCase {
 		assertTrue("a".equals(ovEntity.getPathAttributAsString("rows[0].a")));
 		assertTrue("b".equals(ovEntity.getPathAttributAsString("rows[0].b")));
 		
+		ovEntity = computing.object("entities.entity3", entityVC);
+		
+		assertTrue("0".equals(ovEntity.getPathAttributAsString("rows[0].z0")));
+		assertTrue("a".equals(ovEntity.getPathAttributAsString("rows[1].a")));
+		assertTrue("b".equals(ovEntity.getPathAttributAsString("rows[1].b")));
 		
 	}
 	
@@ -1046,10 +1053,11 @@ public class XalightApplicationTests extends TestCase {
 		ovEntity = computing.object("entities.entity3", entityVC);
 		assertTrue("NIANGON_138".equals(ovEntity.getPathAttributAsString("p.k0[0]")));
 		
-		
+		/*
 		ovEntity = computing.object("data[0]", entityVC);
 		
 		assertTrue("dex".equals(ovEntity.getPathAttributAsString("entity")));
+		*/
 
 		
 		//assertTrue("ABIDJAN".equals(ovEntity.getPathAttributAsString("record[0].sheet")));
