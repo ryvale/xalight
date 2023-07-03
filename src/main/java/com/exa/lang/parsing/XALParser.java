@@ -210,7 +210,12 @@ public class XALParser {
 			}
 			
 			for(String p : propertiesToAdd.keySet()) {
-				mpRef.put(p, propertiesToAdd.get(p).asObjectValue());
+				Value<?, XPOperand<?>> vl = propertiesToAdd.get(p);
+				if(vl == null) {
+					LOG.warn(String.format("No value found for property '%s' during import", p));
+					continue;
+				}
+				mpRef.put(p, vl.asObjectValue());
 			}
 		}
 	}
